@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeitplan</title>
+    <!-- CSS & JS -->
+    <link rel="stylesheet" href="/style.css">
+    <script src="/script.js"></script>
+</head>
+<body>
+    <!-- Wolken -->
+    <div id="clouds">
+        <span class="cloud" style="font-size:200px;">&#127781;</span>
+    </div>
+    <div id="notification-container" class="notification-container">
+        <!-- Hier werden die Benachrichtigungen eingefügt -->
+    </div>
+    <!-- Zeitplan -->
+    <div class="container">
+        <h1>Zeitplan &#128020;&#128467;</h1>
+        <h3>Hier können die Zeiten der Hühnerfütterung eingestellt werden.</h3>
+        <div class="form">
+            <table id="timers">
+                <thead>
+                    <tr>
+                        <th>&#9200;</th>
+                        <th>Name</th>
+                        <th>&#128337;</th>
+                        <th>Mo</th>
+                        <th>Di</th>
+                        <th>Mi</th>
+                        <th>Do</th>
+                        <th>Fr</th>
+                        <th>Sa</th>
+                        <th>So</th>
+                        <th></th> <!-- Leere Spalte für den - Button -->
+                    </tr>
+                </thead>
+                <tbody id="timers-body">
+                    <!-- Hier werden die Zeilen eingefügt -->
+                </tbody>
+            </table>
+        </div>
+        <div class="singel-config">
+            <label for="feed">Futtermenge [g]</label>
+            <input type="number" id="feed" name="feed" min="0" max="1000" value="100">
+        </div>
+        <!-- Buttons -->
+        <div class="buttons">
+            <button id="export" onclick="export2CSV()">&#128229;</button>
+            <button id="import" onclick="importCSV()">&#128228;</button>
+
+            <button id="sleep_mode" onclick="sleep_mode()">Schlafmodus &#128564;</button>
+            <button id="reload" onclick="getTimers()">Neu laden &#128229;</button>
+            <button id="save" onclick="saveTimers()">Speichern &#128190;</button>
+            <button id="add" onclick="addRow()">&#10133;</button>
+            <button id="feed-button" onclick="feedManual()">Manuell füttern (aus)</button>
+        </div>
+    </div>
+    <!-- Farm -->
+    <div id="farm">
+        <span id="tractor" style='font-size:100px;'>&#128668;</span>
+
+        <span class="chicken" id="chicken1">&#128019;</span>
+        <span class="chicken" id="chicken2">&#128019;</span>
+        <span class="chicken" id="chicken3">&#128019;</span>
+    </div>
+</body>
+</html>

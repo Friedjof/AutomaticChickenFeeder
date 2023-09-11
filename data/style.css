@@ -1,0 +1,367 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #0056b3;
+}
+
+h1 {
+    color: #333;
+}
+
+/* Wenn im Handy-Modus */
+@media screen and (max-width: 1000px) {
+    .container {
+        width: 100%;
+        border-radius: 10px;
+        text-align: center;
+        color: #333;
+        background-color: #fff;
+    }
+
+    .timer {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    input[type="text"] {
+        padding: 5px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 60px;
+        outline: none;
+    }
+
+    input[type="time"] {
+        padding: 5px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+    }
+
+    .notification-container {
+        position: fixed;
+        top: 0px;
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .notification {
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        margin: 5px 10px;
+        background-color: #f0f0f0;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        opacity: 1;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    .remove {
+        margin: 5px 5px;
+    }
+
+    button {
+        padding: 5px 10px;
+        margin: 5px 5px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        align-self:baseline;
+    }
+
+    button:checked {
+        background-color: #259b3f;
+    }
+
+    #farm {
+        display: none;
+    }
+
+    #clouds {
+        display: none;
+    }
+}
+
+/* Wenn im Desktop-Modus */
+@media screen and (min-width: 1000px) {
+    .container {
+        width: 40%;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .timer {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        align-items: center;
+    }
+
+    label {
+        font-weight: bold;
+        font-size: 18px;
+    }
+
+    input[type="text"] {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 80px;
+        outline: none;
+    }
+
+    input[type="time"] {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        outline: none;
+    }
+
+    input[type="checkbox"] {
+        margin-right: 10px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .notification-container {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        width: 25%;
+        height: 500px;
+        gap: 10px;
+    }
+
+    .notification {
+        top: 10px;
+        right: 10px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        opacity: 1;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    button {
+        padding: 10px 20px;
+        margin: 5px 5px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        align-self:baseline;
+    }
+
+    button:hover {
+        background-color: #0056b3;
+    }
+}
+
+input[type="number"] {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 80px;
+    outline: none;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+/* Stil für die Benachrichtigungen */
+
+.success {
+    /* Hintergrundfarbe: Dunkelgrün */
+    background-color: #259b3f;
+    color: #fff;
+}
+
+.info {
+    /* Hintergrundfarbe: Dunkelblau */
+    background-color: #128293;
+    color: #fff;
+}
+
+.warning {
+    /* Hintergrundfarbe: Gelb */
+    background-color: #ad8100;
+    color: #fff;
+}
+
+.error {
+    /* Hintergrundfarbe: Dunkelrot */
+    background-color: #bf2231;
+    color: #fff;
+}
+
+/* Traktor */
+#farm {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    height: 10px;
+    width: 100%;
+    font-size: 30px;
+    background-color: #259b3f;
+}
+
+#tractor {
+    position: fixed;
+    bottom: 0;
+    right: 100%; /* Startposition rechts außerhalb des Bildschirms */
+    font-size: 30px; /* Größe des Traktors anpassen */
+    animation: moveTractor 10s linear infinite; /* Animationsdauer anpassen */
+}
+
+.chicken {
+    position: fixed;
+    bottom: 0;
+    right: 100%; /* Startposition rechts außerhalb des Bildschirms */
+    font-size: 30px; /* Größe des Huhns anpassen */
+}
+
+#chicken1 {
+    animation: moveChicken_1 10s linear infinite; /* Animationsdauer anpassen */
+    animation-delay: 0s; /* Verzögerung der Animation anpassen */
+}
+
+#chicken2 {
+    animation: moveChicken_2 10s linear infinite; /* Animationsdauer anpassen */
+    animation-delay: 0s; /* Verzögerung der Animation anpassen */
+}
+
+#chicken3 {
+    animation: moveChicken_3 10s linear infinite; /* Animationsdauer anpassen */
+    animation-delay: 0s; /* Verzögerung der Animation anpassen */
+}
+
+@keyframes moveTractor {
+    0% {
+        right: 0%;
+    }
+    100% {
+        right: 100%; /* Endposition links außerhalb des Bildschirms */
+    }
+}
+
+@keyframes moveChicken_1 {
+    0% {
+        right: 20%;
+    }
+    50% {
+        right: 25%;
+    }
+    70% {
+        right: 25%;
+    }
+    100% {
+        right: 20%;
+    }
+}
+
+@keyframes moveChicken_2 {
+    0% {
+        right: 22%;
+    }
+    50% {
+        right: 26%;
+    }
+    70% {
+        right: 27%;
+    }
+    100% {
+        right: 22%;
+    }
+}
+
+@keyframes moveChicken_3 {
+    0% {
+        right: 21%;
+    }
+    50% {
+        right: 25%;
+    }
+    70% {
+        right: 24%;
+    }
+    100% {
+        right: 21%;
+    }
+}
+
+/* Wolken */
+#clouds {
+    position: fixed;
+    top: 10%;
+    left: 5%;
+}
+
+/* Ladebildschirm - Stil für das Overlay und den Ladekreis */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8); /* Halbtransparentes Weiß als Hintergrund */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Hohe Z-Index, um über anderen Inhalten zu liegen */
+}
+
+/* Stil für den Ladekreis */
+.loading-spinner {
+    border: 4px solid #f3f3f3; /* Kreisrand */
+    border-top: 4px solid #3498db; /* Blaue Farbe für den oberen Rand */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 2s linear infinite; /* Ladeanimation */
+}
+
+.loading-text {
+    position: absolute;
+    /* textausrichtung: zentriert */
+    text-align: center;
+    top: 52%;
+}
+
+/* Ladeanimation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
