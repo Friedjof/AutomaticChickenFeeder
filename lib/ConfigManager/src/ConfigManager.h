@@ -89,6 +89,7 @@ class ConfigManager {
         size_t get_num_timers();
         timer_config_list_t get_timers();
         StaticJsonDocument<JSON_BUFFER_SIZE> get_timers_json();
+        feed_config_t get_feed_config();
 
         void set_timer(int index, timer_config_t timer_config);
         void set_timers(timer_config_list_t timers, size_t num_timers);
@@ -100,16 +101,6 @@ class ConfigManager {
         void set_timer_enabled(int index, bool enabled);
         void set_timer_time(int index, char* time);
         void set_timer_name(int index, char* name);
-
-        void set_timer_weekdays(int index, bool monday, bool tuesday, bool wednesday, bool thursday, bool friday, bool saturday, bool sunday);
-
-        void set_timer_weekday_monday(int index, bool monday);
-        void set_timer_weekday_tuesday(int index, bool tuesday);
-        void set_timer_weekday_wednesday(int index, bool wednesday);
-        void set_timer_weekday_thursday(int index, bool thursday);
-        void set_timer_weekday_friday(int index, bool friday);
-        void set_timer_weekday_saturday(int index, bool saturday);
-        void set_timer_weekday_sunday(int index, bool sunday);
 
         // Debugging
         void print_config();

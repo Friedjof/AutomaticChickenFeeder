@@ -2,7 +2,7 @@
 ## Description
 This is a simple config manager for the ESP32. It can manage Configuration based on a JSON file.
 
-## Usage
+## UsageAlert one if seconds match
 ```cpp
 #include <Arduino.h>
 #include <ConfigManager.h>

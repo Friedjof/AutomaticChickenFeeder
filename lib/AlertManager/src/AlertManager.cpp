@@ -18,11 +18,6 @@ void AlertManager::setup() {
     // Setup der RTC
     this->rtc.setClockMode(false); // Set clock mode to 24 hour
 
-    // Setup Relay Pin
-    pinMode(RELAY_PIN, OUTPUT);
-
-    // Setup Interrupt
-    this->setup_interrupt();
     // Setup next alert
     this->set_next_alert();
 }
@@ -37,16 +32,6 @@ void AlertManager::set_next_alert() {
     } else {
         Serial.println("No next alert found!");
     }
-}
-
-void AlertManager::setup_interrupt() {
-    // Setup Interrupt
-    pinMode(CLINT, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(CLINT), [] {
-        // Activate digital output
-        Serial.println("Interrupt!");
-        digitalWrite(RELAY_PIN, HIGH);
-    }, FALLING);
 }
 
 // helper functions
@@ -124,13 +109,14 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
     ds3231_datetime_t now = this->now();
     int current_weekday = now.weekday;
 
+    optional_ds3231_timer_t optional_earliest_timer;
+    optional_earliest_timer.empty = true; // default to true (no timer found)
+
+    ds3231_timer_t earliest_timer;
+
     timer_config_list_t timers = this->configManager.get_timers();
 
-    // Debugging how many timers are set
-    //Serial.print("Aktive Timer: ");
-    //Serial.println(timers.num_timers);
-
-    for (int i = (current_weekday - 1); i <= (current_weekday - 1) + 7; i++) {
+    for (int i = current_weekday - 1; i <= current_weekday + 6; i++) {
         int weekday = (i % 7) + 1;
         optional_timer_config_list_t timers_by_weekday = this->get_timers_by_weekday(weekday, timers);
 
@@ -138,51 +124,46 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
             if (weekday == current_weekday) {
                 timer_config_list_t sorted_timers = this->configManager.sort_timers_by_time(timers_by_weekday.timers);
 
-                // Gebe die sortierten Timer aus
-                //this->print_timer_list(this->convert_to_timer_list(sorted_timers));
-
+                timer_search:
                 // Suche nach der Uhrzeit nach dem aktuellen Zeitpunkt
-                for (size_t i = 0; i < sorted_timers.num_timers; i++) {
-                    timer_config_t next_alert = sorted_timers.timers[i];
+                for (size_t j = 0; j < sorted_timers.num_timers; j++) {
+                    timer_config_t next_alert = sorted_timers.timers[j];
 
                     if (next_alert.time.hour > now.hour) {
-                        //Serial.println("Frühester Timer gefunden!");
-
-                        ds3231_timer_t earliest_timer;
                         earliest_timer.hour = next_alert.time.hour;
                         earliest_timer.minute = next_alert.time.minute;
                         earliest_timer.weekday = weekday;
 
-                        optional_ds3231_timer_t optional_earliest_timer;
                         optional_earliest_timer.empty = false;
                         optional_earliest_timer.timer = earliest_timer;
 
-                        return optional_earliest_timer;
+                        // break the two loops
+                        i = current_weekday + 6;
+                        break;
                     } else if (next_alert.time.hour == now.hour && next_alert.time.minute > now.minute) {
-                        Serial.println("Frühester Timer gefunden!");
-
-                        ds3231_timer_t earliest_timer;
                         earliest_timer.hour = next_alert.time.hour;
                         earliest_timer.minute = next_alert.time.minute;
                         earliest_timer.weekday = weekday;
 
-                        optional_ds3231_timer_t optional_earliest_timer;
                         optional_earliest_timer.empty = false;
                         optional_earliest_timer.timer = earliest_timer;
 
-                        return optional_earliest_timer;
+                        // break the two loops
+                        i = current_weekday + 6;
+                        break;
                     }
                 }
-            }
 
-            optional_ds3231_timer_t earliest_timer = this->get_earliest_timer_of_the_day(timers_by_weekday.timers);
-
-            if (!earliest_timer.empty) {
-                Serial.println("Frühester Timer gefunden!");
-
-                return earliest_timer;
+                free(sorted_timers.timers);
+            } else {
+                optional_earliest_timer = this->get_earliest_timer_of_the_day(timers_by_weekday.timers, weekday);
+                break;
             }
         }
+    }
+
+    if (!optional_earliest_timer.empty) {
+        return optional_earliest_timer;
     }
 
     // Deaktiviert den Alarm, wenn kein Timer aktiv ist
@@ -268,7 +249,7 @@ optional_timer_config_list_t AlertManager::get_timers_by_weekday(int weekday, ti
     return optional_timers_by_weekday;
 }
 
-optional_ds3231_timer_t AlertManager::get_earliest_timer_of_the_day(timer_config_list_t timers) {
+optional_ds3231_timer_t AlertManager::get_earliest_timer_of_the_day(timer_config_list_t timers, int weekday) {
     optional_ds3231_timer_t optional_earliest_timer;
     optional_earliest_timer.empty = true;
 
@@ -280,12 +261,13 @@ optional_ds3231_timer_t AlertManager::get_earliest_timer_of_the_day(timer_config
     for (size_t i = 0; i < timers.num_timers; i++) {
         timer_config_t timer = timers.timers[i];
 
-        if (timer.enabled) {
+        if (timer.enabled && this->timer_is_active_on_weekday(timer, weekday)) {
             timer_time_t timer_time = timer.time;
 
             ds3231_timer_t next_alert;
             next_alert.hour = timer_time.hour;
             next_alert.minute = timer_time.minute;
+            next_alert.weekday = weekday;
 
             if (next_alert.hour < earliest_timer.hour) {
                 earliest_timer = next_alert;
@@ -348,7 +330,7 @@ void AlertManager::set_alert(rtc_alert_t alert) {
     this->rtc.turnOnAlarm(1);
 
     // Debugging
-    Serial.print("Alarm gesetzt: ");
+    Serial.print("next alert: ");
     Serial.printf("%02d", alert.hour);
     Serial.print(":");
     Serial.printf("%02d", alert.minute);
@@ -363,6 +345,28 @@ void AlertManager::disable_alarm_2() {
     this->rtc.setA2Time(0x00, 0x00, 0xff, 0x60, false, false, false); // 0x60 = 0b01100000 => Alarm when minutes match (never because of 0xff)
     this->rtc.turnOffAlarm(2);
     this->rtc.checkIfAlarm(2);
+}
+
+bool AlertManager::timer_is_active_on_weekday(timer_config_t timer, int weekday) {
+    if (timer.enabled) {
+        if (timer.monday && weekday == 1) {
+            return true;
+        } else if (timer.tuesday && weekday == 2) {
+            return true;
+        } else if (timer.wednesday && weekday == 3) {
+            return true;
+        } else if (timer.thursday && weekday == 4) {
+            return true;
+        } else if (timer.friday && weekday == 5) {
+            return true;
+        } else if (timer.saturday && weekday == 6) {
+            return true;
+        } else if (timer.sunday && weekday == 7) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // Debugging
@@ -400,6 +404,15 @@ void AlertManager::print_timer(ds3231_timer_t timer) {
     Serial.printf("%02d", timer.minute);
     Serial.print(" ");
     Serial.println(this->int_to_weekday(timer.weekday));
+}
+
+void AlertManager::print_timer(timer_config_t timer) {
+    Serial.print("Timer: ");
+    Serial.printf("%02d", timer.time.hour);
+    Serial.print(":");
+    Serial.printf("%02d", timer.time.minute);
+    Serial.print(" ");
+    Serial.println(this->int_to_weekday(this->get_next_weekday_from_timer(timer, this->now().weekday)));
 }
 
 void AlertManager::print_timer_list(ds3231_timer_list_t timers) {

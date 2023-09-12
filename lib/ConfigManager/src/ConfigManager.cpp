@@ -57,6 +57,7 @@ void ConfigManager::load_config() {
 
     // Number of timers in config file
     int timers = doc["timers"].size();
+
     this->config.timer_list.timers = (timer_config_t*) malloc(timers * sizeof(timer_config_t));
     this->config.timer_list.num_timers = timers;
 
@@ -342,6 +343,11 @@ timer_config_list_t ConfigManager::sort_timers_by_time(timer_config_list_t timer
     return sorted_timers;
 }
 
+feed_config_t ConfigManager::get_feed_config() {
+    return this->config.feed;
+}
+
+// Debugging
 void ConfigManager::print_config() {
     Serial.println("Config:");
     Serial.println("Wifi:");
