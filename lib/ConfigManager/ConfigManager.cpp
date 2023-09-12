@@ -1,12 +1,12 @@
 #include "ConfigManager.h"
 
-// This section is for the implementation
+// this section is for the implementation
 ConfigManager::ConfigManager(const char* filename) {
     this->filename = filename;
 
     // start SPIFFS
     if (!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS konnte nicht initialisiert werden");
+        Serial.println("Could not initialize SPIFFS");
         return;
     }
 
@@ -18,7 +18,7 @@ ConfigManager::ConfigManager() {
     this->filename = DEFAULT_CONFIG_FILE;
     // start SPIFFS
     if (!SPIFFS.begin(true)) {
-        Serial.println("SPIFFS konnte nicht initialisiert werden");
+        Serial.println("Could not initialize SPIFFS");
         return;
     }
 
@@ -28,7 +28,7 @@ ConfigManager::ConfigManager() {
 
 ConfigManager::~ConfigManager() { }
 
-// Load config from SPIFFS
+// load config from SPIFFS
 void ConfigManager::load_config() {
     // Open file for reading
     File file = SPIFFS.open(this->filename, FILE_READ);
@@ -84,9 +84,9 @@ void ConfigManager::load_config() {
     file.close();
 }
 
-// Save config to SPIFFS
+// save config to SPIFFS
 void ConfigManager::save_config() {
-    // Open file for writing
+    // open file for writing
     File file = SPIFFS.open(this->filename, FILE_WRITE);
 
     if (!file) {
@@ -94,17 +94,17 @@ void ConfigManager::save_config() {
         return;
     }
 
-    // Allocate a buffer to store contents of the file
+    // allocate a buffer to store contents of the file
     DynamicJsonDocument doc(JSON_BUFFER_SIZE);
 
     // Set the values in the document
     doc["wifi"]["ssid"] = this->config.wifi.ssid;
     doc["wifi"]["password"] = this->config.wifi.password;
 
-    // Feed
+    // feed
     doc["feed"]["quantity"] = this->config.feed.quantity;
 
-    // Timers
+    // timers
     for (int i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
         JsonObject timer = doc["timers"].createNestedObject();
 
@@ -122,12 +122,12 @@ void ConfigManager::save_config() {
         days["sunday"] = this->config.timer_list.timers[i].sunday;
     }
 
-    // Serialize JSON to file
+    // serialize JSON to file
     if (serializeJson(doc, file) == 0) {
         Serial.println("Failed to write to file");
     }
 
-    // Print file to Serial
+    // print file to Serial
     //serializeJson(doc, Serial);
     //Serial.println("\n");
 
@@ -162,7 +162,7 @@ timer_time_t ConfigManager::get_time_from_string(String time) {
     return timer_time;
 }
 
-// Wifi getter and setter
+// wifi getter and setter
 void ConfigManager::set_wifi_ssid(const char* ssid) {
     strlcpy(this->config.wifi.ssid, ssid, sizeof(this->config.wifi.ssid));
 }
@@ -179,10 +179,10 @@ const char* ConfigManager::get_wifi_password() {
     return this->config.wifi.password;
 }
 
-// Timer getter and setter
+// timer getter and setter
 timer_config_t ConfigManager::get_timer(int id) {
     if (id < 0 || id >= this->config.timer_list.num_timers) {
-        Serial.println("Timer ID out of range");
+        Serial.println("timer ID out of range");
         timer_config_t timer;
         return timer;
     }
@@ -226,7 +226,7 @@ StaticJsonDocument<JSON_BUFFER_SIZE> ConfigManager::get_timers_json() {
         days["sunday"] = this->config.timer_list.timers[i].sunday;
     }
 
-    // Feed
+    // feed
     doc["feed"]["quantity"] = this->config.feed.quantity;
 
     return doc;
@@ -234,17 +234,16 @@ StaticJsonDocument<JSON_BUFFER_SIZE> ConfigManager::get_timers_json() {
 
 void ConfigManager::set_timers_json(JsonVariant &json) {
 
-    // Feed
+    // feed
     this->config.feed.quantity = json["feed"]["quantity"] | 0;
 
-    // Timers
+    // timers
     JsonArray timers = json["timers"];
 
     for (int i = 0; i < timers.size() && i <= MAX_TIMERS; i++) {
         JsonObject timer = timers[i];
 
         this->config.timer_list.timers[i].time = this->get_time_from_string(timer["time"]);
-        // strlcpy(this->config.timer_list.timers[i].time, timer["time"] | "", sizeof(this->config.timer_list.timers[i].time));
         this->config.timer_list.timers[i].enabled = timer["enabled"] | false;
         strlcpy(this->config.timer_list.timers[i].name, timer["name"] | "", sizeof(this->config.timer_list.timers[i].name));
 
@@ -257,14 +256,14 @@ void ConfigManager::set_timers_json(JsonVariant &json) {
         this->config.timer_list.timers[i].sunday = timer["days"]["sunday"] | false;
     }
 
-    // Set number of timers
+    // set number of timers
     if (timers.size() > MAX_TIMERS) {
         this->config.timer_list.num_timers = MAX_TIMERS;
     } else {
         this->config.timer_list.num_timers = timers.size();
     }
 
-    // Print timers to Serial
+    // print timers to Serial
     //this->print_timers();
 
     this->save_config();
@@ -301,29 +300,29 @@ timer_config_list_t ConfigManager::sort_timers_by_time(timer_config_list_t timer
         } else {
             bool inserted = false;
 
-            // Solange der Timer nicht eingefügt wurde, vergleiche ihn mit den bereits eingefügten Timern
+            // as long as the timer has not been inserted, compare it with the already inserted timers
             for (size_t j = 0; j < sorted_timers.num_timers; j++) {
                 timer_config_t sorted_timer = sorted_timers.timers[j];
 
                 if (timer.time.hour < sorted_timer.time.hour) {
-                    // Verschiebe alle Timer um eins nach hinten
+                    // move all timers one position back
                     for (size_t k = sorted_timers.num_timers; k > j; k--) {
                         sorted_timers.timers[k] = sorted_timers.timers[k - 1];
                     }
 
-                    // Füge den Timer ein
+                    // insert timer
                     sorted_timers.timers[j] = timer;
                     sorted_timers.num_timers++;
 
                     inserted = true;
                     break;
                 } else if (timer.time.hour == sorted_timer.time.hour && timer.time.minute < sorted_timer.time.minute) {
-                    // Verschiebe alle Timer um eins nach hinten
+                    // move all timers one position back
                     for (size_t k = sorted_timers.num_timers; k > j; k--) {
                         sorted_timers.timers[k] = sorted_timers.timers[k - 1];
                     }
 
-                    // Füge den Timer ein
+                    // insert timer
                     sorted_timers.timers[j] = timer;
                     sorted_timers.num_timers++;
 
@@ -332,7 +331,7 @@ timer_config_list_t ConfigManager::sort_timers_by_time(timer_config_list_t timer
                 }
             }
 
-            // Wenn der Timer nicht eingefügt wurde, füge ihn am Ende ein weil er die größte Zeit hat
+            // if the timer was not inserted, insert it at the end because it has the largest time
             if (!inserted) {
                 sorted_timers.timers[sorted_timers.num_timers] = timer;
                 sorted_timers.num_timers++;
@@ -347,7 +346,7 @@ feed_config_t ConfigManager::get_feed_config() {
     return this->config.feed;
 }
 
-// Debugging
+// debugging functions
 void ConfigManager::print_config() {
     Serial.println("Config:");
     Serial.println("Wifi:");

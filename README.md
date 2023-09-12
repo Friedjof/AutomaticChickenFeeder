@@ -1,47 +1,46 @@
-# Hühner-Futterautomat
+# Chicken Feeder Automaton
 
-## Übersicht
+## Overview
 
-Der Hühner-Futterautomat ist ein Projekt, das entwickelt wurde, um die Fütterung von Hühnern in landwirtschaftlichen Betrieben zu automatisieren. Dieses System wurde entwickelt, um die Effizienz in der Hühnerhaltung zu steigern, die Fütterung zu optimieren und den Aufwand für die tägliche Pflege der Tiere zu reduzieren.
+The Chicken Feeder Automaton is a project developed to automate the feeding of chickens. This system is designed to increase efficiency in poultry farming, optimize feeding, and reduce the daily maintenance effort for poultry care.
 
-![Futterautomat](images/screenshot_desktop.png)
+![Feeder](images/screenshot_desktop.png)
 
-## Funktionen
+## Features
 
-- Automatisierte Fütterung zu festgelegten Zeiten
-- Konfigurierbare Fütterungszeiten und -mengen über eine webbasierte Benutzeroberfläche
-- Sicherung der Fütterungsdaten im permanenten Speicher des Mikrocontrollers
-- Erstellt ein gesichertes WLAN für die Konfiguration und Überwachung des Systems
-- Kann sich in einen Energiesparmodus versetzen, um die Batterielebensdauer zu verlängern
+- Automated feeding at scheduled times
+- Configurable feeding schedules and quantities through a web-based user interface
+- Secure storage of feeding data in the microcontroller's permanent memory
+- Creates a secure Wi-Fi network for system configuration and monitoring
+- Can enter a power-saving mode to extend battery life
 
 ## Hardware
 
-- ESP32-Mikrocontroller
-- Motorsteuerungsmodul (z.B., Servomotor)
-- Smartphones, Tablets oder Computer mit einem Webbrowser und WLAN
-- Real-Time-Clock-Modul DS3231 für die genaue Zeitmessung
-- Stromversorgung (Batterie oder Netzteil)
+- ESP32 microcontroller
+- Motor control module (e.g., servo motor)
+- Smartphones, tablets, or computers with a web browser and Wi-Fi
+- DS3231 Real-Time Clock module for accurate timekeeping
+- Power supply (battery or power adapter)
 
-## Installation und Konfiguration
+## Installation and Configuration
 
-1. Klonen Sie das Repository
-2. Installieren Sie die Abhängigkeiten (VSCode-Erweiterung PlatformIO IDE und PlatformIO Core)
-3. Konfigurieren Sie die `platformio.ini`-Datei, um die richtige Platine und den richtigen Port auszuwählen oder starte eine Nix-Shell mit `nix-shell`.
-4. Mit `make help` können Sie sich die verfügbaren Befehle anzeigen lassen.
+1. Clone the repository.
+2. Install dependencies (VSCode extension PlatformIO IDE and PlatformIO Core).
+3. Configure the `platformio.ini` file to select the correct board and port, or start a Nix shell with `nix-shell`.
+4. Use `make help` to display available commands.
 
-## Hilfreiche Links
-* [PlatformIO und der ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
+## Helpful Links
+* [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
 * [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
 * [DS3231 RTC](https://www.analog.com/media/en/technical-documentation/data-sheets/DS3231.pdf)
 * [RTC Interrupt](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt)
-* [Akku Betrieb](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
+* [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
 * [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
 
+## Contributions and Collaboration
 
-## Beitrag und Mitwirkung
+We welcome contributions and collaboration on this project. If you would like to make improvements, fix bugs, or add new features, please create an issue or a pull request.
 
-Ich begrüße Beiträge und Mitwirkungen an diesem Projekt. Wenn Sie Verbesserungen vornehmen möchten, Fehler beheben oder neue Funktionen hinzufügen möchten, erstellen Sie bitte einen Issue oder ein Pull Request.
-
-## Autor
+## Author
 
 - [Friedjof Noweck](https://github.com/Friedjof)

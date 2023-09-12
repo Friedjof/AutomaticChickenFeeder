@@ -9,10 +9,9 @@
 #include <ConfigManager.h>
 
 // Interrupt frequency, in seconds
-//#define INT_FREQ 3UL        // 3 seconds, characterized as unsigned long
 #define ALERT_BITS 0b00010000 // Alarm when day, hours, minutes, and seconds match
 
-
+// type definitions
 typedef struct {
     int year;
     int month;
@@ -70,7 +69,7 @@ public:
 
     void setup();
 
-    // Debugging
+    // debugging functions
     void print_now();
     void print_temperature();
     void print_timer(ds3231_timer_t timer);

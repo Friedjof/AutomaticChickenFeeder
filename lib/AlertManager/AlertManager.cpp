@@ -15,7 +15,7 @@ void AlertManager::setup() {
     // Setup the I2C bus (SDA = GPIO21, SCL = GPIO22) for the RTC DS3231
     Wire.begin();
 
-    // Setup der RTC
+    // Setup the RTC
     this->rtc.setClockMode(false); // Set clock mode to 24 hour
 
     // Setup next alert
@@ -125,7 +125,7 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
                 timer_config_list_t sorted_timers = this->configManager.sort_timers_by_time(timers_by_weekday.timers);
 
                 timer_search:
-                // Suche nach der Uhrzeit nach dem aktuellen Zeitpunkt
+                // Search for the next timer
                 for (size_t j = 0; j < sorted_timers.num_timers; j++) {
                     timer_config_t next_alert = sorted_timers.timers[j];
 
@@ -310,7 +310,7 @@ rtc_alert_t AlertManager::convert_to_rtc_alert(ds3231_timer_t timer) {
     alert.hour = timer.hour;
     alert.minute = timer.minute;
     alert.second = 0;
-    alert.alert_bits = ALERT_BITS; // Alarm when seconds match
+    alert.alert_bits = ALERT_BITS; // See the header file for more information
     alert.day_is_day = true;       // Use day of the week and not day of the month
     alert.h12 = false;             // Use 24 hour format
     alert.pm = false;              // Ignore AM/PM
@@ -320,7 +320,7 @@ rtc_alert_t AlertManager::convert_to_rtc_alert(ds3231_timer_t timer) {
 }
 
 void AlertManager::set_alert(rtc_alert_t alert) {
-    // Setze den Alarm
+    // Set the alarm
     this->rtc.turnOffAlarm(1);
     this->rtc.setA1Time(
         alert.day, alert.hour, alert.minute, alert.second,
@@ -329,16 +329,13 @@ void AlertManager::set_alert(rtc_alert_t alert) {
     this->rtc.checkIfAlarm(1);
     this->rtc.turnOnAlarm(1);
 
-    // Debugging
-    Serial.print("next alert: ");
+    // Print the new alert
+    Serial.print("New alert: ");
     Serial.printf("%02d", alert.hour);
     Serial.print(":");
     Serial.printf("%02d", alert.minute);
     Serial.print(" ");
     Serial.println(this->int_to_weekday(alert.day));
-
-    // Aktiviere den Alarm
-    //this->rtc.enableInterrupts(false);
 }
 
 void AlertManager::disable_alarm_2() {
@@ -369,7 +366,7 @@ bool AlertManager::timer_is_active_on_weekday(timer_config_t timer, int weekday)
     return false;
 }
 
-// Debugging
+// debugging functions
 void AlertManager::print_now() {
 	ds3231_datetime_t now = this->now();
 
@@ -392,13 +389,13 @@ void AlertManager::print_now() {
 }
 
 void AlertManager::print_temperature() {
-    Serial.print("Temperatur: ");
+    Serial.print("temperature: ");
     Serial.print(this->now().temperature);
     Serial.println("°C");
 }
 
 void AlertManager::print_timer(ds3231_timer_t timer) {
-    Serial.print("Timer: ");
+    Serial.print("timer: ");
     Serial.printf("%02d", timer.hour);
     Serial.print(":");
     Serial.printf("%02d", timer.minute);
@@ -407,7 +404,7 @@ void AlertManager::print_timer(ds3231_timer_t timer) {
 }
 
 void AlertManager::print_timer(timer_config_t timer) {
-    Serial.print("Timer: ");
+    Serial.print("timer: ");
     Serial.printf("%02d", timer.time.hour);
     Serial.print(":");
     Serial.printf("%02d", timer.time.minute);

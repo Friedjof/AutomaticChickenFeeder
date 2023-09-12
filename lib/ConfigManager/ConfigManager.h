@@ -1,19 +1,21 @@
 #ifndef __CONFIG_CONFIG_MANAGER_H__
 #define __CONFIG_CONFIG_MANAGER_H__
 
-#define MAX_TIMERS 4
-#define MAX_TIMER_NAME_LENGTH 32
-#define MAX_TIMER_TIME_LENGTH 6
-#define MAX_WIFI_SSID_LENGTH 32
-#define MAX_WIFI_PASSWORD_LENGTH 64
-#define MAX_FILENAME_LENGTH 32
-#define JSON_BUFFER_SIZE 4096
-#define DEFAULT_CONFIG_FILE "/config.json"
+// constants (changes may lead to crashes)
+#define MAX_TIMERS 4                       // maximum number of timers
+#define MAX_TIMER_NAME_LENGTH 32           // maximum length of timer name
+#define MAX_TIMER_TIME_LENGTH 6            // maximum length of timer time string
+#define MAX_WIFI_SSID_LENGTH 32            // maximum length of wifi ssid
+#define MAX_WIFI_PASSWORD_LENGTH 64        // maximum length of wifi password
+#define MAX_FILENAME_LENGTH 32             // maximum length of filename
+#define JSON_BUFFER_SIZE 4096              // size of json buffer
+#define DEFAULT_CONFIG_FILE "/config.json" // default config file
 
 #include <Arduino.h>
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
 
+// type definitions
 typedef struct {
     unsigned int hour;
     unsigned int minute;
@@ -29,7 +31,6 @@ typedef struct {
     timer_time_t time;
     bool enabled;
 
-    // Weekdays
     bool monday;
     bool tuesday;
     bool wednesday;
@@ -48,7 +49,6 @@ typedef struct {
     timer_config_list_t timers;
     bool empty;
 } optional_timer_config_list_t;
-
 
 typedef struct {
     int quantity;
@@ -76,9 +76,6 @@ class ConfigManager {
         void save_config();
 
         timer_config_list_t sort_timers_by_time(timer_config_list_t timers);
-
-        void set_wifi_config(local_wifi_config_t wifi_config);
-        local_wifi_config_t get_wifi_config();
         
         const char* get_wifi_ssid();
         void set_wifi_ssid(const char* ssid);
@@ -91,18 +88,12 @@ class ConfigManager {
         StaticJsonDocument<JSON_BUFFER_SIZE> get_timers_json();
         feed_config_t get_feed_config();
 
-        void set_timer(int index, timer_config_t timer_config);
-        void set_timers(timer_config_list_t timers, size_t num_timers);
         void set_timers_json(JsonVariant &json);
 
         String time_to_string(timer_time_t time);
         timer_time_t get_time_from_string(String time);
 
-        void set_timer_enabled(int index, bool enabled);
-        void set_timer_time(int index, char* time);
-        void set_timer_name(int index, char* name);
-
-        // Debugging
+        // debugging functions
         void print_config();
         void print_timers();
 };
