@@ -1,7 +1,8 @@
 # ESP32 Makefile
+# https://github.com/Friedjof/Chicken-Feeder-Automaton.git
 
 # Define your project name here
-PROJECT_NAME = YourESP32Project
+PROJECT_NAME = Chicken-Feeder-Automaton
 
 # Define your build environment (e.g., Arduino or PlatformIO)
 BUILD_ENV = platformio
@@ -34,7 +35,7 @@ else
 	@echo "Unsupported build environment: $(BUILD_ENV)"
 endif
 
-upload: build
+flash: build
 ifeq ($(BUILD_ENV), platformio)
 	pio run -t upload --upload-port=$(UPLOAD_PORT)
 else
@@ -80,9 +81,9 @@ shell:
 
 help:
 	@echo "Usage:"
-	@echo "  make              - Build the project"
+	@echo "  make              - Build and upload firmware to ESP32"
 	@echo "  make build        - Build the project"
-	@echo "  make upload       - Upload firmware to ESP32"
+	@echo "  make flash        - Upload firmware to ESP32"
 	@echo "  make clean        - Clean build files"
 	@echo "  make fs           - Build SPIFFS filesystem image"
 	@echo "  make uploadfs     - Upload SPIFFS filesystem image"
