@@ -1,11 +1,3 @@
-/*
-Der Hühner-Futterautomat
-Externe Module:
-- RTC (Real Time Clock)
-  SDA: GPIO 21
-  SCL: GPIO 22
-*/
-
 #include <Arduino.h>
 
 #include <WiFi.h>
