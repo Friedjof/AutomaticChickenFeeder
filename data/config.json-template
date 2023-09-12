@@ -1,0 +1,67 @@
+{
+    "wifi": {
+        "ssid": "Chicken feeder",
+        "password": "password"
+    },
+    "feed": {
+        "quantity": 100
+    },
+    "timers": [
+        {
+            "name": "Morning",
+            "time": "07:00",
+            "enabled": true,
+            "days": {
+                "monday": true,
+                "tuesday": true,
+                "wednesday": true,
+                "thursday": true,
+                "friday": true,
+                "saturday": false,
+                "sunday": false
+            }
+        },
+        {
+            "name": "Evening",
+            "time": "19:00",
+            "enabled": false,
+            "days": {
+                "monday": true,
+                "tuesday": true,
+                "wednesday": true,
+                "thursday": true,
+                "friday": true,
+                "saturday": false,
+                "sunday": false
+            }
+        },
+        {
+            "name": "Weekend",
+            "time": "09:00",
+            "enabled": true,
+            "days": {
+                "monday": false,
+                "tuesday": false,
+                "wednesday": false,
+                "thursday": false,
+                "friday": false,
+                "saturday": true,
+                "sunday": true
+            }
+        },
+        {
+            "name": "Night",
+            "time": "23:00",
+            "enabled": true,
+            "days": {
+                "monday": true,
+                "tuesday": true,
+                "wednesday": true,
+                "thursday": true,
+                "friday": true,
+                "saturday": true,
+                "sunday": true
+            }
+        }
+    ]
+}
