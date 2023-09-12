@@ -45,9 +45,6 @@ The Makefile provides a set of commands to build, flash, and monitor the microco
 - `make reload`: build, flash and monitor
 - `make start`: build SPIFFS file system, upload SPIFFS file system, build firmware, flash firmware, and open a serial monitor
 
-
-
-
 ## Helpful Links
 * [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
 * [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
