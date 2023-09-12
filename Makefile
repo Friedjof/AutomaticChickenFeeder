@@ -1,8 +1,7 @@
 # ESP32 Makefile
-# https://github.com/Friedjof/Chicken-Feeder-Automaton.git
 
 # Define your project name here
-PROJECT_NAME = Chicken-Feeder-Automaton
+PROJECT_NAME = Automatic chicken feeder
 
 # Define your build environment (e.g., Arduino or PlatformIO)
 BUILD_ENV = platformio

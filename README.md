@@ -1,7 +1,7 @@
-# Chicken Feeder Automaton
+# Automatic chicken feeder
 
 ## Overview
-The Chicken Feeder Automaton is a project developed to automate the feeding of chickens. This system is designed to increase efficiency in poultry farming, optimize feeding, and reduce the daily maintenance effort for poultry care.
+The automatic chicken feeder is a project developed to automate the feeding of chickens. This system is designed to increase efficiency in poultry farming, optimize feeding, and reduce the daily maintenance effort for poultry care.
 
 ![Feeder](images/screenshot_desktop.png)
 
@@ -20,10 +20,7 @@ The Chicken Feeder Automaton is a project developed to automate the feeding of c
 - Power supply (battery or power adapter)
 
 ## Installation and Configuration
-1. Clone the repository.
-```bash
-git clone https://github.com/Friedjof/Chicken-Feeder-Automaton.git
-```
+1. Clone this repository.
 2. Rename `data/config.json-template` to `data/config.json` and change the default values to your preferences.
 ```bash
 cp data/config.json-template data/config.json
