@@ -124,7 +124,6 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
             if (weekday == current_weekday) {
                 timer_config_list_t sorted_timers = this->configManager.sort_timers_by_time(timers_by_weekday.timers);
 
-                timer_search:
                 // Search for the next timer
                 for (size_t j = 0; j < sorted_timers.num_timers; j++) {
                     timer_config_t next_alert = sorted_timers.timers[j];

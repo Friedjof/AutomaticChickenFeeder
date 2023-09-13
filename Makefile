@@ -13,13 +13,13 @@ UPLOAD_PORT = /dev/ttyUSB0
 UPLOAD_SPEED = 115200
 
 # Define the ESP32 board model (e.g., esp32, esp32dev, etc.)
-ESP32_BOARD = esp32dev
+BOARD = esp8266
 
 # Location of the SPIFFS filesystem directory
 SPIFFS_DIR = data
 
 # Location of PlatformIO build directory
-BUILD_DIR = .pio/build/$(ESP32_BOARD)
+BUILD_DIR = .pio/build/$(BOARD)
 
 # Define the default target (upload)
 .DEFAULT_GOAL := upload
@@ -29,14 +29,14 @@ all: build
 
 build:
 ifeq ($(BUILD_ENV), platformio)
-	pio run -e $(ESP32_BOARD)
+	pio run -e $(BOARD)
 else
 	@echo "Unsupported build environment: $(BUILD_ENV)"
 endif
 
 flash: build
 ifeq ($(BUILD_ENV), platformio)
-	pio run -t upload --upload-port=$(UPLOAD_PORT)
+	pio run -t upload --upload-port=$(UPLOAD_PORT) -e $(BOARD)
 else
 	@echo "Unsupported build environment: $(BUILD_ENV)"
 endif
@@ -50,14 +50,14 @@ endif
 
 fs:
 ifeq ($(BUILD_ENV), platformio)
-	pio run -t buildfs
+	pio run -t buildfs -e $(BOARD)
 else
 	@echo "Unsupported build environment: $(BUILD_ENV)"
 endif
 
 uploadfs: fs
 ifeq ($(BUILD_ENV), platformio)
-	pio run -t uploadfs
+	pio run -t uploadfs -e $(BOARD)
 else
 	@echo "Unsupported build environment: $(BUILD_ENV)"
 endif
@@ -71,9 +71,9 @@ endif
 
 reupload: uploadfs monitor
 
-reload: upload monitor
+reload: flash monitor
 
-start: uploadfs upload monitor
+start: uploadfs flash monitor
 
 shell:
 	nix-shell

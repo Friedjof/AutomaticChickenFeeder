@@ -4,12 +4,14 @@
 ConfigManager::ConfigManager(const char* filename) {
     this->filename = filename;
 
+    #ifdef ESP32DEV
     // start SPIFFS
     if (!SPIFFS.begin(true)) {
         Serial.println("Could not initialize SPIFFS");
         return;
     }
-
+    #endif
+    
     // load config
     this->load_config();
 }
@@ -17,10 +19,17 @@ ConfigManager::ConfigManager(const char* filename) {
 ConfigManager::ConfigManager() {
     this->filename = DEFAULT_CONFIG_FILE;
     // start SPIFFS
+    #ifdef ESP32DEV
     if (!SPIFFS.begin(true)) {
         Serial.println("Could not initialize SPIFFS");
         return;
     }
+    #else
+    if (!LittleFS.begin()) {
+        Serial.println("Could not initialize LittleFS");
+        return;
+    }
+    #endif
 
     // load config
     this->load_config();
@@ -30,13 +39,21 @@ ConfigManager::~ConfigManager() { }
 
 // load config from SPIFFS
 void ConfigManager::load_config() {
+    Serial.println("Loading config");
+    Serial.print("Filename: ");
+    Serial.println(this->filename);
     // Open file for reading
+    #ifdef ESP32DEV
     File file = SPIFFS.open(this->filename, FILE_READ);
+    #else
+    File file = LittleFS.open(this->filename, "r");
+    #endif
 
     if (!file) {
         Serial.println("Failed to open config file");
         return;
     }
+    Serial.println("File opened");
 
     // Allocate a buffer to store contents of the file
     StaticJsonDocument<JSON_BUFFER_SIZE> doc;
@@ -87,7 +104,11 @@ void ConfigManager::load_config() {
 // save config to SPIFFS
 void ConfigManager::save_config() {
     // open file for writing
+    #ifdef ESP32DEV
     File file = SPIFFS.open(this->filename, FILE_WRITE);
+    #else
+    File file = LittleFS.open(this->filename, "w");
+    #endif
 
     if (!file) {
         Serial.println("Failed to create file");
@@ -105,7 +126,7 @@ void ConfigManager::save_config() {
     doc["feed"]["quantity"] = this->config.feed.quantity;
 
     // timers
-    for (int i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
+    for (size_t i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
         JsonObject timer = doc["timers"].createNestedObject();
 
         timer["time"] = this->time_to_string(this->config.timer_list.timers[i].time);
@@ -181,10 +202,9 @@ const char* ConfigManager::get_wifi_password() {
 
 // timer getter and setter
 timer_config_t ConfigManager::get_timer(int id) {
-    if (id < 0 || id >= this->config.timer_list.num_timers) {
+    if (id < 0 || id >= (int)this->config.timer_list.num_timers) {
         Serial.println("timer ID out of range");
-        timer_config_t timer;
-        return timer;
+        return this->config.timer_list.timers[id];
     }
 
     return this->config.timer_list.timers[id];
@@ -209,7 +229,7 @@ StaticJsonDocument<JSON_BUFFER_SIZE> ConfigManager::get_timers_json() {
 
     JsonArray timers = doc.createNestedArray("timers");
 
-    for (int i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
+    for (size_t i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
         JsonObject timer = timers.createNestedObject();
 
         timer["time"] = this->time_to_string(this->config.timer_list.timers[i].time);
@@ -240,7 +260,7 @@ void ConfigManager::set_timers_json(JsonVariant &json) {
     // timers
     JsonArray timers = json["timers"];
 
-    for (int i = 0; i < timers.size() && i <= MAX_TIMERS; i++) {
+    for (size_t i = 0; i < timers.size() && i <= MAX_TIMERS; i++) {
         JsonObject timer = timers[i];
 
         this->config.timer_list.timers[i].time = this->get_time_from_string(timer["time"]);
@@ -356,7 +376,7 @@ void ConfigManager::print_config() {
     Serial.println(this->config.wifi.password);
 
     Serial.println("Timers:");
-    for (int i = 0; i < this->config.timer_list.num_timers; i++) {
+    for (size_t i = 0; i < this->config.timer_list.num_timers; i++) {
         Serial.print("* Timer ");
         Serial.println(i);
         Serial.print("  Time: ");
@@ -389,7 +409,7 @@ void ConfigManager::print_config() {
 void ConfigManager::print_timers() {
     Serial.print("[");
 
-    for (int i = 0; i < this->config.timer_list.num_timers; i++) {
+    for (size_t i = 0; i < this->config.timer_list.num_timers; i++) {
         Serial.print("{");
         Serial.print("\"time\": \"");
         Serial.print(this->time_to_string(this->config.timer_list.timers[i].time));

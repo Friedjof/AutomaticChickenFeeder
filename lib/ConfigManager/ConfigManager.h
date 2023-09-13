@@ -12,7 +12,13 @@
 #define DEFAULT_CONFIG_FILE "/config.json" // default config file
 
 #include <Arduino.h>
+
+#ifdef ESP32DEV
 #include <SPIFFS.h>
+#else
+#include <LittleFS.h>
+#endif
+
 #include <ArduinoJson.h>
 
 // type definitions

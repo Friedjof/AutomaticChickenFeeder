@@ -13,14 +13,14 @@
 
 // type definitions
 typedef struct {
-    int year;
-    int month;
-    int day;
-    int hour;
-    int minute;
-    int second;
+    unsigned int year;
+    unsigned int month;
+    unsigned int day;
+    unsigned int hour;
+    unsigned int minute;
+    unsigned int second;
 
-    int weekday;
+    unsigned int weekday;
 
     float temperature;
 } ds3231_datetime_t;

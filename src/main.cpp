@@ -1,11 +1,19 @@
 #include <Arduino.h>
 
-#include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
+
+#ifdef ESP32DEV
+#include <WiFi.h>
 #include <SPIFFS.h>
+#else
+#include <ESPAsyncTCP.h>
+#include <ESP8266WiFi.h>
+#include <LittleFS.h>
+#endif
+
 #include <SPI.h>
 
 #include <time.h>
@@ -39,7 +47,11 @@ bool interrupt_flag = false;
 unsigned long feed_millis = millis();
 
 // deep sleep
+#ifdef ESP32DEV
 esp_sleep_wakeup_cause_t wakeup_reason;
+#else
+String wakeup_reason;
+#endif
 
 AsyncWebServer server(80);
 
@@ -67,11 +79,18 @@ void setup() {
   pinMode(CLINT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CLINT), interrupt_handler, FALLING);
 
+  #ifdef ESP32DEV
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0);
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
+  bool timer_wakeup = wakeup_reason == ESP_SLEEP_WAKEUP_EXT0;
+  #else
+  ESP.deepSleep(0);
 
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+  wakeup_reason = ESP.getResetReason();
+  bool timer_wakeup = wakeup_reason == "Deep-Sleep Wake";
+  #endif
+  if (timer_wakeup) {
     Serial.println("Wakeup caused by external signal using RTC_IO");
 
     // feed the chickens
@@ -79,7 +98,12 @@ void setup() {
 
     // go to sleep
     Serial.println("Schlafmodus aktiviert");
+
+    #ifdef ESP32DEV
     esp_deep_sleep_start();
+    #else
+    ESP.deepSleep(0);
+    #endif
   } else {
     // Setup WiFi
     setup_wifi();
@@ -113,7 +137,7 @@ void feed() {
 
 void setup_wifi() {
   Serial.print("Waiting for SSID and password");
-  while (configManager.get_wifi_ssid() == "" || configManager.get_wifi_password() == "") {
+  while (strcmp(configManager.get_wifi_ssid(), "") == 0 || strcmp(configManager.get_wifi_password(), "") == 0) {
     Serial.print(".");
     delay(1000);
   }
@@ -131,24 +155,31 @@ void setup_wifi() {
 }
 
 void setup_aws() {
-    // Index-Datei auf `/` ausliefern
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    #ifdef ESP32DEV
     request->send(SPIFFS, INDEX_FILE, "text/html");
+    #else
+    request->send(LittleFS, INDEX_FILE, "text/html");
+    #endif
   });
-
-  // CSS-Datei auf `/style.css` ausliefern
+  
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    #ifdef ESP32DEV
     request->send(SPIFFS, CSS_FILE, "text/css");
+    #else
+    request->send(LittleFS, CSS_FILE, "text/css");
+    #endif
   });
 
-  // JS-Datei auf `/script.js` ausliefern
   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    #ifdef ESP32DEV
     request->send(SPIFFS, JS_FILE, "text/javascript");
+    #else
+    request->send(LittleFS, JS_FILE, "text/javascript");
+    #endif
   });
 
-  // Endpunkt zum Abrufen der Timer-Daten
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
-    // JSON-Daten in einen String umwandeln
     String jsonString;
     serializeJson(configManager.get_timers_json(), jsonString);
 
@@ -176,7 +207,11 @@ void setup_aws() {
     Serial.println("Schlafmodus aktiviert");
     
     // go to sleep
+    #ifdef ESP32DEV
     esp_deep_sleep_start();
+    #else
+    ESP.deepSleep(0);
+    #endif
     request->send(200);
   });
 
