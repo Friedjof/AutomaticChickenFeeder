@@ -221,24 +221,24 @@ function showNotification(notType, msg, showTime) {
 
 function sleep_mode() {
     fetch('/sleep')
-        .then(data => {
-            var count = 10;
-            var counter = setInterval(timer, 1000);
-            function timer() {
-                count = count - 1;
-                if (count <= 0) {
-                    clearInterval(counter);
-                    showNotification('success', 'Sleep mode activated &#128564;', 3000);
-                    disableInputs();
-                    return;
-                }
-
-                showNotification('info', 'Sleep mode enabled in' + count + ' sec &#128564;', 1000);
-            }
-        })
+        .then()
         .catch(error => {
             showNotification('error', 'Error when activating the sleep mode (no connection &#128268; )', 5000);
         });
+    
+    var count = 10;
+    var counter = setInterval(timer, 1000);
+    function timer() {
+        count = count - 1;
+        if (count <= 0) {
+            clearInterval(counter);
+            showNotification('success', 'Sleep mode activated &#128564;', 3000);
+            disableInputs();
+            return;
+        }
+
+        showNotification('info', 'Sleep mode enabled in ' + count + ' sec &#128564;', 1000);
+    }
 }
 
 function export2CSV() {
