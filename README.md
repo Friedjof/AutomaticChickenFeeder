@@ -54,6 +54,10 @@ The Makefile provides a set of commands to build, flash, and monitor the microco
 * [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
 * [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
 
+## Usage
+When you use the ESP32 in Access Point mode, the ESP32 creates its own WiFi network. The default IP address to access the ESP32's web server is: http://192.168.4.1 You can open your web browser and enter this IP address to access the web services and features provided by the ESP32.
+
+
 ## Contributions and Collaboration
 We welcome contributions and collaboration on this project. If you would like to make improvements, fix bugs, or add new features, please create an issue or a pull request.
 
