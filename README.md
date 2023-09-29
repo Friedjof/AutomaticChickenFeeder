@@ -78,3 +78,4 @@ We welcome contributions and collaboration on this project. If you would like to
 
 ## Author
 - [Friedjof Noweck](https://github.com/Friedjof)
+- [Bernhard schlagheck](https://github.com/bschlagheck)
