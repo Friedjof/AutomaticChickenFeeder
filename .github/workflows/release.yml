@@ -34,7 +34,6 @@ jobs:
     - name: Archive binaries
       run: |
         mkdir -p releases/esp32dev releases/esp8266
-
         mv .pio/build/esp32dev/*.bin releases/esp32dev/
         mv .pio/build/esp8266/*.bin releases/esp8266/
 
