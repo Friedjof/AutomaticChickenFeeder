@@ -21,7 +21,7 @@
 #ifndef __CLOCK_H__
 #define __CLOCK_H__
 #include <Wire.h>
-// #include <DS3231.h>
+#include <DS3231.h>
 #endif
 
 #include <ConfigManager.h>
