@@ -163,7 +163,7 @@ void new_request() {
 }
 
 void setup_wifi() {
-  Serial.println("Waiting for SSID and password");
+  Serial.print("Waiting for SSID and password…");
   while (strcmp(configManager.get_wifi_ssid(), "") == 0 || strcmp(configManager.get_wifi_password(), "") == 0) {
     Serial.print(".");
     delay(1000);
