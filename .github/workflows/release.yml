@@ -42,16 +42,6 @@ jobs:
       with:
         name: esp-binaries
         path: releases
-    
-    - name: Cleanup
-      run: rm -rf .pio
-
-  create-release:
-    needs: [ build ]
-    runs-on: ubuntu-latest
-
-    - name: Checkout Repository
-      uses: actions/checkout@v3
 
     - name: Create Release
       id: create_release
@@ -60,4 +50,3 @@ jobs:
         artifacts: esp-binaries
         tag_name: ${{ github.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
-
