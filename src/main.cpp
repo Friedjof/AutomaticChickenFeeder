@@ -175,6 +175,7 @@ void setup_wifi() {
   Serial.println("Starte WiFi Access Point");
   WiFi.softAP(configManager.get_wifi_ssid(), configManager.get_wifi_password());
 
+  #ifdef FALSE
   // Setup IP address
   IPAddress ip;
   ip.fromString(configManager.get_ip());
@@ -182,8 +183,9 @@ void setup_wifi() {
   gateway.fromString(configManager.get_gateway());
   IPAddress subnet;
   subnet.fromString(configManager.get_subnet()); // Default: 255.255.255.0
-  // WiFi.softAPConfig(ip, gateway, subnet);
+  WiFi.softAPConfig(ip, gateway, subnet);
   // TODO: If the line above is used, no devices can connect to the WiFi network
+  #endif
   
   Serial.println();
   Serial.print("Hotspot-SSID: ");
