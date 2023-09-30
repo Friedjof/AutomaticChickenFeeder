@@ -9,7 +9,7 @@ on:
       - '*'
 
 jobs:
-  platformio-build:
+  platformio-build-esp32dev:
     runs-on: ubuntu-latest
 
     steps:
