@@ -53,9 +53,15 @@ You need to install the esptool first.
 ```bash
 pip install esptool
 ```
-#### firmware.bin, bootloader.bin and partitions.bin
+#### firmware.bin, bootloader.bin and partitions.bin (ESP32)
 ```bash
 esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
+```
+Change the `--port` parameter to match your system configuration and the path to the binary files.
+
+#### firmware.bin (ESP8266)
+```bash
+esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x10000 firmware.bin
 ```
 Change the `--port` parameter to match your system configuration and the path to the binary files.
 
