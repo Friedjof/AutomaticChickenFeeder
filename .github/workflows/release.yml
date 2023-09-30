@@ -61,9 +61,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        files:
-          - releases/esp32dev/*.bin
-          - releases/esp8266/*.bin
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        draft: false
+        prerelease: false
 
     - name: Publish esp32dev Release
       uses: actions/upload-release-asset@v1
