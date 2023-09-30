@@ -31,20 +31,68 @@ cp data/config.json-template data/config.json
 nix-shell
 ```
 
-## Makefile
-The Makefile provides a set of commands to build, flash, and monitor the microcontroller. You might need to adjust the `PORT` variable in the Makefile to match your system configuration. The default value is `/dev/ttyUSB0`. The following commands are available:
-- `make help`: Show help message
-- `make shell`: Start a Nix shell
-- `make build`: Build firmware
-- `make flash`: Flash firmware to microcontroller
-- `make monitor`: Monitor serial output
-- `make clean`: Clean build files
-- `make fs`: Build the SPIFFS file system
-- `make uploadfs`: Upload the SPIFFS file system
-- `make reupload`: Reupload the SPIFFS file system and open a serial monitor
-- `make reload`: build, flash and monitor
-- `make start`: build SPIFFS file system, upload SPIFFS file system, build firmware, flash firmware, and open a serial monitor
+## Usage
+When you use the ESP32 in Access Point mode, the ESP32 creates its own WiFi network. The default IP address to access the ESP32's web server is: http://192.168.4.1 You can open your web browser and enter this IP address to access the web services and features provided by the ESP32.
 
+### Pinout
+The following table shows the pinout of the ESP32 microcontroller. The pinout of the DS3231 RTC module and the motor control module may vary depending on the manufacturer.
+
+| ESP32 | RTC | Motor   |
+| ----- | --- | ------- |
+| 21    | SDA | -       |
+| 22    | SCL | -       |
+| 4     | INT | -       |
+| 2     | -   | CONTROL |
+| 3.3V  | VCC | VCC     |
+| GND   | GND | GND     |
+
+### Flashing
+In the release section, you can find the latest binary files for the microcontrollers. You can use the following commands to flash the binary files to the `ESP32` or `ESP8266` microcontroller.
+
+You need to install the esptool first.
+```bash
+pip install esptool
+```
+#### firmware.bin, bootloader.bin and partitions.bin (ESP32)
+```bash
+esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
+```
+Change the `--port` parameter to match your system configuration and the path to the binary files.
+
+#### firmware.bin (ESP8266)
+```bash
+esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x10000 firmware.bin
+```
+Change the `--port` parameter to match your system configuration and the path to the binary files.
+
+#### spiffs.bin
+```bash
+esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x290000 spiffs.bin
+```
+Change the `--port` parameter to match your system configuration and the path to the binary files.
+
+## Contributions and Collaboration
+We welcome contributions and collaboration on this project. If you would like to make improvements, fix bugs, or add new features, please create an issue or a pull request.
+
+### Build project
+Change the `BOARD` variable in the Makefile to select the correct board. The default value is `esp32dev`. You can use the following command to build the project.
+```bash
+make build
+```
+You can use the following command to flash the project to the microcontroller.
+```bash
+make flash
+```
+For the file system, you can use the following commands. You have to move or change the `config.json` file in the `data` folder. Visit the `config.json-template` file for more information.
+```bash
+make fs
+make uploadfs
+```
+
+For more advanced commands, you can use the help command.
+```bash
+make help
+```
 ## Helpful Links
 * [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
 * [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
@@ -53,28 +101,6 @@ The Makefile provides a set of commands to build, flash, and monitor the microco
 * [RTC Synchronization](https://github.com/Friedjof/SyncRTC)
 * [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
 * [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
-
-## Usage
-When you use the ESP32 in Access Point mode, the ESP32 creates its own WiFi network. The default IP address to access the ESP32's web server is: http://192.168.4.1 You can open your web browser and enter this IP address to access the web services and features provided by the ESP32.
-
-### Pinout
-The following table shows the pinout of the ESP32 microcontroller. The pinout of the DS3231 RTC module and the motor control module may vary depending on the manufacturer.
-| ESP32 Pin | RTC Pin |
-| --------- | ------- |
-| 21        | SDA     |
-| 22        | SCL     |
-| 4         | INT     |
-| 3.3V      | VCC     |
-| GND       | GND     |
-
-| ESP32 Pin | Motor Pin |
-| --------- | --------- |
-| 2         | OUT       |
-| GND       | GND       |
-| 3.3V      | VCC       |
-
-## Contributions and Collaboration
-We welcome contributions and collaboration on this project. If you would like to make improvements, fix bugs, or add new features, please create an issue or a pull request.
 
 ## Author
 - [Friedjof Noweck](https://github.com/Friedjof)

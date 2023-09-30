@@ -17,8 +17,12 @@
 #include <SPI.h>
 
 #include <time.h>
+
+#ifndef __CLOCK_H__
+#define __CLOCK_H__
 #include <Wire.h>
 #include <DS3231.h>
+#endif
 
 #include <ConfigManager.h>
 #include <AlertManager.h>
@@ -159,7 +163,7 @@ void new_request() {
 }
 
 void setup_wifi() {
-  Serial.print("Waiting for SSID and password");
+  Serial.print("Waiting for SSID and password…");
   while (strcmp(configManager.get_wifi_ssid(), "") == 0 || strcmp(configManager.get_wifi_password(), "") == 0) {
     Serial.print(".");
     delay(1000);
