@@ -49,6 +49,6 @@ jobs:
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
-        artifacts: esp-binaries
+        artifacts: "releases/**/*"
         tag_name: ${{ github.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
