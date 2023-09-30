@@ -68,6 +68,10 @@ void ConfigManager::load_config() {
     // Copy values from the JsonDocument to the Config
     strlcpy(this->config.wifi.ssid, doc["wifi"]["ssid"] | "", sizeof(this->config.wifi.ssid));
     strlcpy(this->config.wifi.password, doc["wifi"]["password"] | "", sizeof(this->config.wifi.password));
+    
+    // Copy system config
+    this->config.system.auto_sleep = doc["system"]["auto_sleep"] | false;
+    this->config.system.auto_sleep_after = doc["system"]["auto_sleep_after"] | 300;
 
     // Feed
     this->config.feed.quantity = doc["feed"]["quantity"] | 0;
@@ -121,6 +125,10 @@ void ConfigManager::save_config() {
     // Set the values in the document
     doc["wifi"]["ssid"] = this->config.wifi.ssid;
     doc["wifi"]["password"] = this->config.wifi.password;
+
+    // Set system config
+    doc["system"]["auto_sleep"] = this->config.system.auto_sleep;
+    doc["system"]["auto_sleep_after"] = this->config.system.auto_sleep_after;
 
     // feed
     doc["feed"]["quantity"] = this->config.feed.quantity;
@@ -364,6 +372,10 @@ timer_config_list_t ConfigManager::sort_timers_by_time(timer_config_list_t timer
 
 feed_config_t ConfigManager::get_feed_config() {
     return this->config.feed;
+}
+
+system_t ConfigManager::get_system_config() {
+    return this->config.system;
 }
 
 // debugging functions

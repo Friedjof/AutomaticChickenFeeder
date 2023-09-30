@@ -3,6 +3,10 @@
         "ssid": "Chicken feeder",
         "password": "password"
     },
+    "system": {
+        "auto_sleep": true,
+        "auto_sleep_after": 300
+    },
     "feed": {
         "quantity": 100
     },
