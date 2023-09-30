@@ -192,6 +192,7 @@ void setup_wifi() {
   Serial.print("Hotspot-IP-Adresse: ");
   Serial.println(WiFi.softAPIP());
 
+  #ifdef ESP32DEV
   if (!MDNS.begin(configManager.get_hostname())) {
     Serial.println("Error setting up MDNS responder!");
   } else {
@@ -200,6 +201,7 @@ void setup_wifi() {
   }
 
   MDNS.addService(configManager.get_hostname(), "tcp", 80);
+  #endif
 }
 
 void setup_aws() {
