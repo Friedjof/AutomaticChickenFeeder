@@ -49,14 +49,6 @@ jobs:
   release:
     needs: [ build ]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-    - name: Download Binaries
-      uses: actions/download-artifact@v3
-      with:
-        name: esp-binaries
 
     - name: Checkout Repository
       uses: actions/checkout@v3
@@ -65,9 +57,7 @@ jobs:
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          releases/esp32dev/*.bin
-          releases/esp8266/*.bin
+        artifacts: esp-binaries
         tag_name: ${{ github.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
