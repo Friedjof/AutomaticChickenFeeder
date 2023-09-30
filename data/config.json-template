@@ -1,7 +1,11 @@
 {
     "wifi": {
         "ssid": "Chicken feeder",
-        "password": "password"
+        "password": "password",
+        "ip": "192.168.4.2",
+        "gateway": "192.168.4.1",
+        "subnet": "255.255.255.0",
+        "hostname": "chicken-feeder.local"
     },
     "system": {
         "auto_sleep": true,

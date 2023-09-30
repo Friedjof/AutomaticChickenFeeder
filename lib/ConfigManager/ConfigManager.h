@@ -6,6 +6,8 @@
 #define MAX_TIMER_NAME_LENGTH 32           // maximum length of timer name
 #define MAX_TIMER_TIME_LENGTH 6            // maximum length of timer time string
 #define MAX_WIFI_SSID_LENGTH 32            // maximum length of wifi ssid
+#define MAX_HOSTNAME_LENGTH 32             // maximum length of hostname
+#define IP_LENGTH 15                       // maximum length of ip address
 #define MAX_WIFI_PASSWORD_LENGTH 64        // maximum length of wifi password
 #define MAX_FILENAME_LENGTH 32             // maximum length of filename
 #define JSON_BUFFER_SIZE 4096              // size of json buffer
@@ -35,6 +37,10 @@ typedef struct {
 typedef struct {
     char ssid[MAX_WIFI_SSID_LENGTH];
     char password[MAX_WIFI_PASSWORD_LENGTH];
+    char ip[IP_LENGTH];
+    char gateway[IP_LENGTH];
+    char subnet[IP_LENGTH];
+    char hostname[MAX_HOSTNAME_LENGTH];
 } local_wifi_config_t;
 
 typedef struct {
@@ -94,6 +100,10 @@ class ConfigManager {
         void set_wifi_ssid(const char* ssid);
         const char* get_wifi_password();
         void set_wifi_password(const char* password);
+        const char* get_hostname();
+        const char* get_ip();
+        const char* get_gateway();
+        const char* get_subnet();
 
         timer_config_t get_timer(int index);
         size_t get_num_timers();

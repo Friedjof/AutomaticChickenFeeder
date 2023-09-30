@@ -5,6 +5,8 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 
+#include <ESPmDNS.h>
+
 #ifdef ESP32DEV
 #include <WiFi.h>
 #include <SPIFFS.h>
@@ -172,13 +174,31 @@ void setup_wifi() {
 
   Serial.println("Starte WiFi Access Point");
   WiFi.softAP(configManager.get_wifi_ssid(), configManager.get_wifi_password());
+
+  // Setup IP address
+  IPAddress ip;
+  ip.fromString(configManager.get_ip());
+  IPAddress gateway;
+  gateway.fromString(configManager.get_gateway());
+  IPAddress subnet;
+  subnet.fromString(configManager.get_subnet()); // Default: 255.255.255.0
+  // WiFi.softAPConfig(ip, gateway, subnet);
+  // TODO: If the line above is used, no devices can connect to the WiFi network
   
   Serial.println();
   Serial.print("Hotspot-SSID: ");
   Serial.println(configManager.get_wifi_ssid());
   Serial.print("Hotspot-IP-Adresse: ");
   Serial.println(WiFi.softAPIP());
-  Serial.println();
+
+  if (!MDNS.begin(configManager.get_hostname())) {
+    Serial.println("Error setting up MDNS responder!");
+  } else {
+    Serial.print("Hostname: ");
+    Serial.println(configManager.get_hostname());
+  }
+
+  MDNS.addService(configManager.get_hostname(), "tcp", 80);
 }
 
 void setup_aws() {

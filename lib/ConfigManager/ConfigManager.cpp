@@ -68,6 +68,10 @@ void ConfigManager::load_config() {
     // Copy values from the JsonDocument to the Config
     strlcpy(this->config.wifi.ssid, doc["wifi"]["ssid"] | "", sizeof(this->config.wifi.ssid));
     strlcpy(this->config.wifi.password, doc["wifi"]["password"] | "", sizeof(this->config.wifi.password));
+    strlcpy(this->config.wifi.hostname, doc["wifi"]["hostname"] | "", sizeof(this->config.wifi.hostname));
+    strlcpy(this->config.wifi.ip, doc["wifi"]["ip"] | "", sizeof(this->config.wifi.ip));
+    strlcpy(this->config.wifi.gateway, doc["wifi"]["gateway"] | "", sizeof(this->config.wifi.gateway));
+    strlcpy(this->config.wifi.subnet, doc["wifi"]["subnet"] | "", sizeof(this->config.wifi.subnet));
     
     // Copy system config
     this->config.system.auto_sleep = doc["system"]["auto_sleep"] | false;
@@ -126,6 +130,10 @@ void ConfigManager::save_config() {
     // Set the values in the document
     doc["wifi"]["ssid"] = this->config.wifi.ssid;
     doc["wifi"]["password"] = this->config.wifi.password;
+    doc["wifi"]["hostname"] = this->config.wifi.hostname;
+    doc["wifi"]["ip"] = this->config.wifi.ip;
+    doc["wifi"]["gateway"] = this->config.wifi.gateway;
+    doc["wifi"]["subnet"] = this->config.wifi.subnet;
 
     // Set system config
     doc["system"]["auto_sleep"] = this->config.system.auto_sleep;
@@ -208,6 +216,22 @@ void ConfigManager::set_wifi_password(const char* password) {
 
 const char* ConfigManager::get_wifi_password() {
     return this->config.wifi.password;
+}
+
+const char* ConfigManager::get_hostname() {
+    return this->config.wifi.hostname;
+}
+
+const char* ConfigManager::get_ip() {
+    return this->config.wifi.ip;
+}
+
+const char* ConfigManager::get_gateway() {
+    return this->config.wifi.gateway;
+}
+
+const char* ConfigManager::get_subnet() {
+    return this->config.wifi.subnet;
 }
 
 // timer getter and setter
