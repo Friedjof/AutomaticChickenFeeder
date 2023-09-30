@@ -12,7 +12,6 @@ on:
       - '.github/workflows/**'
 
       - '!.github/workflows/release.yml'
-      - '!**/tests/**'
       - '!**/README.md'
 
 jobs:

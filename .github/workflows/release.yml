@@ -1,6 +1,6 @@
 name: Release Workflow
 
-on:
+on: 
   push:
     tags:
       - '*'
