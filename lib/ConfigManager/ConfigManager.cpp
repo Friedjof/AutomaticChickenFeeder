@@ -71,6 +71,7 @@ void ConfigManager::load_config() {
 
     // Feed
     this->config.feed.quantity = doc["feed"]["quantity"] | 0;
+    this->config.feed.factor = doc["feed"]["factor"] | 1.0;
 
     // Number of timers in config file
     int timers = doc["timers"].size();
@@ -124,6 +125,7 @@ void ConfigManager::save_config() {
 
     // feed
     doc["feed"]["quantity"] = this->config.feed.quantity;
+    doc["feed"]["factor"] = this->config.feed.factor;
 
     // timers
     for (size_t i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
@@ -287,6 +289,18 @@ void ConfigManager::set_timers_json(JsonVariant &json) {
     //this->print_timers();
 
     this->save_config();
+}
+
+int ConfigManager::get_quantity() {
+    return this->config.feed.quantity;
+}
+
+float ConfigManager::get_factor() {
+    return this->config.feed.factor;
+}
+
+void ConfigManager::set_factor(float factor) {
+    this->config.feed.factor = factor;
 }
 
 String ConfigManager::time_to_string(timer_time_t time) {
