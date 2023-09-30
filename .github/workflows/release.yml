@@ -6,7 +6,7 @@ on:
       - '*'
 
 jobs:
-  build:
+  create-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -45,10 +45,11 @@ jobs:
         name: esp-binaries
         path: releases
 
-    - name: Create Release
-      id: create_release
-      uses: softprops/action-gh-release@v1
+    - name: Create Release With Asset
+      id: Release-AIO
+      uses: Hs1r1us/Release-AIO@v2.0.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        artifacts: "releases/**/*"
         tag_name: ${{ github.ref }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        asset_files: 'releases/**/*'
