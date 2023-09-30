@@ -6,7 +6,7 @@ on:
       - '*'
 
 jobs:
-  build:
+  build-release:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,7 +23,7 @@ jobs:
         pip install platformio
         platformio update
 
-    - name: Build all Platforms
+    - name: Build all platforms
       run: platformio run
 
     - name: Build FS Images
@@ -33,31 +33,18 @@ jobs:
 
     - name: Archive binaries
       run: |
-        mkdir -p releases/esp32dev releases/esp8266
+        mkdir -p esp-binaries/esp32dev esp-binaries/esp8266
 
-        mv .pio/build/esp32/firmware.bin releases/esp32dev/
-        mv .pio/build/esp32/spiffs.bin releases/esp32dev/
-        mv .pio/build/esp8266/firmware.bin releases/es8266/
-        mv .pio/build/esp8266/spiffs.bin releases/esp8266/
-
-    - name: Upload Binaries
-      uses: actions/upload-artifact@v3
-      with:
-        name: esp-binaries
-        path: releases
-
-  create-release:
-    needs: [ build ]
-    runs-on: ubuntu-latest
-
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+        mv .pio/build/esp32dev/*.bin esp-binaries/esp32dev/
+        mv .pio/build/esp8266/*.bin esp-binaries/esp8266/
 
     - name: Create Release
       id: create_release
-      uses: softprops/action-gh-release@v1
+      uses: meeDamian/github-release@2.0
       with:
-        artifacts: esp-binaries
-        tag_name: ${{ github.ref }}
         token: ${{ secrets.GITHUB_TOKEN }}
-
+        tag: ${{ github.ref }}
+        files: >
+          ./esp-binaries/esp32dev/
+          ./esp-binaries/esp8266/
+        gzip: folders
