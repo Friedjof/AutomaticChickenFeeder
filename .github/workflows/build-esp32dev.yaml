@@ -1,0 +1,40 @@
+name: CI/CD for PlatformIO
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        platformio update
+
+    - name: Build PlatformIO Project
+      run: platformio run
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: platformio-build
+        path: .pio/build
+
+    - name: Cleanup
+      run: rm -rf .pio
+
