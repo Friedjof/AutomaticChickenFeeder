@@ -14,10 +14,10 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
@@ -30,7 +30,7 @@ jobs:
       run: platformio run -e esp32dev
 
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: platformio-build
         path: .pio/build
@@ -43,10 +43,10 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Setup Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
@@ -59,35 +59,6 @@ jobs:
       run: platformio run -e esp8266
 
     - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v2
-      with:
-        name: platformio-build
-        path: .pio/build
-
-    - name: Cleanup
-      run: rm -rf .pio
-
-  platformio-build-fs-esp32dev:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install PlatformIO
-      run: |
-        pip install platformio
-        platformio update
-
-    - name: Build PlatformIO Project for Filesystem
-      run: pio run -t buildfs -e esp32dev
-
-    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: platformio-build
@@ -96,7 +67,7 @@ jobs:
     - name: Cleanup
       run: rm -rf .pio
 
-  platformio-build-fs-esp8266:
+  platformio-build-fs:
     runs-on: ubuntu-latest
 
     steps:
@@ -114,7 +85,7 @@ jobs:
         platformio update
 
     - name: Build PlatformIO Project for Filesystem
-      run: pio run -t buildfs -e esp8266
+      run: pio run -t buildfs
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
