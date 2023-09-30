@@ -5,11 +5,10 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 
-#include <ESPmDNS.h>
-
 #ifdef ESP32DEV
 #include <WiFi.h>
 #include <SPIFFS.h>
+#include <ESPmDNS.h>
 #else
 #include <ESPAsyncTCP.h>
 #include <ESP8266WiFi.h>
