@@ -425,4 +425,27 @@ function feedManual() {
     feed_button.innerHTML = "Feed manually (" + (feed_on ? "on" : "off") + ")";
 }
 
+// Display current date and time
+function displayCurrentDateTime() {
+    fetch('/time')
+        .then(response => response.json())
+        .then(data => {
+            if (!data) {
+                return;
+            }
+
+            var date = new Date(data["year"], data["month"] - 1, data["day"], data["hour"], data["minute"], data["second"]);
+            var date_options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            var time_options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            
+            // Display date and time
+            document.getElementById('date-text').innerHTML = date.toLocaleDateString('en-GB', date_options);
+            document.getElementById('time-text').innerHTML = date.toLocaleTimeString('en-GB', time_options);
+        }).catch(error => {
+            showNotification('error', 'Error loading the current date and time (no connection &#128268; )', 5000);
+        });
+}
+
+setInterval(displayCurrentDateTime, 1000);
+
 window.onload = getTimers;

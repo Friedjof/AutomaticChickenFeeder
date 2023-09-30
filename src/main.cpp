@@ -215,6 +215,39 @@ void setup_aws() {
     request->send(200);
   });
 
+  // get current time
+  server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
+    // get current time
+    ds3231_datetime_t now = alertManager.now();
+
+    // create json object
+    StaticJsonDocument<JSON_OBJECT_SIZE(6)> json;
+    json["year"] = now.year;
+    json["month"] = now.month;
+    json["day"] = now.day;
+    json["hour"] = now.hour;
+    json["minute"] = now.minute;
+    json["second"] = now.second;
+
+    Serial.print("Get current time: ");
+    Serial.print(now.year);
+    Serial.print("-");
+    Serial.print(now.month);
+    Serial.print("-");
+    Serial.print(now.day);
+    Serial.print(" ");
+    Serial.print(now.hour);
+    Serial.print(":");
+    Serial.print(now.minute);
+    Serial.print(":");
+    Serial.println(now.second);
+
+    String jsonString;
+    serializeJson(json, jsonString);
+
+    request->send(200, "application/json", jsonString); 
+  });
+
   // feed manually
   AsyncCallbackJsonWebHandler* feed_handler = new AsyncCallbackJsonWebHandler("/feed", [](AsyncWebServerRequest *request, JsonVariant &json) {
     // if 'on' is true, start feeding

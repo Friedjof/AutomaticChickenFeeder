@@ -320,6 +320,10 @@ input[type="number"] {
     left: 5%;
 }
 
+#time {
+    margin: 5px;
+}
+
 .loading-overlay {
     position: fixed;
     top: 0;
