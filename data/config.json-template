@@ -8,7 +8,8 @@
         "auto_sleep_after": 300
     },
     "feed": {
-        "quantity": 100
+        "quantity": 100,
+        "factor": 1.0
     },
     "timers": [
         {

@@ -141,7 +141,9 @@ void IRAM_ATTR interrupt_handler() {
 void feed() {
   Serial.println("Fütterung gestartet");
   digitalWrite(RELAY_PIN, HIGH);
-  delay(configManager.get_feed_config().quantity * FEED_FACTOR);
+
+  delay(configManager.get_quantity() * configManager.get_factor());
+  
   digitalWrite(RELAY_PIN, LOW);
   Serial.println("Fütterung beendet");
   interrupt_flag = false;

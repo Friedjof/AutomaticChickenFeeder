@@ -63,6 +63,7 @@ typedef struct {
 
 typedef struct {
     int quantity;
+    float factor;
 } feed_config_t;
 
 typedef struct {
@@ -100,7 +101,10 @@ class ConfigManager {
         StaticJsonDocument<JSON_BUFFER_SIZE> get_timers_json();
         feed_config_t get_feed_config();
         system_t get_system_config();
+        int get_quantity();
+        float get_factor();
 
+        void set_factor(float factor);
         void set_timers_json(JsonVariant &json);
 
         String time_to_string(timer_time_t time);
