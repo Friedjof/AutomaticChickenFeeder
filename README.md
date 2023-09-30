@@ -57,9 +57,25 @@ The Makefile provides a set of commands to build, flash, and monitor the microco
 ## Usage
 When you use the ESP32 in Access Point mode, the ESP32 creates its own WiFi network. The default IP address to access the ESP32's web server is: http://192.168.4.1 You can open your web browser and enter this IP address to access the web services and features provided by the ESP32.
 
+### Pinout
+The following table shows the pinout of the ESP32 microcontroller. The pinout of the DS3231 RTC module and the motor control module may vary depending on the manufacturer.
+| ESP32 Pin | RTC Pin |
+| --------- | ------- |
+| 21        | SDA     |
+| 22        | SCL     |
+| 4         | INT     |
+| 3.3V      | VCC     |
+| GND       | GND     |
+
+| ESP32 Pin | Motor Pin |
+| --------- | --------- |
+| 2         | OUT       |
+| GND       | GND       |
+| 3.3V      | VCC       |
 
 ## Contributions and Collaboration
 We welcome contributions and collaboration on this project. If you would like to make improvements, fix bugs, or add new features, please create an issue or a pull request.
 
 ## Author
 - [Friedjof Noweck](https://github.com/Friedjof)
+- [Bernhard schlagheck](https://github.com/bschlagheck)

@@ -28,6 +28,11 @@ typedef struct {
 } timer_time_t;
 
 typedef struct {
+    bool auto_sleep;
+    int auto_sleep_after;
+} system_t;
+
+typedef struct {
     char ssid[MAX_WIFI_SSID_LENGTH];
     char password[MAX_WIFI_PASSWORD_LENGTH];
 } local_wifi_config_t;
@@ -65,6 +70,7 @@ typedef struct {
     local_wifi_config_t wifi;
     timer_config_list_t timer_list;
     feed_config_t feed;
+    system_t system;
 } config_t;
 
 
@@ -94,6 +100,7 @@ class ConfigManager {
         timer_config_list_t get_timers();
         StaticJsonDocument<JSON_BUFFER_SIZE> get_timers_json();
         feed_config_t get_feed_config();
+        system_t get_system_config();
         int get_quantity();
         float get_factor();
 

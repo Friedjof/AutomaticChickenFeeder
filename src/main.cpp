@@ -32,8 +32,8 @@
 #define CSS_FILE "/style.css"
 #define JS_FILE "/script.js"
 
-#define RELAY_PIN 2 // D2 (Onboard LED)
-#define CLINT 4     // RTC interrupt pin for alarm 1
+#define RELAY_PIN 2  // D2 (Onboard LED)
+#define CLINT 4      // RTC interrupt pin for alarm 1
 
 // Prototypes
 void IRAM_ATTR interrupt_handler();
@@ -41,10 +41,12 @@ void setup_wifi();  // Setup WiFi
 void setup_aws();   // Setup AsyncWebServer
 
 void feed();        // Feed the chickens
+void new_request(); // Will be executed when a new request is received
 
 // Global variables
 bool interrupt_flag = false;
 unsigned long feed_millis = millis();
+unsigned long auto_sleep_millis = millis();
 
 // deep sleep
 #ifdef ESP32DEV
@@ -114,15 +116,28 @@ void setup() {
 }
 
 void loop() {
+  // handle interrupt
   if (interrupt_flag) {
     feed();
   }
+
+  // auto sleep depending on AUTO_SLEEP
+  if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > 1000 * configManager.get_system_config().auto_sleep_after)) {
+    Serial.println("Going to sleep because of auto sleep");
+    #ifdef ESP32DEV
+    esp_deep_sleep_start();
+    #else
+    ESP.deepSleep(0);
+    #endif
+  }
 }
 
+// Interrupt handler
 void IRAM_ATTR interrupt_handler() {
   interrupt_flag = true;
 }
 
+// Feed the chickens
 void feed() {
   Serial.println("Fütterung gestartet");
   digitalWrite(RELAY_PIN, HIGH);
@@ -135,6 +150,12 @@ void feed() {
 
   // Setup the new alert (if necessary)
   alertManager.set_next_alert();
+}
+
+// Will be executed when a new request is received
+void new_request() {
+  // reset auto sleep millis to prevent going to sleep
+  auto_sleep_millis = millis();
 }
 
 void setup_wifi() {
@@ -158,6 +179,8 @@ void setup_wifi() {
 
 void setup_aws() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    new_request();
+
     #ifdef ESP32DEV
     request->send(SPIFFS, INDEX_FILE, "text/html");
     #else
@@ -182,6 +205,8 @@ void setup_aws() {
   });
 
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
+    new_request();
+
     String jsonString;
     serializeJson(configManager.get_timers_json(), jsonString);
 
@@ -192,6 +217,8 @@ void setup_aws() {
 
   // This endpoint is used to set the timers
   AsyncCallbackJsonWebHandler* set_handler = new AsyncCallbackJsonWebHandler("/set", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    new_request();
+
     // Convert the data to a JSON object
     Serial.println("Set new configuration");
     configManager.set_timers_json(json);
@@ -206,6 +233,8 @@ void setup_aws() {
 
   // activate sleep mode
   server.on("/sleep", HTTP_GET, [](AsyncWebServerRequest *request) {
+    new_request();
+
     Serial.println("Schlafmodus aktiviert");
     
     // go to sleep
@@ -219,6 +248,8 @@ void setup_aws() {
 
   // get current time
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
+    new_request();
+
     // get current time
     ds3231_datetime_t now = alertManager.now();
 
@@ -231,19 +262,6 @@ void setup_aws() {
     json["minute"] = now.minute;
     json["second"] = now.second;
 
-    Serial.print("Get current time: ");
-    Serial.print(now.year);
-    Serial.print("-");
-    Serial.print(now.month);
-    Serial.print("-");
-    Serial.print(now.day);
-    Serial.print(" ");
-    Serial.print(now.hour);
-    Serial.print(":");
-    Serial.print(now.minute);
-    Serial.print(":");
-    Serial.println(now.second);
-
     String jsonString;
     serializeJson(json, jsonString);
 
@@ -252,6 +270,8 @@ void setup_aws() {
 
   // feed manually
   AsyncCallbackJsonWebHandler* feed_handler = new AsyncCallbackJsonWebHandler("/feed", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    new_request();
+
     // if 'on' is true, start feeding
     if (json.containsKey("on") && json["on"].is<bool>()) {
       if (json["on"].as<bool>()) {
