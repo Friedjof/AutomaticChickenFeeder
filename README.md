@@ -65,9 +65,9 @@ esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard
 ```
 Change the `--port` parameter to match your system configuration and the path to the binary files.
 
-#### spiffs.bin
+#### littlefs.bin (ESP32 and ESP8266)
 ```bash
-esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x290000 spiffs.bin
+esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x290000 littlefs.bin
 ```
 Change the `--port` parameter to match your system configuration and the path to the binary files.
 
