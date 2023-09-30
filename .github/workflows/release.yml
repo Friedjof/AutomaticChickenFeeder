@@ -35,23 +35,21 @@ jobs:
 
     - name: Archive binaries
       run: |
-        mkdir -p releases/esp32dev releases/esp8266
-        mv .pio/build/esp32dev/*.bin releases/esp32dev/
-        mv .pio/build/esp8266/*.bin releases/esp8266/
+        mkdir -p esp-binaries/esp32dev esp-binaries/esp8266
+        mv .pio/build/esp32dev/*.bin esp-binaries/esp32dev/
+        mv .pio/build/esp8266/*.bin esp-binaries/esp8266/
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v3
       with:
-        name: esp-binaries
-        path: releases
+        name: ESP Binaries
+        path: esp-binaries
 
     - name: Create Release
       uses: meeDamian/github-release@2.0
       with:
         tag: ${{ github.ref }}
-        files: >
-          releases/esp32dev/*.bin
-          releases/esp8266/*.bin
+        files: ./esp-binaries
         prerelease: true
         draft: false
         token: ${{ secrets.GITHUB_TOKEN }}
