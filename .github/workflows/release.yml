@@ -34,7 +34,7 @@ jobs:
     - name: Archive binaries
       run: |
         mkdir -p releases/esp32dev releases/esp8266
-        
+
         mv .pio/build/esp32/firmware.bin releases/esp32dev/
         mv .pio/build/esp32/spiffs.bin releases/esp32dev/
         mv .pio/build/esp8266/firmware.bin releases/es8266/
@@ -47,7 +47,7 @@ jobs:
         path: releases
 
   release:
-    needs: [build]
+    needs: [ build ]
 
     runs-on: ubuntu-latest
 

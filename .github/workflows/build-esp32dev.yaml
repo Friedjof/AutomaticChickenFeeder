@@ -31,11 +31,14 @@ jobs:
         mv data/config.json-template data/config.json
         pio run -t buildfs -e esp32dev
 
+        mkdir esp32dev
+        mv .pio/build/esp32dev/*.bin esp32dev/
+
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: platformio-build
-        path: .pio/build
+        path: esp32dev
 
     - name: Cleanup
       run: rm -rf .pio
@@ -58,18 +61,22 @@ jobs:
         platformio update
 
     - name: Build PlatformIO Project for ESP8266
-      run: platformio run -e esp8266
+      run: |
+        platformio run -e esp8266
 
     - name: Build fs image
       run:  |
         mv data/config.json-template data/config.json
         pio run -t buildfs -e esp8266
 
+        mkdir esp8266
+        mv .pio/build/esp8266/*.bin esp8266/
+
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: platformio-build
-        path: .pio/build
+        path: esp8266
 
     - name: Cleanup
       run: rm -rf .pio
