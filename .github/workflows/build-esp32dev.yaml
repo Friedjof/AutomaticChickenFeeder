@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - '*'
+    paths:
+      - 'src/**'
+      - 'lib/**'
+      - 'data/**'
+      - 'platformio.ini'
+      - '.github/workflows/**'
+
+      - '!.github/workflows/release.yml'
+      - '!**/tests/**'
+      - '!**/README.md'
 
 jobs:
   platformio-build-esp32dev:
