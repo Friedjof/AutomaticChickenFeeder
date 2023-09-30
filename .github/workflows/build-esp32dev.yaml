@@ -27,7 +27,9 @@ jobs:
       run: platformio run -e esp32dev
 
     - name: Build fs image
-      run: pio run -t buildfs -e esp32dev
+      run: |
+        mv data/config.json-template data/config.json
+        pio run -t buildfs -e esp32dev
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
@@ -59,7 +61,9 @@ jobs:
       run: platformio run -e esp8266
 
     - name: Build fs image
-      run: pio run -t buildfs -e esp8266
+      run:  |
+        mv data/config.json-template data/config.json
+        pio run -t buildfs -e esp8266
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3

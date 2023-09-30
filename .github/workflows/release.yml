@@ -1,0 +1,87 @@
+name: Release Workflow
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        platformio update
+
+    - name: Build all Platforms
+      run: platformio run
+
+    - name: Build FS Images
+      run: |
+        mv data/config.json-template data/config.json
+        platformio run -t buildfs
+
+    - name: Archive binaries
+      run: |
+        mkdir -p releases/esp32dev releases/esp8266
+        
+        mv .pio/build/esp32/firmware.bin releases/esp32dev/
+        mv .pio/build/esp32/spiffs.bin releases/esp32dev/
+        mv .pio/build/esp8266/firmware.bin releases/es8266/
+        mv .pio/build/esp8266/spiffs.bin releases/esp8266/
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: esp-binaries
+        path: releases
+
+  release:
+    needs: [build]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download Binaries
+      uses: actions/download-artifact@v3
+      with:
+        name: esp-binaries
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        files:
+          - releases/esp32dev/*.bin
+          - releases/esp8266/*.bin
+
+    - name: Publish esp32dev Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: releases/esp32dev/*.bin
+        asset_name: esp32dev.zip
+
+    - name: Publish esp8266 Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: releases/esp8266/*.bin
+        asset_name: esp8266.zip
+
