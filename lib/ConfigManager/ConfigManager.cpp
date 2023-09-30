@@ -4,13 +4,11 @@
 ConfigManager::ConfigManager(const char* filename) {
     this->filename = filename;
 
-    #ifdef ESP32DEV
-    // start SPIFFS
-    if (!SPIFFS.begin(true)) {
-        Serial.println("Could not initialize SPIFFS");
+    // start LittleFS
+    if (!LittleFS.begin()) {
+        Serial.println("Could not initialize LittleFS");
         return;
     }
-    #endif
     
     // load config
     this->load_config();
@@ -18,18 +16,12 @@ ConfigManager::ConfigManager(const char* filename) {
 
 ConfigManager::ConfigManager() {
     this->filename = DEFAULT_CONFIG_FILE;
-    // start SPIFFS
-    #ifdef ESP32DEV
-    if (!SPIFFS.begin(true)) {
-        Serial.println("Could not initialize SPIFFS");
-        return;
-    }
-    #else
+
+    // start LittleFS
     if (!LittleFS.begin()) {
         Serial.println("Could not initialize LittleFS");
         return;
     }
-    #endif
 
     // load config
     this->load_config();
@@ -37,17 +29,13 @@ ConfigManager::ConfigManager() {
 
 ConfigManager::~ConfigManager() { }
 
-// load config from SPIFFS
+// load config from LittleFS
 void ConfigManager::load_config() {
     Serial.println("Loading config");
     Serial.print("Filename: ");
     Serial.println(this->filename);
     // Open file for reading
-    #ifdef ESP32DEV
-    File file = SPIFFS.open(this->filename, FILE_READ);
-    #else
     File file = LittleFS.open(this->filename, "r");
-    #endif
 
     if (!file) {
         Serial.println("Failed to open config file");
@@ -106,14 +94,10 @@ void ConfigManager::load_config() {
     file.close();
 }
 
-// save config to SPIFFS
+// save config to LittleFS
 void ConfigManager::save_config() {
     // open file for writing
-    #ifdef ESP32DEV
-    File file = SPIFFS.open(this->filename, FILE_WRITE);
-    #else
     File file = LittleFS.open(this->filename, "w");
-    #endif
 
     if (!file) {
         Serial.println("Failed to create file");
