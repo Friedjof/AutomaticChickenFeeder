@@ -6,7 +6,7 @@ ConfigManager::ConfigManager(const char* filename) {
 
     // start LittleFS
     if (!LittleFS.begin()) {
-        Serial.println("Could not initialize LittleFS");
+        // GGTAAF(LOG_LEVEL_ERROR, "Could not initialize LittleFS");
         return;
     }
     
@@ -19,7 +19,7 @@ ConfigManager::ConfigManager() {
 
     // start LittleFS
     if (!LittleFS.begin()) {
-        Serial.println("Could not initialize LittleFS");
+        // GGTAAF(LOG_LEVEL_ERROR, "Could not initialize LittleFS");
         return;
     }
 
@@ -31,17 +31,18 @@ ConfigManager::~ConfigManager() { }
 
 // load config from LittleFS
 void ConfigManager::load_config() {
-    Serial.println("Loading config");
-    Serial.print("Filename: ");
-    Serial.println(this->filename);
+    //const char* log_msg = "Loading config from ";
+    //log_msg += this->filename;
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
+    
     // Open file for reading
     File file = LittleFS.open(this->filename, "r");
 
     if (!file) {
-        Serial.println("Failed to open config file");
+        // GGTAAF(LOG_LEVEL_ERROR, "Failed to open config file");
         return;
     }
-    Serial.println("File opened");
+    // GGTAAF(LOG_LEVEL_INFO, "File opened");
 
     // Allocate a buffer to store contents of the file
     StaticJsonDocument<JSON_BUFFER_SIZE> doc;
@@ -49,7 +50,7 @@ void ConfigManager::load_config() {
     // Deserialize the JSON document
     DeserializationError error = deserializeJson(doc, file);
     if (error) {
-        Serial.println("Failed to read file, using default configuration");
+        // GGTAAF(LOG_LEVEL_ERROR, "Failed to read file, using default configuration");
         return;
     }
 
@@ -100,7 +101,7 @@ void ConfigManager::save_config() {
     File file = LittleFS.open(this->filename, "w");
 
     if (!file) {
-        Serial.println("Failed to create file");
+        // GGTAAF(LOG_LEVEL_ERROR, "Failed to create file");
         return;
     }
 
@@ -139,7 +140,7 @@ void ConfigManager::save_config() {
 
     // serialize JSON to file
     if (serializeJson(doc, file) == 0) {
-        Serial.println("Failed to write to file");
+        // GGTAAF(LOG_LEVEL_ERROR, "Failed to write to file");
     }
 
     // print file to Serial
@@ -154,7 +155,7 @@ timer_time_t ConfigManager::get_time_from_string(String time) {
     timer_time_t timer_time = {0, 0};
 
     if (time.length() != 5) {
-        Serial.println("Time string has wrong length");
+        // GGTAAF(LOG_LEVEL_ERROR, "Time string has wrong length");
         return timer_time;
     }
 
@@ -162,12 +163,12 @@ timer_time_t ConfigManager::get_time_from_string(String time) {
     int minute = time.substring(3, 5).toInt();
 
     if (hour < 0 || hour > 23) {
-        Serial.println("Hour out of range");
+        // GGTAAF(LOG_LEVEL_ERROR, "Hour out of range");
         return timer_time;
     }
 
     if (minute < 0 || minute > 59) {
-        Serial.println("Minute out of range");
+        // GGTAAF(LOG_LEVEL_ERROR, "Minute out of range");
         return timer_time;
     }
 
@@ -197,7 +198,7 @@ const char* ConfigManager::get_wifi_password() {
 // timer getter and setter
 timer_config_t ConfigManager::get_timer(int id) {
     if (id < 0 || id >= (int)this->config.timer_list.num_timers) {
-        Serial.println("timer ID out of range");
+        // GGTAAF(LOG_LEVEL_ERROR, "timer ID out of range");
         return this->config.timer_list.timers[id];
     }
 
@@ -378,76 +379,81 @@ system_t ConfigManager::get_system_config() {
 
 // debugging functions
 void ConfigManager::print_config() {
-    Serial.println("Config:");
-    Serial.println("Wifi:");
-    Serial.print("  SSID: ");
-    Serial.println(this->config.wifi.ssid);
-    Serial.print("  Password: ");
-    Serial.println(this->config.wifi.password);
+    //const char* log_msg = "Config:";
+    //log_msg += "\nWifi:";
+    //log_msg += "\n  SSID: ";
+    //log_msg += this->config.wifi.ssid;
+    //log_msg += "\n  Password: ";
+    //log_msg += this->config.wifi.password;
 
-    Serial.println("Timers:");
+    //log_msg += "\nTimers:";
     for (size_t i = 0; i < this->config.timer_list.num_timers; i++) {
-        Serial.print("* Timer ");
-        Serial.println(i);
-        Serial.print("  Time: ");
-        Serial.println(this->time_to_string(this->config.timer_list.timers[i].time));
-        Serial.print("  Enabled: ");
-        Serial.println(this->config.timer_list.timers[i].enabled);
-        Serial.print("  Name: ");
-        Serial.println(this->config.timer_list.timers[i].name);
-        Serial.print("  Monday: ");
-        Serial.println(this->config.timer_list.timers[i].monday);
-        Serial.print("  Tuesday: ");
-        Serial.println(this->config.timer_list.timers[i].tuesday);
-        Serial.print("  Wednesday: ");
-        Serial.println(this->config.timer_list.timers[i].wednesday);
-        Serial.print("  Thursday: ");
-        Serial.println(this->config.timer_list.timers[i].thursday);
-        Serial.print("  Friday: ");
-        Serial.println(this->config.timer_list.timers[i].friday);
-        Serial.print("  Saturday: ");
-        Serial.println(this->config.timer_list.timers[i].saturday);
-        Serial.print("  Sunday: ");
-        Serial.println(this->config.timer_list.timers[i].sunday);
+        //log_msg += "\n  Timer ";
+        //log_msg += i;
+        //log_msg += ":";
+        //log_msg += "\n    Time: ";
+        //log_msg += this->time_to_string(this->config.timer_list.timers[i].time);
+        //log_msg += "\n    Enabled: ";
+        //log_msg += this->config.timer_list.timers[i].enabled;
+        //log_msg += "\n    Name: ";
+        //log_msg += this->config.timer_list.timers[i].name;
+        //log_msg += "\n    Monday: ";
+        //log_msg += this->config.timer_list.timers[i].monday;
+        //log_msg += "\n    Tuesday: ";
+        //log_msg += this->config.timer_list.timers[i].tuesday;
+        //og_msg += "\n    Wednesday: ";
+        //log_msg += this->config.timer_list.timers[i].wednesday;
+        //log_msg += "\n    Thursday: ";
+        //log_msg += this->config.timer_list.timers[i].thursday;
+        //log_msg += "\n    Friday: ";
+        //log_msg += this->config.timer_list.timers[i].friday;
+        //log_msg += "\n    Saturday: ";
+        //log_msg += this->config.timer_list.timers[i].saturday;
+        //log_msg += "\n    Sunday: ";
+        //log_msg += this->config.timer_list.timers[i].sunday;
     }
 
-    Serial.println("Feed:");
-    Serial.print("  Quantity: ");
-    Serial.println(this->config.feed.quantity);
+    //log_msg += "\nFeed:";
+    //log_msg += "\n  Quantity: ";
+    //log_msg += this->config.feed.quantity;
+    
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
 
 void ConfigManager::print_timers() {
-    Serial.print("[");
+    //const char* log_msg = "[";
 
     for (size_t i = 0; i < this->config.timer_list.num_timers; i++) {
-        Serial.print("{");
-        Serial.print("\"time\": \"");
-        Serial.print(this->time_to_string(this->config.timer_list.timers[i].time));
-        Serial.print("\", \"enabled\": ");
-        Serial.print(this->config.timer_list.timers[i].enabled);
-        Serial.print(", \"name\": \"");
-        Serial.print(this->config.timer_list.timers[i].name);
-        Serial.print("\", \"days\": {");
-        Serial.print("\"monday\": ");
-        Serial.print(this->config.timer_list.timers[i].monday);
-        Serial.print(", \"tuesday\": ");
-        Serial.print(this->config.timer_list.timers[i].tuesday);
-        Serial.print(", \"wednesday\": ");
-        Serial.print(this->config.timer_list.timers[i].wednesday);
-        Serial.print(", \"thursday\": ");
-        Serial.print(this->config.timer_list.timers[i].thursday);
-        Serial.print(", \"friday\": ");
-        Serial.print(this->config.timer_list.timers[i].friday);
-        Serial.print(", \"saturday\": ");
-        Serial.print(this->config.timer_list.timers[i].saturday);
-        Serial.print(", \"sunday\": ");
-        Serial.print(this->config.timer_list.timers[i].sunday);
-        Serial.print("}}");
+        //log_msg += "{";
+        //log_msg += "\"time\": \"";
+        //log_msg += this->time_to_string(this->config.timer_list.timers[i].time);
+        //log_msg += "\", \"enabled\": ";
+        //log_msg += this->config.timer_list.timers[i].enabled;
+        //log_msg += ", \"name\": \"";
+        //log_msg += this->config.timer_list.timers[i].name;
+        //log_msg += "\", \"days\": {";
+        //log_msg += "\"monday\": ";
+        //log_msg += this->config.timer_list.timers[i].monday;
+        //log_msg += ", \"tuesday\": ";
+        //log_msg += this->config.timer_list.timers[i].tuesday;
+        //log_msg += ", \"wednesday\": ";
+        //log_msg += this->config.timer_list.timers[i].wednesday;
+        //log_msg += ", \"thursday\": ";
+        //log_msg += this->config.timer_list.timers[i].thursday;
+        //log_msg += ", \"friday\": ";
+        //log_msg += this->config.timer_list.timers[i].friday;
+        //log_msg += ", \"saturday\": ";
+        //log_msg += this->config.timer_list.timers[i].saturday;
+        //log_msg += ", \"sunday\": ";
+        //log_msg += this->config.timer_list.timers[i].sunday;
+        //log_msg += "}}";
 
         if (i < this->config.timer_list.num_timers - 1) {
-            Serial.print(",");
+            //log_msg += ", ";
         }
     }
 
-    Serial.println("]");
+    //log_msg += "]";
+
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
