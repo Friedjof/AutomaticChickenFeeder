@@ -1,7 +1,8 @@
 #include "AlertManager.h"
 
-AlertManager::AlertManager(ConfigManager configManager) {
+AlertManager::AlertManager(ConfigManager configManager, ClockService clockService) {
     this->configManager = configManager;
+    this->clockService = clockService;
 }
 
 AlertManager::AlertManager() {
@@ -12,12 +13,6 @@ AlertManager::~AlertManager() { }
 
 // Setup
 void AlertManager::setup() {
-    // Setup the I2C bus (SDA = GPIO21, SCL = GPIO22) for the RTC DS3231
-    Wire.begin();
-
-    // Setup the RTC
-    this->rtc.setClockMode(false); // Set clock mode to 24 hour
-
     // Setup next alert
     this->set_next_alert();
 }
@@ -30,22 +25,22 @@ void AlertManager::set_next_alert() {
     if (!next_alert.empty) {
         this->set_alert(this->convert_to_rtc_alert(next_alert.timer));
     } else {
-        Serial.println("No next alert found!");
+        // GGTAAF(LOG_LEVEL_ERROR, "No next alert found!");
     }
 }
 
 // helper functions
 ds3231_datetime_t AlertManager::now() {
     ds3231_datetime_t now;
-    now.year = (2000 + this->century * 100) + this->rtc.getYear();
-    now.month = this->rtc.getMonth(this->century);
-    now.day = this->rtc.getDate();
-    now.hour = this->rtc.getHour(this->h12Flag, this->pmFlag);
-    now.minute = this->rtc.getMinute();
-    now.second = this->rtc.getSecond();
-    now.weekday = this->rtc.getDoW();
+    now.year = this->clockService.getYear();
+    now.month = this->clockService.getMonth();
+    now.day = this->clockService.getDay();
+    now.hour = this->clockService.getHour();
+    now.minute = this->clockService.getMinute();
+    now.second = this->clockService.getSecond();
+    now.weekday = this->clockService.getDoW();
 
-    now.temperature = this->rtc.getTemperature();
+    now.temperature = this->clockService.getTemperature();
     return now;
 }
 
@@ -166,7 +161,7 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
     }
 
     // Deaktiviert den Alarm, wenn kein Timer aktiv ist
-    this->rtc.turnOffAlarm(1);
+    this->clockService.turnOffAlarm(1);
 
     ds3231_timer_t next_alert;
     next_alert.hour = 0;
@@ -320,27 +315,22 @@ rtc_alert_t AlertManager::convert_to_rtc_alert(ds3231_timer_t timer) {
 
 void AlertManager::set_alert(rtc_alert_t alert) {
     // Set the alarm
-    this->rtc.turnOffAlarm(1);
-    this->rtc.setA1Time(
+    this->clockService.turnOffAlarm(1);
+    this->clockService.setA1Time(
         alert.day, alert.hour, alert.minute, alert.second,
-        alert.alert_bits, alert.day_is_day, alert.h12, alert.pm
+        alert.alert_bits, alert.day_is_day
     );
-    this->rtc.checkIfAlarm(1);
-    this->rtc.turnOnAlarm(1);
+    this->clockService.checkIfAlarm(1);
+    this->clockService.turnOnAlarm(1);
 
-    // Print the new alert
-    Serial.print("New alert: ");
-    Serial.printf("%02d", alert.hour);
-    Serial.print(":");
-    Serial.printf("%02d", alert.minute);
-    Serial.print(" ");
-    Serial.println(this->int_to_weekday(alert.day));
-}
+    const char* log_msg = "New alert: ";
+    //log_msg += alert.hour;
+    //log_msg += ":";
+    //log_msg += alert.minute;
+    //log_msg += " ";
+    //log_msg += this->int_to_weekday(alert.day);
 
-void AlertManager::disable_alarm_2() {
-    this->rtc.setA2Time(0x00, 0x00, 0xff, 0x60, false, false, false); // 0x60 = 0b01100000 => Alarm when minutes match (never because of 0xff)
-    this->rtc.turnOffAlarm(2);
-    this->rtc.checkIfAlarm(2);
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
 
 bool AlertManager::timer_is_active_on_weekday(timer_config_t timer, int weekday) {
@@ -369,64 +359,70 @@ bool AlertManager::timer_is_active_on_weekday(timer_config_t timer, int weekday)
 void AlertManager::print_now() {
 	ds3231_datetime_t now = this->now();
 
-    // Display the date
-    Serial.print(now.year);
-    Serial.print("-");
-    Serial.printf("%02d", now.month);
-    Serial.print("-");
-    Serial.printf("%02d", now.day);
-    Serial.print(" ");
+    //const char* log_msg = now.year;
+    //log_msg += "-";
+    //log_msg += now.month;
+    //log_msg += "-";
+    //log_msg += now.day;
+    //log_msg += " ";
+    //log_msg += now.hour;
+    //log_msg += ":";
+    //log_msg += now.minute;
+    //log_msg += ":";
+    //log_msg += now.second;
 
-    // Display the time
-    Serial.printf("%02d", now.hour);
-    Serial.print(":");
-    Serial.printf("%02d", now.minute);
-    Serial.print(":");
-    Serial.printf("%02d", now.second);
-    Serial.print(" ");
-    Serial.println();
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
 
 void AlertManager::print_temperature() {
-    Serial.print("temperature: ");
-    Serial.print(this->now().temperature);
-    Serial.println("°C");
+    //const char* log_msg = "temperature: ";
+    //log_msg += this->now().temperature;
+    //log_msg += "°C";
+
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
 
 void AlertManager::print_timer(ds3231_timer_t timer) {
-    Serial.print("timer: ");
-    Serial.printf("%02d", timer.hour);
-    Serial.print(":");
-    Serial.printf("%02d", timer.minute);
-    Serial.print(" ");
-    Serial.println(this->int_to_weekday(timer.weekday));
+    //const char* log_msg = "timer: ";
+    //log_msg += timer.hour;
+    //log_msg += ":";
+    //log_msg += timer.minute;
+    //log_msg += " ";
+    //log_msg += this->int_to_weekday(timer.weekday);
+
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
 
 void AlertManager::print_timer(timer_config_t timer) {
-    Serial.print("timer: ");
-    Serial.printf("%02d", timer.time.hour);
-    Serial.print(":");
-    Serial.printf("%02d", timer.time.minute);
-    Serial.print(" ");
-    Serial.println(this->int_to_weekday(this->get_next_weekday_from_timer(timer, this->now().weekday)));
+    //const char* log_msg = "timer: ";
+    //log_msg += timer.time.hour;
+    //log_msg += ":";
+    //log_msg += timer.time.minute;
+    //log_msg += " ";
+    //log_msg += this->int_to_weekday(this->get_next_weekday_from_timer(timer, this->now().weekday));
+
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }
 
 void AlertManager::print_timer_list(ds3231_timer_list_t timers) {
-    Serial.print("[ ");
+    //const char* log_msg = "timers: [ ";
     for (size_t i = 0; i < timers.num_timers; i++) {
         ds3231_timer_t timer = timers.timers[i];
 
-        Serial.print("{ ");
-        Serial.printf("%02d", timer.hour);
-        Serial.print(":");
-        Serial.printf("%02d", timer.minute);
-        Serial.print(", '");
-        Serial.print(this->int_to_weekday(timer.weekday));
-        Serial.print("' }");
+        //log_msg += "{ ";
+        //log_msg += timer.hour;
+        //log_msg += ":";
+        //log_msg += timer.minute;
+        //log_msg += ", '";
+        //log_msg += this->int_to_weekday(timer.weekday);
+        //log_msg += "' }";
 
         if (i < timers.num_timers - 1) {
-            Serial.print(", ");
+            //log_msg += ", ";
         }
     }
-    Serial.println(" ]");
+    
+    //log_msg += " ]";
+
+    // GGTAAF(LOG_LEVEL_INFO, log_msg);
 }

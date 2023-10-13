@@ -3,13 +3,15 @@
 
 #include <Arduino.h>
 
-#ifndef __CLOCK_H__
-#define __CLOCK_H__
-#include <Wire.h>
-#include <DS3231.h>
+#include <string>
+
+#ifndef __CLOCKSERVICE_H__
+#define __CLOCKSERVICE_H__
+#include <ClockService.h>
 #endif
 
 #include <ConfigManager.h>
+#include <LoggingManager.h>
 
 // Interrupt frequency, in seconds
 #define ALERT_BITS 0b00010000 // Alarm when day, hours, minutes, and seconds match
@@ -57,45 +59,44 @@ typedef struct {
 } rtc_alert_t;
 
 class AlertManager {
-private:
-    ConfigManager configManager;
-    DS3231 rtc;
-    bool century = false;
-    bool h12Flag;
-    bool pmFlag;
-    byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
+    private:
+        ConfigManager configManager;
+        LoggingManager loggingManager;
 
-public:
-    AlertManager(ConfigManager configManager);
-    AlertManager();
-    ~AlertManager();
+        ClockService clockService;
 
-    void setup();
+        byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
 
-    // debugging functions
-    void print_now();
-    void print_temperature();
-    void print_timer(ds3231_timer_t timer);
-    void print_timer(timer_config_t timer);
-    void print_timer_list(ds3231_timer_list_t timers);
+    public:
+        AlertManager(ConfigManager configManager, ClockService clockService);
+        AlertManager();
+        ~AlertManager();
 
-    ds3231_datetime_t now();
+        void setup();
 
-    void set_next_alert();
-    rtc_alert_t convert_to_rtc_alert(ds3231_timer_t timer);
-    void set_alert(rtc_alert_t alert);
-    optional_ds3231_timer_t get_next_alert();
-    ds3231_timer_list_t convert_to_timer_list(timer_config_list_t timers);
-    int get_next_weekday_from_timer(timer_config_t timer, int current_weekday);
-    optional_timer_config_list_t get_timers_by_weekday(int weekday, timer_config_list_t timers);
-    optional_ds3231_timer_t get_earliest_timer_of_the_day(timer_config_list_t timers, int weekday);
-    bool timer_is_active_on_weekday(timer_config_t timer, int weekday);
+        // debugging functions
+        void print_now();
+        void print_temperature();
+        void print_timer(ds3231_timer_t timer);
+        void print_timer(timer_config_t timer);
+        void print_timer_list(ds3231_timer_list_t timers);
 
-    void setup_interrupt();
-    void disable_alarm_2();
+        ds3231_datetime_t now();
 
-    int weekday_to_int(char *weekday);
-    String int_to_weekday(int weekday);
+        void set_next_alert();
+        rtc_alert_t convert_to_rtc_alert(ds3231_timer_t timer);
+        void set_alert(rtc_alert_t alert);
+        optional_ds3231_timer_t get_next_alert();
+        ds3231_timer_list_t convert_to_timer_list(timer_config_list_t timers);
+        int get_next_weekday_from_timer(timer_config_t timer, int current_weekday);
+        optional_timer_config_list_t get_timers_by_weekday(int weekday, timer_config_list_t timers);
+        optional_ds3231_timer_t get_earliest_timer_of_the_day(timer_config_list_t timers, int weekday);
+        bool timer_is_active_on_weekday(timer_config_t timer, int weekday);
+
+        void setup_interrupt();
+
+        int weekday_to_int(char *weekday);
+        String int_to_weekday(int weekday);
 };
 
 #endif
