@@ -1,134 +1,197 @@
 #include "ClockService.h"
 
 ClockService::ClockService(bool century, bool h12, bool pm) {
-    this->century = century;
-    this->h12Flag = h12;
-    this->pmFlag = pm;
-
-    // Setup ClockService
-    this->setup();
+  this->century = century;
+  this->h12Flag = h12;
+  this->pmFlag = pm;
 }
 
 ClockService::ClockService() {
-    this->century = false;
-    this->h12Flag = false;
-    this->pmFlag = false;
-    
-    // Setup ClockService
-    this->setup();
+  this->century = false;
+  this->h12Flag = false;
+  this->pmFlag = false;
 }
 
 ClockService::~ClockService() {
-    delete this->rtc;
+  // Nothing to do here
 }
 
-void ClockService::setup() {
-    Wire.begin();
+void ClockService::begin() {
+  if (this->initialized) {
+    return;
+  }
 
-    this->rtc->setClockMode(this->h12Flag);
+  delay(1000);
+
+  Wire.begin(SDA_PIN, SCL_PIN);
+
+  delay(1000);
+
+  this->rtc.setClockMode(this->h12Flag);
+
+  this->initialized = true;
+}
+
+bool ClockService::is_initialized() {
+  return this->initialized;
 }
 
 DateTime ClockService::get_datetime() {
-    DateTime datetime(
-        this->getYear(), this->getMonth(), this->getDay(),
-        this->getHour(), this->getMinute(), this->getSecond()
-    );
+  DateTime datetime(
+    this->getYear(), this->getMonth(), this->getDay(),
+    this->getHour(), this->getMinute(), this->getSecond()
+  );
 
-    return datetime;
+  return datetime;
 }
 
 void ClockService::set_century(bool century) {
-    this->century = century;
+  this->century = century;
 }
 
 bool ClockService::get_century() {
-    return this->century;
+  return this->century;
 }
 
 void ClockService::set_h12(bool h12) {
-    this->h12Flag = h12;
+  this->h12Flag = h12;
 }
 
 bool ClockService::get_h12() {
-    return this->h12Flag;
+  return this->h12Flag;
 }
 
 void ClockService::set_pm(bool pm) {
-    this->pmFlag = pm;
+  this->pmFlag = pm;
 }
 
 bool ClockService::get_pm() {
-    return this->pmFlag;
+  return this->pmFlag;
 }
 
 uint16_t ClockService::getYear() {
-    return this->rtc->getYear();
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getYear();
 }
 
 uint16_t ClockService::getMonth() {
-    return this->rtc->getMonth(this->century);
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getMonth(this->century);
 }
 
 uint16_t ClockService::getDay() {
-    return this->rtc->getDate();
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getDate();
 }
 
 uint16_t ClockService::getHour() {
-    return this->rtc->getHour(this->h12Flag, this->pmFlag);
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getHour(this->h12Flag, this->pmFlag);
 }
 
 uint16_t ClockService::getMinute() {
-    return this->rtc->getMinute();
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getMinute();
 }
 
 uint16_t ClockService::getSecond() {
-    return this->rtc->getSecond();
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getSecond();
 }
 
 uint16_t ClockService::getDoW() {
-    return this->rtc->getDoW();
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getDoW();
 }
 
 uint16_t ClockService::getTemperature() {
-    return this->rtc->getTemperature();
+  if (!this->initialized) {
+    return 0;
+  }
+
+  return this->rtc.getTemperature();
 }
 
 void ClockService::turnOffAlarm(byte alarm) {
-    this->rtc->turnOffAlarm(alarm);
+  if (!this->initialized) {
+    return;
+  }
+
+  this->rtc.turnOffAlarm(alarm);
 }
 
 void ClockService::turnOnAlarm(byte alarm) {
-    this->rtc->turnOnAlarm(alarm);
+  if (!this->initialized) {
+    return;
+  }
+
+  this->rtc.turnOnAlarm(alarm);
 }
 
 void ClockService::setA1Time(byte day, byte hour, byte minute, byte second, byte alarmBits, bool day_is_day) {
-    this->rtc->setA1Time(day, hour, minute, second, alarmBits, day_is_day, this->h12Flag, this->pmFlag);
+  if (!this->initialized) {
+    return;
+  }
+
+  this->rtc.setA1Time(day, hour, minute, second, alarmBits, day_is_day, this->h12Flag, this->pmFlag);
 }
 
 bool ClockService::checkIfAlarm(byte alarm) {
-    return this->rtc->checkIfAlarm(alarm);
+  if (!this->initialized) {
+    return false;
+  }
+
+  return this->rtc.checkIfAlarm(alarm);
 }
 
 void ClockService::disableAlarm2() {
-    this->rtc->setA2Time(0x00, 0x00, 0xff, 0x60, false, false, false); // 0x60 = 0b01100000 => Alarm when minutes match (never because of 0xff)
-    this->rtc->turnOffAlarm(2);
-    this->rtc->checkIfAlarm(2);
+  if (!this->initialized) {
+    return;
+  }
+
+  this->rtc.setA2Time(0x00, 0x00, 0xff, 0x60, false, false, false); // 0x60 = 0b01100000 => Alarm when minutes match (never because of 0xff)
+  this->rtc.turnOffAlarm(2);
+  this->rtc.checkIfAlarm(2);
 }
 
+/*
+  @Return datetime as string in format: YYYY-MM-DD HH:MM:SS
+  Important: the year is 2000 + the actual year and every value should have 2 digits
+*/
 std::string ClockService::datetime_as_string() {
-    std::string datetime_string = "";
+  std::string yyyy = std::to_string(CENTURY + this->getYear());
+  std::string mm = std::to_string(this->getMonth());
+  std::string dd = std::to_string(this->getDay());
+  std::string hh = std::to_string(this->getHour());
+  std::string ii = std::to_string(this->getMinute());
+  std::string ss = std::to_string(this->getSecond());
 
-    datetime_string += std::to_string(this->getYear());
-    datetime_string += "-";
-    datetime_string += std::to_string(this->getMonth());
-    datetime_string += "-";
-    datetime_string += std::to_string(this->getDay());
-    datetime_string += " ";
-    datetime_string += std::to_string(this->getHour());
-    datetime_string += ":";
-    datetime_string += std::to_string(this->getMinute());
-    datetime_string += ":";
-    datetime_string += std::to_string(this->getSecond());
+  mm = mm.length() == 1 ? "0" + mm : mm;
+  dd = dd.length() == 1 ? "0" + dd : dd;
+  hh = hh.length() == 1 ? "0" + hh : hh;
+  ii = ii.length() == 1 ? "0" + ii : ii;
+  ss = ss.length() == 1 ? "0" + ss : ss;
 
-    return datetime_string;
+  return yyyy + "-" + mm + "-" + dd + " " + hh + ":" + ii + ":" + ss;
 }

@@ -3,8 +3,6 @@
 #include <ESPAsyncWebServer.h>
 
 #include <AsyncJson.h>
-#include <ArduinoJson.h>
-#include <LittleFS.h>
 
 #ifdef ESP32DEV
 #include <WiFi.h>
@@ -13,23 +11,14 @@
 #include <ESP8266WiFi.h>
 #endif
 
-#include <SPI.h>
-
-#include <time.h>
-
-#ifndef __CLOCK_H__
-#define __CLOCK_H__
-#include <Wire.h>
-#include <DS3231.h>
-#endif
-
+// Own libraries from lib/
 #include <ConfigManager.h>
 #include <AlertManager.h>
 #include <LoggingManager.h>
 #include <ClockService.h>
 
 
-#define VERSION "1.0.0"
+#define VERSION "0.1.2"
 
 #define CONFIG_FILE "/config.json"
 
@@ -64,25 +53,37 @@ String wakeup_reason;
 
 AsyncWebServer server(80);
 
-ClockService   clockService;
+ClockService clockService;
+
 LoggingManager loggingManager(clockService);
-ConfigManager  configManager(CONFIG_FILE);
-AlertManager   alertManager(configManager, clockService);
+ConfigManager configManager(DEFAULT_CONFIG_FILE, loggingManager);
+AlertManager alertManager(configManager, loggingManager, clockService);
 
 void setup() {
   Serial.begin(115200);
 
-  delay(2000);
+  // check if LittleFS is mounted
+  if (!LittleFS.begin()) {
+    Serial.println("LittleFS mount failed");
+    return;
+  }
 
-  loggingManager.log(LOG_LEVEL_INFO, "Start Chicken Feeder");
+  // Start ClockService
+  clockService.begin();
 
-  // FGTAAF(LOG_LEVEL_INFO, "Start Chicken Feeder");
-
-  // Setup of the alert manager
-  alertManager.setup();
-
-  // Setup of the logging manager
+  // Setup of the LoggingManager
   loggingManager.set_log_level(LOG_LEVEL_INFO);
+  loggingManager.set_file_log_level(LOG_LEVEL_INFO_FILE);
+
+  // Start ConfigManager
+  configManager.begin();
+  // Start AlertManager
+  alertManager.begin();
+  // Start LoggingManager
+  loggingManager.begin();
+
+  // Log the start of the program
+  loggingManager.log(LOG_LEVEL_INFO_FILE, "Start Chicken Feeder");
 
   // print next alert
   optional_ds3231_timer_t next_alert = alertManager.get_next_alert();
@@ -109,13 +110,13 @@ void setup() {
   #endif
 
   if (timer_wakeup) {
-    // FGTAAF(LOG_LEVEL_INFO, "Wakeup caused by external signal using RTC_IO");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "Wakeup caused by external signal using RTC_IO");
 
     // feed the chickens
     feed();
 
     // go to sleep
-    // FGTAAF(LOG_LEVEL_INFO, "sleep mode activated");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "sleep mode activated");
 
     #ifdef ESP32DEV
     esp_deep_sleep_start();
@@ -139,7 +140,7 @@ void loop() {
 
   // auto sleep depending on AUTO_SLEEP
   if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > (long unsigned int)(1000 * configManager.get_system_config().auto_sleep_after))) {
-    // FGTAAF(LOG_LEVEL_INFO, "Going to sleep because of auto sleep");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "Going to sleep because of auto sleep");
     #ifdef ESP32DEV
     esp_deep_sleep_start();
     #else
@@ -155,7 +156,7 @@ void IRAM_ATTR interrupt_handler() {
 
 // Feed the chickens
 void feed() {
-  // FGTAAF(LOG_LEVEL_INFO, "feeding started");
+  loggingManager.log(LOG_LEVEL_INFO_FILE, "feeding started");
 
   digitalWrite(RELAY_PIN, HIGH);
 
@@ -166,7 +167,7 @@ void feed() {
 
   interrupt_flag = false;
 
-  // FGTAAF(LOG_LEVEL_INFO, "feeding finished");
+  loggingManager.log(LOG_LEVEL_INFO, "feeding finished");
 
   // Setup the new alert (if necessary)
   alertManager.set_next_alert();
@@ -179,29 +180,28 @@ void new_request() {
 }
 
 void setup_wifi() {
-  // FGTAAF(LOG_LEVEL_INFO, "Setup WiFi");
+  loggingManager.log(LOG_LEVEL_INFO, "Setup WiFi");
   // Wait for connection
   while (strcmp(configManager.get_wifi_ssid(), "") == 0 || strcmp(configManager.get_wifi_password(), "") == 0) {
     delay(1000);
   }
 
-  // FGTAAF(LOG_LEVEL_INFO, "Starte WiFi Access Point");
+  loggingManager.log(LOG_LEVEL_INFO, "Starte WiFi Access Point");
   WiFi.softAP(configManager.get_wifi_ssid(), configManager.get_wifi_password());
 
-  //std::string log_msg = "Hotspot-SSID: ";
-  //log_msg += (std::string)configManager.get_wifi_ssid();
+  loggingManager.start_seq(LOG_LEVEL_INFO, "Hotspot-SSID: '");
+  loggingManager.append_seq(configManager.get_wifi_ssid());
+  loggingManager.end_seq("'");
 
-  // FGTAAF(LOG_LEVEL_INFO, log_msg);
-
-  //log_msg = "Hotspot-IP-Adresse: ";
-  //log_msg += WiFi.softAPIP().toString();
-  // FGTAAF(LOG_LEVEL_INFO, log_msg);
+  loggingManager.start_seq(LOG_LEVEL_INFO, "Hotspot-IP-Adresse: '");
+  loggingManager.append_seq(WiFi.softAPIP().toString().c_str());
+  loggingManager.end_seq("'");
 }
 
 void setup_aws() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     new_request();
-    // FGTAAF(LOG_LEVEL_INFO, "GET /");
+    loggingManager.log(LOG_LEVEL_INFO, "GET /");
 
     request->send(LittleFS, INDEX_FILE, "text/html");
   });
@@ -215,12 +215,43 @@ void setup_aws() {
   });
 
   server.on("/logging", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(LittleFS, DEFAULT_LOG_FILE, "text/plain");
+    new_request();
+    
+    request->send(200, "text/plain", loggingManager.get_logs());
+  });
+
+  server.on("/log_lines", HTTP_GET, [](AsyncWebServerRequest *request) {
+    new_request();
+
+    int line_counter = loggingManager.count_log_lines() + 1;
+    int file_line_counter = loggingManager.get_file_line_counter() + 1;
+
+    loggingManager.start_seq(LOG_LEVEL_INFO_FILE, "GET /log_lines [");
+    loggingManager.append_seq(line_counter);
+    loggingManager.append_seq(", ");
+    loggingManager.append_seq(file_line_counter);
+    loggingManager.end_seq("]");
+
+    String jsonString = "{";
+    jsonString += "\"log_lines\":";
+    jsonString += line_counter;
+    jsonString += ",";
+    jsonString += "\"counted_lines\":";
+    jsonString += file_line_counter;
+    jsonString += ",";
+    jsonString += "\"log_level\":";
+    jsonString += loggingManager.get_log_level();
+    jsonString += ",";
+    jsonString += "\"file_log_level\":";
+    jsonString += loggingManager.get_file_log_level();
+    jsonString += "}";
+    
+    request->send(200, "text/json", jsonString);
   });
 
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
     new_request();
-    // FGTAAF(LOG_LEVEL_INFO, "GET /get [configuration]");
+    loggingManager.log(LOG_LEVEL_INFO, "GET /get [configuration]");
 
     String jsonString;
     serializeJson(configManager.get_timers_json(), jsonString);
@@ -231,7 +262,7 @@ void setup_aws() {
   // This endpoint is used to set the timers
   AsyncCallbackJsonWebHandler* set_handler = new AsyncCallbackJsonWebHandler("/set", [](AsyncWebServerRequest *request, JsonVariant &json) {
     new_request();
-    // FGTAAF(LOG_LEVEL_INFO, "POST /set [configuration]");
+    loggingManager.log(LOG_LEVEL_INFO, "POST /set [configuration]");
 
     // Convert the data to a JSON object
     configManager.set_timers_json(json);
@@ -247,7 +278,7 @@ void setup_aws() {
   // activate sleep mode
   server.on("/sleep", HTTP_GET, [](AsyncWebServerRequest *request) {
     new_request();
-    // FGTAAF(LOG_LEVEL_INFO, "GET /sleep [start sleep mode]");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "GET /sleep [start sleep mode]");
     
     // go to sleep
     #ifdef ESP32DEV
@@ -283,15 +314,15 @@ void setup_aws() {
   // feed manually
   AsyncCallbackJsonWebHandler* feed_handler = new AsyncCallbackJsonWebHandler("/feed", [](AsyncWebServerRequest *request, JsonVariant &json) {
     new_request();
-    // FGTAAF(LOG_LEVEL_INFO, "POST /feed [feed manually]");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "POST /feed [feed manually]");
 
     // if 'on' is true, start feeding
     if (json.containsKey("on") && json["on"].is<bool>()) {
       if (json["on"].as<bool>()) {
-        // FGTAAF(LOG_LEVEL_INFO, "Start feeding");
+        loggingManager.log(LOG_LEVEL_INFO, "Start feeding");
         digitalWrite(RELAY_PIN, HIGH);
       } else {
-        // FGTAAF(LOG_LEVEL_INFO, "Stop feeding");
+        loggingManager.log(LOG_LEVEL_INFO, "Stop feeding");
         digitalWrite(RELAY_PIN, LOW);
       }
     }
@@ -302,6 +333,6 @@ void setup_aws() {
   server.addHandler(feed_handler);
 
   // Webserver starten
-  // FGTAAF(LOG_LEVEL_INFO, "Starte Webserver");
+  loggingManager.log(LOG_LEVEL_INFO, "Starte Webserver");
   server.begin();
 }
