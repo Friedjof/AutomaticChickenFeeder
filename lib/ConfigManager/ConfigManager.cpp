@@ -15,6 +15,22 @@ void ConfigManager::begin() {
   if (this->initialized) {
     return;
   }
+
+  if (!LittleFS.begin()) {
+    this->loggingManager.log(LOG_LEVEL_ERROR, "Failed to mount file system");
+    return;
+  }
+
+  if (!LittleFS.exists(this->filename) && LittleFS.exists(TEMPLAT_CONFIG_FILE)) {
+    this->loggingManager.log(LOG_LEVEL_INFO, "Config file does not exist, copying template file");
+
+    LittleFS.rename(TEMPLAT_CONFIG_FILE, this->filename);
+
+    this->load_config();
+    this->loggingManager.log(LOG_LEVEL_INFO, "Config file copied and loaded");
+  }
+
+  this->loggingManager.log(LOG_LEVEL_INFO, "ConfigManager initialized");
 }
 
 bool ConfigManager::is_initialized() {

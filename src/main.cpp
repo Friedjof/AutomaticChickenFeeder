@@ -75,12 +75,12 @@ void setup() {
   loggingManager.set_log_level(LOG_LEVEL_INFO);
   loggingManager.set_file_log_level(LOG_LEVEL_INFO_FILE);
 
+  // Start LoggingManager
+  loggingManager.begin();
   // Start ConfigManager
   configManager.begin();
   // Start AlertManager
   alertManager.begin();
-  // Start LoggingManager
-  loggingManager.begin();
 
   // Log the start of the program
   loggingManager.log(LOG_LEVEL_INFO_FILE, "Start Chicken Feeder");

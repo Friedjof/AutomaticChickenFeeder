@@ -1,14 +1,15 @@
 #pragma once
 
 // constants (changes may lead to crashes)
-#define MAX_TIMERS 4             // maximum number of timers
-#define MAX_TIMER_NAME_LENGTH 32       // maximum length of timer name
-#define MAX_TIMER_TIME_LENGTH 6      // maximum length of timer time string
-#define MAX_WIFI_SSID_LENGTH 32      // maximum length of wifi ssid
-#define MAX_WIFI_PASSWORD_LENGTH 64    // maximum length of wifi password
-#define MAX_FILENAME_LENGTH 32       // maximum length of filename
-#define JSON_BUFFER_SIZE 4096        // size of json buffer
-#define DEFAULT_CONFIG_FILE "/config.json" // default config file
+#define MAX_TIMERS 4                                // maximum number of timers
+#define MAX_TIMER_NAME_LENGTH 32                    // maximum length of timer name
+#define MAX_TIMER_TIME_LENGTH 6                     // maximum length of timer time string
+#define MAX_WIFI_SSID_LENGTH 32                     // maximum length of wifi ssid
+#define MAX_WIFI_PASSWORD_LENGTH 64                 // maximum length of wifi password
+#define MAX_FILENAME_LENGTH 32                      // maximum length of filename
+#define JSON_BUFFER_SIZE 4096                       // size of json buffer
+#define DEFAULT_CONFIG_FILE "/config.json"          // default config file
+#define TEMPLAT_CONFIG_FILE "/config.json-template" // default config file template
 
 #include <LittleFS.h>
 #include <ArduinoJson.h>
