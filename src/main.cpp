@@ -4,6 +4,7 @@
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
+#include <LittleFS.h>
 
 #ifdef ESP32DEV
 #include <WiFi.h>
@@ -12,7 +13,6 @@
 #else
 #include <ESPAsyncTCP.h>
 #include <ESP8266WiFi.h>
-#include <LittleFS.h>
 #endif
 
 #include <SPI.h>
@@ -127,7 +127,7 @@ void loop() {
   }
 
   // auto sleep depending on AUTO_SLEEP
-  if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > 1000 * configManager.get_system_config().auto_sleep_after)) {
+  if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > (long unsigned int)(1000 * configManager.get_system_config().auto_sleep_after))) {
     Serial.println("Going to sleep because of auto sleep");
     #ifdef ESP32DEV
     esp_deep_sleep_start();
@@ -208,27 +208,15 @@ void setup_aws() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     new_request();
 
-    #ifdef ESP32DEV
-    request->send(SPIFFS, INDEX_FILE, "text/html");
-    #else
     request->send(LittleFS, INDEX_FILE, "text/html");
-    #endif
   });
   
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
-    #ifdef ESP32DEV
-    request->send(SPIFFS, CSS_FILE, "text/css");
-    #else
     request->send(LittleFS, CSS_FILE, "text/css");
-    #endif
   });
 
   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
-    #ifdef ESP32DEV
-    request->send(SPIFFS, JS_FILE, "text/javascript");
-    #else
     request->send(LittleFS, JS_FILE, "text/javascript");
-    #endif
   });
 
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
