@@ -6,8 +6,8 @@
 
 #define DEFAULT_LOG_FILE "/system.log"
 #define DEFAULT_LOG_LEVEL LOG_LEVEL_DEBUG
-#define MAX_NR_OF_LINES 4
-#define REDUCE_LOG_FILE_TO 2
+#define MAX_NR_OF_LINES 512
+#define REDUCE_LOG_FILE_TO 256
 
 
 enum log_level_t {
