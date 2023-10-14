@@ -330,7 +330,8 @@ bool LoggingManager::delete_first_n_lines(int n) {
   return true;
 
   // TODO: the following code does not work, because the file can not be deleted
-  
+  //       and the temp file can not be renamed (See Issue #17 on GitHub for more information)
+
   // open file
   File file = LittleFS.open(this->filename, "r");
 
