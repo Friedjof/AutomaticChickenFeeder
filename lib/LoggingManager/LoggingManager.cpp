@@ -31,8 +31,8 @@ bool LoggingManager::is_initialized() {
   return this->initialized;
 }
 
-std::string LoggingManager::log_string(log_level_t level) {
-  std::string log_message = "(";
+String LoggingManager::log_string(log_level_t level) {
+  String log_message = "(";
 
   log_message += this->clockService.datetime_as_string();
 
@@ -45,8 +45,8 @@ std::string LoggingManager::log_string(log_level_t level) {
   return log_message;
 }
 
-std::string LoggingManager::log_level_to_string(log_level_t level) {
-  std::string log_level_string;
+String LoggingManager::log_level_to_string(log_level_t level) {
+  String log_level_string;
 
   if (level == LOG_LEVEL_DEBUG) {
   log_level_string = "DEBUG";
@@ -65,7 +65,7 @@ std::string LoggingManager::log_level_to_string(log_level_t level) {
 
 void LoggingManager::log(log_level_t level, const char* message) {
   if (level >= this->log_level || !this->log_sequence) {
-  std::string log_message = this->log_string(level);
+  String log_message = this->log_string(level);
 
   log_message += message;
   log_message += "\"\n";
@@ -115,7 +115,7 @@ void LoggingManager::start_seq(log_level_t level, const char* message) {
   this->log_sequence = true;
   this->log_sequence_level = level;
 
-  std::string log_message = this->log_string(level);
+  String log_message = this->log_string(level);
   log_message += message;
 
   // write to file
@@ -160,7 +160,7 @@ void LoggingManager::start_seq(log_level_t level, double message) {
 
 void LoggingManager::append_seq(const char* message) {
   if (this->log_sequence) {
-  std::string log_message = message;
+  String log_message = message;
 
   // write to file
   this->append_to_file(this->log_sequence_level, log_message.c_str());
@@ -205,7 +205,7 @@ void LoggingManager::append_seq(double message) {
 void LoggingManager::end_seq(const char* message) {
   if (this->log_sequence) {
 
-  std::string log_message = message;
+  String log_message = message;
   log_message += "\"\n";
 
   // write to file
@@ -274,7 +274,7 @@ int LoggingManager::get_file_line_counter() {
   return this->file_line_counter;
 }
 
-void LoggingManager::append_to_file(log_level_t level, std::string message) {
+void LoggingManager::append_to_file(log_level_t level, String message) {
   if (level < this->file_log_level) {
     return;
   }
@@ -291,7 +291,7 @@ void LoggingManager::append_to_file(log_level_t level, std::string message) {
   file.print(message.c_str());
 
   // check if \n is in the message to count the lines
-  if (message.find("\n") != std::string::npos) {
+  if (message.indexOf('\n') != -1) {
     this->file_line_counter++;
   }
 

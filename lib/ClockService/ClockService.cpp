@@ -179,13 +179,13 @@ void ClockService::disableAlarm2() {
   @Return datetime as string in format: YYYY-MM-DD HH:MM:SS
   Important: the year is 2000 + the actual year and every value should have 2 digits
 */
-std::string ClockService::datetime_as_string() {
-  std::string yyyy = std::to_string(CENTURY + this->getYear());
-  std::string mm = std::to_string(this->getMonth());
-  std::string dd = std::to_string(this->getDay());
-  std::string hh = std::to_string(this->getHour());
-  std::string ii = std::to_string(this->getMinute());
-  std::string ss = std::to_string(this->getSecond());
+String ClockService::datetime_as_string() {
+  String yyyy = String(CENTURY + this->getYear());
+  String mm = String(this->getMonth());
+  String dd = String(this->getDay());
+  String hh = String(this->getHour());
+  String ii = String(this->getMinute());
+  String ss = String(this->getSecond());
 
   mm = mm.length() == 1 ? "0" + mm : mm;
   dd = dd.length() == 1 ? "0" + dd : dd;

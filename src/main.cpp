@@ -18,8 +18,6 @@
 #include <ClockService.h>
 
 
-#define VERSION "0.1.2"
-
 #define CONFIG_FILE "/config.json"
 
 #define FEED_FACTOR 1 // factor to match the mass of the food

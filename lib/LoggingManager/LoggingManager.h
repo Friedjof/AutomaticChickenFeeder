@@ -34,8 +34,8 @@ class LoggingManager {
 
     bool initialized = false;
 
-    std::string log_string(log_level_t level);
-    void append_to_file(log_level_t level, std::string message);
+    String log_string(log_level_t level);
+    void append_to_file(log_level_t level, String message);
 
     void cut_log_file();
     bool delete_first_n_lines(int n);
@@ -94,7 +94,7 @@ class LoggingManager {
 
     void set_filename(const char* filename);
     const char* get_filename();
-    std::string log_level_to_string(log_level_t level);
+    String log_level_to_string(log_level_t level);
 
     void set_log_level(log_level_t level);
     log_level_t get_log_level();

@@ -53,5 +53,5 @@ class ClockService {
 
     void disableAlarm2();
 
-    std::string datetime_as_string();
+    String datetime_as_string();
 };

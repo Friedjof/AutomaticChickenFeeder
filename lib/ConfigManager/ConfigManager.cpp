@@ -41,6 +41,11 @@ bool ConfigManager::is_initialized() {
 void ConfigManager::load_config() {
   this->loggingManager.start_seq(LOG_LEVEL_INFO, "Loading config from ");
   this->loggingManager.end_seq(this->filename);
+
+  if (!LittleFS.exists(this->filename)) {
+    this->loggingManager.log(LOG_LEVEL_ERROR, "Config file does not exist");
+    return;
+  }
   
   // Open file for reading
   File file = LittleFS.open(this->filename, "r");
