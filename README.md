@@ -3,7 +3,9 @@
 ## Overview
 The automatic chicken feeder is a project developed to automate the feeding of chickens. This system is designed to increase efficiency in poultry farming, optimize feeding, and reduce the daily maintenance effort for poultry care.
 
-![Feeder](images/screenshot_desktop.png)
+<img src="media/Zmf8OmPV7K.jpg" width="30%"></img>
+<img src="media/JljAL2A0pf.jpg" width="30%"></img>
+<img src="media/JNqULSaXMi.png" width="30%"></img> 
 
 ## Features
 - Automated feeding at scheduled times
