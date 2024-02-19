@@ -15,7 +15,7 @@ The automatic chicken feeder is a project developed to automate the feeding of c
 - Can enter a power-saving mode to extend battery life
 
 ## Hardware
-- ESP32 microcontroller
+- ESP32 or ESP32S3 microcontroller
 - Motor control module (e.g., servo motor)
 - DS3231 Real-Time Clock module for accurate timekeeping
 - Smartphones, tablets, or computers with a web browser and Wi-Fi
@@ -49,12 +49,13 @@ The following table shows the pinout of the ESP32 microcontroller. The pinout of
 | GND   | GND | GND     |
 
 ### Flashing
-In the release section, you can find the latest binary files for the microcontrollers. You can use the following commands to flash the binary files to the `ESP32` or `ESP8266` microcontroller.
+In the release section, you can find the latest binary files for the microcontrollers. You can use the following commands to flash the binary files to the `ESP32` or `ESPS3` microcontroller.
 
 You need to install the esptool first.
 ```bash
 pip install esptool
 ```
+
 #### firmware.bin, bootloader.bin and partitions.bin (ESP32)
 ```bash
 esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
@@ -95,14 +96,16 @@ For more advanced commands, you can use the help command.
 ```bash
 make help
 ```
+
 ## Helpful Links
-* [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
-* [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
-* [DS3231 RTC](https://www.analog.com/media/en/technical-documentation/data-sheets/DS3231.pdf)
-* [RTC Interrupt](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt)
-* [RTC Synchronization](https://github.com/Friedjof/SyncRTC)
-* [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
-* [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
+- [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
+- [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
+- [DS3231 RTC](https://www.analog.com/media/en/technical-documentation/data-sheets/DS3231.pdf)
+- [RTC Interrupt](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt)
+- [RTC Synchronization](https://github.com/Friedjof/SyncRTC)
+- [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
+- [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
+- [ESP32S3 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
 
 ## Author
 - [Friedjof Noweck](https://github.com/Friedjof)

@@ -1,4 +1,7 @@
 {
+    "terminal.integrated.env.linux": {
+        "LD_PRELOAD": null,
+    },
     "files.associations": {
         "array": "cpp",
         "bitset": "cpp",
