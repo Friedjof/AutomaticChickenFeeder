@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
 #include <ESPAsyncWebServer.h>
-
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
@@ -14,7 +13,6 @@
 #endif
 
 #include <SPI.h>
-
 #include <time.h>
 
 #ifndef __CLOCK_H__
@@ -26,17 +24,16 @@
 #include <ConfigManager.h>
 #include <AlertManager.h>
 
-
 #define CONFIG_FILE "/config.json"
-
-#define FEED_FACTOR 1 // factor to match the mass of the food
 
 #define INDEX_FILE "/index.html"
 #define CSS_FILE "/style.css"
 #define JS_FILE "/script.js"
 
-#define RELAY_PIN 2  // D2 (Onboard LED)
-#define CLINT 4      // RTC interrupt pin for alarm 1
+#define FEED_FACTOR 1 // factor to match the mass of the food
+
+#define RELAY_PIN 2   // D2 (Onboard LED)
+#define CLINT 4       // RTC interrupt pin for alarm 1
 
 // Prototypes
 void IRAM_ATTR interrupt_handler();
