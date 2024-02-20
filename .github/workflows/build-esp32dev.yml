@@ -13,6 +13,8 @@ on:
 
       - '!.github/workflows/release.yml'
       - '!**/README.md'
+      - '!**/LICENSE'
+      - '!/media/**'
 
 jobs:
   platformio-build-esp32dev:

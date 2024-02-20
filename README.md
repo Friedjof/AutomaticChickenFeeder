@@ -103,7 +103,6 @@ esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard
 ```
 Change the `--port` parameter to match your system configuration and the path to the binary files.
 
-## Contributions and Collaboration
 ## Contributions and Collaboration Opportunities
 
 This project thrives on community involvement and we wholeheartedly welcome contributions and collaboration. Whether you're looking to implement new features, optimize existing functionalities, or fix bugs, your input is invaluable. 
