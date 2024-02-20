@@ -115,7 +115,9 @@ This project thrives on community involvement and we wholeheartedly welcome cont
 We're excited to see how you can help shape and evolve this project. Together, we can achieve more!
 
 ### Build the project with the `Makefile`
-To select the appropriate board for your project, modify the BOARD variable in the Makefile. The default setting for this variable is esp32dev. To build the project with your specified settings, use the command below:
+> To select the appropriate board for your project, modify the BOARD variable in the Makefile. The default setting for this variable is `esp32s3`.
+
+To build the project with your specified settings, use the command below:
 
 ```bash
 make build
@@ -128,7 +130,7 @@ make flash
 ```
 
 To set up the file system, utilize the commands outlined below.
-> It is necessary to relocate or modify the `config.json` file within the data folder. For detailed instructions on configuring this file, please refer to the `config.json-template` file.
+> It is necessary to relocate or modify the `config.json` file within the `./data` folder. For detailed instructions on configuring this file, please refer to the `config.json-template` file.
 
 ```bash
 make fs
