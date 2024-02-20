@@ -3,9 +3,9 @@
 ## Overview
 The automatic chicken feeder is a project developed to automate the feeding of chickens. This system is designed to increase efficiency in poultry farming, optimize feeding, and reduce the daily maintenance effort for poultry care.
 
-<img src="media/Zmf8OmPV7K.jpg" width="30%"></img>
-<img src="media/JljAL2A0pf.jpg" width="30%"></img>
-<img src="media/JNqULSaXMi.png" width="30%"></img> 
+<img src="media/Zmf8OmPV7K.jpg" width="32%"></img>
+<img src="media/JljAL2A0pf.jpg" width="32%"></img>
+<img src="media/JNqULSaXMi.png" width="32%"></img> 
 
 ## Features
 - Automated feeding at scheduled times
@@ -20,6 +20,10 @@ The automatic chicken feeder is a project developed to automate the feeding of c
 - DS3231 Real-Time Clock module for accurate timekeeping
 - Smartphones, tablets, or computers with a web browser and Wi-Fi
 - Power supply (battery or power adapter)
+
+<img src="media/esp32-front.jpg" width="32%" alt="ESP32"></img>
+<img src="media/esp32s3-front.jpg" width="32%" alt="ESP32S3 microcontroller"></img>
+<img src="media/esp32s3-back.jpg" width="32%" alt="ESP32S3 microcontroller"></img>
 
 ## Installation and Configuration
 1. Clone this repository.
@@ -39,14 +43,14 @@ When you use the ESP32 in Access Point mode, the ESP32 creates its own WiFi netw
 ### Pinout
 The following table shows the pinout of the ESP32 microcontroller. The pinout of the DS3231 RTC module and the motor control module may vary depending on the manufacturer.
 
-| ESP32 | RTC | Motor   |
-| ----- | --- | ------- |
-| 21    | SDA | -       |
-| 22    | SCL | -       |
-| 4     | INT | -       |
-| 2     | -   | CONTROL |
-| 3.3V  | VCC | VCC     |
-| GND   | GND | GND     |
+| ESP32S3 | ESP32 | RTC | Motor   |
+| ------- | ----- | --- | ------- |
+| 4       | 21    | SDA | -       |
+| 5       | 22    | SCL | -       |
+| 7       | 4     | INT | -       |
+| 8       | 2     | -   | CONTROL |
+| 3.3V    | 3.3V  | VCC | VCC     |
+| GND     | GND   | GND | GND     |
 
 ### Flashing
 In the release section, you can find the latest binary files for the microcontrollers. You can use the following commands to flash the binary files to the `ESP32` or `ESPS3` microcontroller.
