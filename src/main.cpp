@@ -56,7 +56,7 @@ unsigned long auto_sleep_millis = millis();
 // deep sleep
 #if defined(ESP32DEV) || defined(ESP32S3)
 esp_sleep_wakeup_cause_t wakeup_reason;
-#else
+#elif defined(ESP8266)
 String wakeup_reason;
 #endif
 
@@ -91,7 +91,7 @@ void setup() {
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
   bool timer_wakeup = wakeup_reason == ESP_SLEEP_WAKEUP_EXT0;
-  #else
+  #elif defined(ESP8266)
   ESP.deepSleep(0);
 
   wakeup_reason = ESP.getResetReason();
@@ -109,7 +109,7 @@ void setup() {
 
     #if defined(ESP32DEV) || defined(ESP32S3)
     esp_deep_sleep_start();
-    #else
+    #elif defined(ESP8266)
     ESP.deepSleep(0);
     #endif
 
@@ -131,9 +131,14 @@ void loop() {
   // auto sleep depending on AUTO_SLEEP
   if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > (long unsigned int)(1000 * configManager.get_system_config().auto_sleep_after))) {
     Serial.println("Going to sleep because of auto sleep");
+
+    // turn the relay off
+    digitalWrite(RELAY_PIN, LOW);
+
+    // go to sleep
     #if defined(ESP32DEV) || defined(ESP32S3)
     esp_deep_sleep_start();
-    #else
+    #elif defined(ESP8266)
     ESP.deepSleep(0);
     #endif
   }
@@ -235,7 +240,7 @@ void setup_aws() {
     // go to sleep
     #if defined(ESP32DEV) || defined(ESP32S3)
     esp_deep_sleep_start();
-    #else
+    #elif defined(ESP8266)
     ESP.deepSleep(0);
     #endif
 
