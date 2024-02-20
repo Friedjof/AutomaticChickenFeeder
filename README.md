@@ -29,7 +29,7 @@ The automatic chicken feeder is a project developed to automate the feeding of c
 1. Clone this repository.
 2. Rename `data/config.json-template` to `data/config.json` and change the default values to your preferences.
 ```bash
-cp data/config.json-template data/config.json
+mv data/config.json-template data/config.json
 ```
 3. Install dependencies (VSCode extension PlatformIO IDE and PlatformIO Core).
 4. Configure the `platformio.ini` file to select the correct board and port, or start a Nix shell.
@@ -52,7 +52,9 @@ The following table shows the pinout of the ESP32 microcontroller. The pinout of
 | 3.3V    | 3.3V  | VCC | VCC     |
 | GND     | GND   | GND | GND     |
 
-### Flashing
+### Flashing from the release section
+> You need to build your own `littlefs.bin` file. See the [`Makefile`](#build-project) section for more information. Otherwise, the configuration file will not be available and the system will not work properly.
+
 In the release section, you can find the latest binary files for the microcontrollers. You can use the following commands to flash the binary files to the `ESP32` or `ESPS3` microcontroller.
 
 You need to install the esptool first.
@@ -111,6 +113,6 @@ make help
 - [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
 - [ESP32S3 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf)
 
-## Author
+## Authors
 - [Friedjof Noweck](https://github.com/Friedjof)
 - [Bernhard schlagheck](https://github.com/bschlagheck)

@@ -5,9 +5,9 @@
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
-#ifdef ESP32DEV
+#if defined(ESP32DEV) || defined(ESP32S3)
 #include <WiFi.h>
-#else
+#elif defined(ESP8266)
 #include <ESPAsyncTCP.h>
 #include <ESP8266WiFi.h>
 #endif
@@ -32,8 +32,13 @@
 
 #define FEED_FACTOR 1 // factor to match the mass of the food
 
+#if defined(ESP32DEV) || defined(ESP8266)
 #define RELAY_PIN 2   // D2 (Onboard LED)
 #define CLINT 4       // RTC interrupt pin for alarm 1
+#elif defined(ESP32S3)
+#define RELAY_PIN 8   // D2 (Onboard LED)
+#define CLINT 7       // RTC interrupt pin for alarm 1
+#endif
 
 // Prototypes
 void IRAM_ATTR interrupt_handler();
@@ -49,7 +54,7 @@ unsigned long feed_millis = millis();
 unsigned long auto_sleep_millis = millis();
 
 // deep sleep
-#ifdef ESP32DEV
+#if defined(ESP32DEV) || defined(ESP32S3)
 esp_sleep_wakeup_cause_t wakeup_reason;
 #else
 String wakeup_reason;
@@ -81,7 +86,7 @@ void setup() {
   pinMode(CLINT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CLINT), interrupt_handler, FALLING);
 
-  #ifdef ESP32DEV
+  #if defined(ESP32DEV) || defined(ESP32S3)
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_4, 0);
 
   wakeup_reason = esp_sleep_get_wakeup_cause();
@@ -92,6 +97,7 @@ void setup() {
   wakeup_reason = ESP.getResetReason();
   bool timer_wakeup = wakeup_reason == "Deep-Sleep Wake";
   #endif
+
   if (timer_wakeup) {
     Serial.println("Wakeup caused by external signal using RTC_IO");
 
@@ -101,11 +107,12 @@ void setup() {
     // go to sleep
     Serial.println("Schlafmodus aktiviert");
 
-    #ifdef ESP32DEV
+    #if defined(ESP32DEV) || defined(ESP32S3)
     esp_deep_sleep_start();
     #else
     ESP.deepSleep(0);
     #endif
+
   } else {
     // Setup WiFi
     setup_wifi();
@@ -124,7 +131,7 @@ void loop() {
   // auto sleep depending on AUTO_SLEEP
   if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > (long unsigned int)(1000 * configManager.get_system_config().auto_sleep_after))) {
     Serial.println("Going to sleep because of auto sleep");
-    #ifdef ESP32DEV
+    #if defined(ESP32DEV) || defined(ESP32S3)
     esp_deep_sleep_start();
     #else
     ESP.deepSleep(0);
@@ -226,11 +233,12 @@ void setup_aws() {
     Serial.println("Schlafmodus aktiviert");
     
     // go to sleep
-    #ifdef ESP32DEV
+    #if defined(ESP32DEV) || defined(ESP32S3)
     esp_deep_sleep_start();
     #else
     ESP.deepSleep(0);
     #endif
+
     request->send(200);
   });
 
