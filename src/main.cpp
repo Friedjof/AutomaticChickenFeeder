@@ -4,6 +4,7 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <TaskScheduler.h>
 
 #if defined(ESP32DEV) || defined(ESP32S3)
 #include <WiFi.h>
@@ -42,11 +43,12 @@
 
 // Prototypes
 void IRAM_ATTR interrupt_handler();
-void setup_wifi();  // Setup WiFi
-void setup_aws();   // Setup AsyncWebServer
+void setup_wifi();    // Setup WiFi
+void setup_aws();     // Setup AsyncWebServer
 
-void feed();        // Feed the chickens
-void new_request(); // Will be executed when a new request is received
+void start_feeding(); // Start feeding the chickens
+void stop_feeding();  // Stop feeding the chickens
+void new_request();   // Will be executed when a new request is received
 
 // Global variables
 bool interrupt_flag = false;
@@ -65,11 +67,24 @@ AsyncWebServer server(80);
 ConfigManager configManager(CONFIG_FILE);
 AlertManager alertManager(configManager);
 
+// TaskScheduler
+Scheduler runner;
+
+Task startFeedingTask(TASK_IMMEDIATE, TASK_ONCE, &start_feeding, &runner, false);
+Task stopFeedingTask(TASK_IMMEDIATE, TASK_ONCE, &stop_feeding, &runner, false);
+
+// ------------------------------------- SETUP -------------------------------------
+
 void setup() {
   Serial.begin(115200);
   delay(2000);
 
   Serial.println("Starte Hühner-Futterautomat");
+
+  // Init TaskScheduler
+  runner.init();
+  runner.addTask(startFeedingTask);
+  runner.addTask(stopFeedingTask);
 
   // Setup of the alert manager
   alertManager.setup();
@@ -98,11 +113,15 @@ void setup() {
   bool timer_wakeup = wakeup_reason == "Deep-Sleep Wake";
   #endif
 
+  // If the wakeup was caused by the timer
   if (timer_wakeup) {
     Serial.println("Wakeup caused by external signal using RTC_IO");
 
-    // feed the chickens
-    feed();
+    // feed the chickens and wait for the feeding to finish
+    startFeedingTask.enable();
+    while (startFeedingTask.isEnabled() || stopFeedingTask.isEnabled()) {
+      runner.execute();
+    }
 
     // go to sleep
     Serial.println("Schlafmodus aktiviert");
@@ -122,10 +141,14 @@ void setup() {
   }
 }
 
+// ------------------------------------- LOOP -------------------------------------
+
 void loop() {
-  // handle interrupt
-  if (interrupt_flag) {
-    feed();
+  runner.execute();
+
+  // handle feeding
+  if (interrupt_flag && !startFeedingTask.isEnabled() && !stopFeedingTask.isEnabled()) {
+    startFeedingTask.enable();
   }
 
   // auto sleep depending on AUTO_SLEEP
@@ -144,24 +167,27 @@ void loop() {
   }
 }
 
-// Interrupt handler
-void IRAM_ATTR interrupt_handler() {
-  interrupt_flag = true;
-}
-
 // Feed the chickens
-void feed() {
+void start_feeding() {
   Serial.println("Fütterung gestartet");
   digitalWrite(RELAY_PIN, HIGH);
 
-  delay(configManager.get_quantity() * configManager.get_factor());
-  
+  // Planen des Endes der Fütterung
+  stopFeedingTask.setInterval(configManager.get_quantity() * configManager.get_factor());
+  stopFeedingTask.enable();
+}
+
+// Stop feeding the chickens
+void stop_feeding() {
   digitalWrite(RELAY_PIN, LOW);
   Serial.println("Fütterung beendet");
   interrupt_flag = false;
-
-  // Setup the new alert (if necessary)
   alertManager.set_next_alert();
+}
+
+// Interrupt handler
+void IRAM_ATTR interrupt_handler() {
+  interrupt_flag = true;
 }
 
 // Will be executed when a new request is received
@@ -188,6 +214,8 @@ void setup_wifi() {
   Serial.println(WiFi.softAPIP());
   Serial.println();
 }
+
+// ------------------------------------- SETUP AWS -------------------------------------
 
 void setup_aws() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
