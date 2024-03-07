@@ -46,8 +46,10 @@ void IRAM_ATTR interrupt_handler();
 void setup_wifi();    // Setup WiFi
 void setup_aws();     // Setup AsyncWebServer
 
+bool is_feeding();    // Check if the chickens are being fed
 void start_feeding(); // Start feeding the chickens
 void stop_feeding();  // Stop feeding the chickens
+void sleep_mode();    // Go to sleep
 void new_request();   // Will be executed when a new request is received
 
 // Global variables
@@ -119,18 +121,12 @@ void setup() {
 
     // feed the chickens and wait for the feeding to finish
     startFeedingTask.enable();
-    while (startFeedingTask.isEnabled() || stopFeedingTask.isEnabled()) {
+    while (is_feeding()) {
       runner.execute();
     }
 
     // go to sleep
-    Serial.println("Schlafmodus aktiviert");
-
-    #if defined(ESP32DEV) || defined(ESP32S3)
-    esp_deep_sleep_start();
-    #elif defined(ESP8266)
-    ESP.deepSleep(0);
-    #endif
+    sleep_mode();
 
   } else {
     // Setup WiFi
@@ -147,29 +143,23 @@ void loop() {
   runner.execute();
 
   // handle feeding
-  if (interrupt_flag && !startFeedingTask.isEnabled() && !stopFeedingTask.isEnabled()) {
+  if (interrupt_flag && !is_feeding()) {
     startFeedingTask.enable();
   }
 
   // auto sleep depending on AUTO_SLEEP
   if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > (long unsigned int)(1000 * configManager.get_system_config().auto_sleep_after))) {
-    Serial.println("Going to sleep because of auto sleep");
-
-    // turn the relay off
-    digitalWrite(RELAY_PIN, LOW);
-
-    // go to sleep
-    #if defined(ESP32DEV) || defined(ESP32S3)
-    esp_deep_sleep_start();
-    #elif defined(ESP8266)
-    ESP.deepSleep(0);
-    #endif
+    sleep_mode();
   }
 }
 
-// Feed the chickens
+bool is_feeding() {
+  return startFeedingTask.isEnabled() || stopFeedingTask.isEnabled();
+}
+
+// Start feeding
 void start_feeding() {
-  Serial.println("Fütterung gestartet");
+  Serial.println("Start feeding");
   digitalWrite(RELAY_PIN, HIGH);
 
   // Planen des Endes der Fütterung
@@ -177,12 +167,26 @@ void start_feeding() {
   stopFeedingTask.enable();
 }
 
-// Stop feeding the chickens
+// Stop feeding
 void stop_feeding() {
   digitalWrite(RELAY_PIN, LOW);
-  Serial.println("Fütterung beendet");
+
+  Serial.println("Stop feeding");
   interrupt_flag = false;
+
   alertManager.set_next_alert();
+}
+
+// Activate sleep mode
+void sleep_mode() {
+  Serial.println("Schlafmodus aktiviert");
+
+  // go to sleep
+  #if defined(ESP32DEV) || defined(ESP32S3)
+  esp_deep_sleep_start();
+  #elif defined(ESP8266)
+  ESP.deepSleep(0);
+  #endif
 }
 
 // Interrupt handler
