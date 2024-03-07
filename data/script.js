@@ -4,7 +4,6 @@ var currentId = 0;
 var feed_on = false;
 
 async function getTimers() {
-    
     fetch('/get')
         .then(response => response.json())
         .then(data => {
@@ -446,6 +445,26 @@ function displayCurrentDateTime() {
         });
 }
 
+// Get remaining time until sleep
+async function getRemainingAutoSleepTime() {
+    fetch('/autosleep')
+        .then(response => response.json())
+        .then(data => {
+            if (!data) {
+                return;
+            }
+
+            var remaining = data["remaining"];
+            var remaining_text = document.getElementById('autosleep-remaining-time');
+            remaining_text.innerHTML = remaining;
+        }
+    ).catch(error => {
+        showNotification('error', 'Error loading the remaining time until sleep (no connection &#128268; )', 5000);
+    }
+    );
+}
+
 setInterval(displayCurrentDateTime, 1000);
+setInterval(getRemainingAutoSleepTime, 1000);
 
 window.onload = getTimers;

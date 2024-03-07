@@ -47,6 +47,7 @@ void setup_aws();   // Setup AsyncWebServer
 
 void feed();        // Feed the chickens
 void new_request(); // Will be executed when a new request is received
+int remaining_auto_sleep_time();
 
 // Global variables
 bool interrupt_flag = false;
@@ -129,7 +130,7 @@ void loop() {
   }
 
   // auto sleep depending on AUTO_SLEEP
-  if (configManager.get_system_config().auto_sleep && (millis() - auto_sleep_millis > (long unsigned int)(1000 * configManager.get_system_config().auto_sleep_after))) {
+  if (configManager.get_system_config().auto_sleep && 0 >= remaining_auto_sleep_time()) {
     Serial.println("Going to sleep because of auto sleep");
 
     // turn the relay off
@@ -162,6 +163,11 @@ void feed() {
 
   // Setup the new alert (if necessary)
   alertManager.set_next_alert();
+}
+
+// remaining auto sleep time
+int remaining_auto_sleep_time() {
+  return (configManager.get_system_config().auto_sleep_after - (millis() - auto_sleep_millis) / 1000);
 }
 
 // Will be executed when a new request is received
@@ -249,8 +255,6 @@ void setup_aws() {
 
   // get current time
   server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
-    new_request();
-
     // get current time
     ds3231_datetime_t now = alertManager.now();
 
@@ -262,6 +266,21 @@ void setup_aws() {
     json["hour"] = now.hour;
     json["minute"] = now.minute;
     json["second"] = now.second;
+
+    String jsonString;
+    serializeJson(json, jsonString);
+
+    request->send(200, "application/json", jsonString); 
+  });
+
+  // get autosleep remaining time
+  server.on("/autosleep", HTTP_GET, [](AsyncWebServerRequest *request) {
+    // get remaining time
+    int remaining = remaining_auto_sleep_time();
+
+    // create json object
+    StaticJsonDocument<JSON_OBJECT_SIZE(1)> json;
+    json["remaining"] = remaining;
 
     String jsonString;
     serializeJson(json, jsonString);

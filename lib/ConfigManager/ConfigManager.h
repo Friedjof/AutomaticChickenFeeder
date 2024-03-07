@@ -12,9 +12,7 @@
 #define DEFAULT_CONFIG_FILE "/config.json" // default config file
 
 #include <Arduino.h>
-
 #include <LittleFS.h>
-
 #include <ArduinoJson.h>
 
 // type definitions
