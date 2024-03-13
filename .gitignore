@@ -2,7 +2,7 @@
 .vscode/*
 
 # data
-data/*.json
+data/
 local/
 
 # docs
