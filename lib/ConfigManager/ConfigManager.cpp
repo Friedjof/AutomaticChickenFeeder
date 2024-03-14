@@ -7,7 +7,7 @@ ConfigManager::ConfigManager(const char* filename) {
 
     #if defined(ESP32S3)
     // Start micro sd card
-    if(!SD.begin(21)){
+    if(!SD.begin()){
         Serial.println("Card Mount Failed");
         return;
     }
@@ -33,9 +33,10 @@ ConfigManager::ConfigManager(const char* filename) {
 ConfigManager::ConfigManager() {
     this->filename = DEFAULT_CONFIG_FILE;
 
-    #if defined(ESP32S3)
+    #if defined(ESP32S3) && !defined(__INIT_SD_CARD__)
+    #define __INIT_SD_CARD__
     // Start micro sd card
-    if(!SD.begin(21)){
+    if(!SD.begin()){
         Serial.println("Card Mount Failed");
         return;
     }

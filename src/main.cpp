@@ -24,13 +24,15 @@
 #include <ConfigManager.h>
 #include <AlertManager.h>
 
-#define CONFIG_FILE "/config.json"
-
 #if defined(ESP32S3)
+#define CONFIG_FILE "/sd/config.json"
+
 #define INDEX_FILE "/sd/index.html"
 #define CSS_FILE "/sd/style.css"
 #define JS_FILE "/sd/script.js"
 #else
+#define CONFIG_FILE "/config.json"
+
 #define INDEX_FILE "/index.html"
 #define CSS_FILE "/style.css"
 #define JS_FILE "/script.js"
@@ -78,6 +80,22 @@ void setup() {
   delay(2000);
 
   Serial.println("Starte Hühner-Futterautomat");
+
+  #if defined(ESP32S3) && !defined(__INIT_SD_CARD__)
+  #define __INIT_SD_CARD__
+  // Start micro sd card
+  if(!SD.begin()){
+    Serial.println("Card Mount Failed");
+    return;
+  }
+  
+  uint8_t cardType = SD.cardType();
+  
+  if(cardType == CARD_NONE){
+    Serial.println("No SD card attached");
+    return;
+  }
+  #endif
 
   // Setup of the alert manager
   alertManager.setup();

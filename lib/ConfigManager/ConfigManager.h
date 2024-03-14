@@ -9,6 +9,7 @@
 #define MAX_WIFI_PASSWORD_LENGTH 64        // maximum length of wifi password
 #define MAX_FILENAME_LENGTH 32             // maximum length of filename
 #define JSON_BUFFER_SIZE 4096              // size of json buffer
+
 #define DEFAULT_CONFIG_FILE "/config.json" // default config file
 
 #include <Arduino.h>
