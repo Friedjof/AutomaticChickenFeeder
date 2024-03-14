@@ -36,8 +36,8 @@
 #define RELAY_PIN 2   // D2 (Onboard LED)
 #define CLINT 4       // RTC interrupt pin for alarm 1
 #elif defined(ESP32S3)
-#define RELAY_PIN 8   // D2 (Onboard LED)
-#define CLINT 7       // RTC interrupt pin for alarm 1
+#define RELAY_PIN D8  // D2 (Onboard LED)
+#define CLINT D7      // RTC interrupt pin for alarm 1
 #endif
 
 // Prototypes
