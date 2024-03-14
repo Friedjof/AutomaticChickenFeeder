@@ -4,11 +4,27 @@
 ConfigManager::ConfigManager(const char* filename) {
     this->filename = filename;
 
+
+    #if defined(ESP32S3)
+    // Start micro sd card
+    if(!SD.begin(21)){
+        Serial.println("Card Mount Failed");
+        return;
+    }
+    
+    uint8_t cardType = SD.cardType();
+    
+    if(cardType == CARD_NONE){
+        Serial.println("No SD card attached");
+        return;
+    }
+    #else
     // start LittleFS
     if (!LittleFS.begin()) {
         Serial.println("Could not initialize LittleFS");
         return;
     }
+    #endif
     
     // load config
     this->load_config();
@@ -17,11 +33,26 @@ ConfigManager::ConfigManager(const char* filename) {
 ConfigManager::ConfigManager() {
     this->filename = DEFAULT_CONFIG_FILE;
 
+    #if defined(ESP32S3)
+    // Start micro sd card
+    if(!SD.begin(21)){
+        Serial.println("Card Mount Failed");
+        return;
+    }
+    
+    uint8_t cardType = SD.cardType();
+    
+    if(cardType == CARD_NONE){
+        Serial.println("No SD card attached");
+        return;
+    }
+    #else
     // start LittleFS
     if (!LittleFS.begin()) {
         Serial.println("Could not initialize LittleFS");
         return;
     }
+    #endif
 
     // load config
     this->load_config();
@@ -34,8 +65,13 @@ void ConfigManager::load_config() {
     Serial.println("Loading config");
     Serial.print("Filename: ");
     Serial.println(this->filename);
+
     // Open file for reading
+    #if defined(ESP32S3)
+    File file = SD.open(this->filename, "r");
+    #else
     File file = LittleFS.open(this->filename, "r");
+    #endif
 
     if (!file) {
         Serial.println("Failed to open config file");
@@ -97,7 +133,11 @@ void ConfigManager::load_config() {
 // save config to LittleFS
 void ConfigManager::save_config() {
     // open file for writing
+    #if defined(ESP32S3)
+    File file = SD.open(this->filename, "r");
+    #else
     File file = LittleFS.open(this->filename, "w");
+    #endif
 
     if (!file) {
         Serial.println("Failed to create file");

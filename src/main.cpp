@@ -26,9 +26,15 @@
 
 #define CONFIG_FILE "/config.json"
 
+#if defined(ESP32S3)
+#define INDEX_FILE "/sd/index.html"
+#define CSS_FILE "/sd/style.css"
+#define JS_FILE "/sd/script.js"
+#else
 #define INDEX_FILE "/index.html"
 #define CSS_FILE "/style.css"
 #define JS_FILE "/script.js"
+#endif
 
 #define FEED_FACTOR 1 // factor to match the mass of the food
 
@@ -65,6 +71,7 @@ AsyncWebServer server(80);
 
 ConfigManager configManager(CONFIG_FILE);
 AlertManager alertManager(configManager);
+
 
 void setup() {
   Serial.begin(115200);
@@ -199,15 +206,27 @@ void setup_aws() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     new_request();
 
+    #if defined(ESP32S3)
+    request->send(SD, INDEX_FILE, "text/html");
+    #else
     request->send(LittleFS, INDEX_FILE, "text/html");
+    #endif
   });
   
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request) {
+    #if defined(ESP32S3)
+    request->send(SD, INDEX_FILE, "text/html");
+    #else
     request->send(LittleFS, CSS_FILE, "text/css");
+    #endif
   });
 
   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
+    #if defined(ESP32S3)
+    request->send(SD, INDEX_FILE, "text/html");
+    #else
     request->send(LittleFS, JS_FILE, "text/javascript");
+    #endif
   });
 
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {

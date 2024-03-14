@@ -39,7 +39,7 @@ jobs:
 
     - name: Build fs image
       run: |
-        mv data/config.json-template data/config.json
+        cp -r data-template/ data/
         pio run -t buildfs -e esp32dev
 
         mkdir -p artifacts/esp32dev
@@ -76,7 +76,7 @@ jobs:
 
     - name: Build fs image
       run: |
-        mv data/config.json-template data/config.json
+        cp -r data-template/ data/
         pio run -t buildfs -e esp32s3
 
         mkdir -p artifacts/esp32s3
@@ -114,7 +114,7 @@ jobs:
 
     - name: Build fs image
       run:  |
-        mv data/config.json-template data/config.json
+        cp -r data-template/ data/
         pio run -t buildfs -e esp8266
 
         mkdir -p artifacts/esp8266

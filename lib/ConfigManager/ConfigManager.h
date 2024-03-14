@@ -12,8 +12,15 @@
 #define DEFAULT_CONFIG_FILE "/config.json" // default config file
 
 #include <Arduino.h>
-#include <LittleFS.h>
 #include <ArduinoJson.h>
+
+#if defined(ESP32S3)
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
+#else
+#include <LittleFS.h>
+#endif
 
 // type definitions
 typedef struct {

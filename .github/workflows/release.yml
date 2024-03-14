@@ -30,7 +30,7 @@ jobs:
 
     - name: Build FS Images
       run: |
-        mv data/config.json-template data/config.json
+        cp -r data-template/ data/
         platformio run -t buildfs
 
     - name: Archive binaries
