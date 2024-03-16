@@ -4,6 +4,7 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <TaskScheduler.h>
 
 #if defined(ESP32DEV) || defined(ESP32S3)
 #include <WiFi.h>
@@ -36,8 +37,8 @@
 #define RELAY_PIN 2   // D2 (Onboard LED)
 #define CLINT 4       // RTC interrupt pin for alarm 1
 #elif defined(ESP32S3)
-#define RELAY_PIN 8   // D2 (Onboard LED)
-#define CLINT 7       // RTC interrupt pin for alarm 1
+#define RELAY_PIN D8   // D2 (Onboard LED)
+#define CLINT D9       // RTC interrupt pin for alarm 1
 #endif
 
 // Prototypes
@@ -47,12 +48,14 @@ void setup_aws();   // Setup AsyncWebServer
 
 void feed();        // Feed the chickens
 void new_request(); // Will be executed when a new request is received
-int remaining_auto_sleep_time();
+void goToSleep();   // Go to sleep
+void resetSleep();  // Reset sleep
 
 // Global variables
 bool interrupt_flag = false;
 unsigned long feed_millis = millis();
 unsigned long auto_sleep_millis = millis();
+long rt = 0;
 
 // deep sleep
 #if defined(ESP32DEV) || defined(ESP32S3)
@@ -62,6 +65,9 @@ String wakeup_reason;
 #endif
 
 AsyncWebServer server(80);
+Scheduler runner;
+
+Task taskGoToSleep(1000 * 5, TASK_ONCE, &goToSleep, &runner, true);
 
 ConfigManager configManager(CONFIG_FILE);
 AlertManager alertManager(configManager);
@@ -108,12 +114,11 @@ void setup() {
     // go to sleep
     Serial.println("Schlafmodus aktiviert");
 
-    #if defined(ESP32DEV) || defined(ESP32S3)
-    esp_deep_sleep_start();
-    #elif defined(ESP8266)
-    ESP.deepSleep(0);
-    #endif
-
+    //#if defined(ESP32DEV) || defined(ESP32S3)
+    //esp_deep_sleep_start();
+    //#elif defined(ESP8266)
+    //ESP.deepSleep(0);
+    //#endif
   } else {
     // Setup WiFi
     setup_wifi();
@@ -121,28 +126,43 @@ void setup() {
     // Setup AsyncWebServer
     setup_aws();
   }
+
+  resetSleep(); // Set the sleep task
 }
 
 void loop() {
+  // run the scheduler
+  runner.execute();
+
   // handle interrupt
   if (interrupt_flag) {
     feed();
   }
+}
 
-  // auto sleep depending on AUTO_SLEEP
-  if (configManager.get_system_config().auto_sleep && 0 >= remaining_auto_sleep_time()) {
-    Serial.println("Going to sleep because of auto sleep");
+void goToSleep() {
+  Serial.println("Going to sleep because of auto sleep");
 
-    // turn the relay off
-    digitalWrite(RELAY_PIN, LOW);
+  // Debugging with all infos
+  Serial.printf("\nCurrent time: %d\n", millis());
+  Serial.printf("Remaining time: %d\n", rt);
+  Serial.println();
 
-    // go to sleep
-    #if defined(ESP32DEV) || defined(ESP32S3)
-    esp_deep_sleep_start();
-    #elif defined(ESP8266)
-    ESP.deepSleep(0);
-    #endif
-  }
+  // turn the relay off
+  digitalWrite(RELAY_PIN, LOW);
+
+  // go to sleep
+  #if defined(ESP32DEV) || defined(ESP32S3)
+  esp_deep_sleep_start();
+  #elif defined(ESP8266)
+  ESP.deepSleep(0);
+  #endif
+}
+
+void resetSleep() {
+  taskGoToSleep.restartDelayed(configManager.get_system_config().auto_sleep_after * 1000);
+
+  Serial.println("Reset sleep task");
 }
 
 // Interrupt handler
@@ -166,14 +186,22 @@ void feed() {
 }
 
 // remaining auto sleep time
-int remaining_auto_sleep_time() {
-  return (configManager.get_system_config().auto_sleep_after - (millis() - auto_sleep_millis) / 1000);
+long remaining_auto_sleep_time() {
+  unsigned long currentMillis = millis();
+  unsigned long elapsedMillis = currentMillis - auto_sleep_millis;
+  long elapsedSeconds = elapsedMillis / 1000L;
+  
+  long autoSleepAfter = (long)configManager.get_system_config().auto_sleep_after;
+
+  long remainingTime = autoSleepAfter - elapsedSeconds;
+
+  return remainingTime;
 }
 
 // Will be executed when a new request is received
 void new_request() {
   // reset auto sleep millis to prevent going to sleep
-  auto_sleep_millis = millis();
+  resetSleep();
 }
 
 void setup_wifi() {
