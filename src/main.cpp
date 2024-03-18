@@ -279,6 +279,9 @@ void goToSleep() {
   // turn the relay off
   digitalWrite(RELAY_PIN, LOW);
 
+  // Set next alert
+  alertManager.set_next_alert();
+
   // go to sleep
   #if defined(ESP32DEV) || defined(ESP32S3)
   esp_deep_sleep_start();
