@@ -283,8 +283,16 @@ void ConfigManager::set_timers_json(JsonVariant &json) {
     this->save_config();
 }
 
+unsigned long ConfigManager::get_auto_sleep_after() {
+    return this->config.system.auto_sleep_after * 1000;
+}
+
 int ConfigManager::get_quantity() {
     return this->config.feed.quantity;
+}
+
+unsigned long ConfigManager::get_feeding_time() {
+    return this->config.feed.factor * this->config.feed.quantity * 1000;
 }
 
 float ConfigManager::get_factor() {
