@@ -162,8 +162,6 @@ void setup() {
 
     // This endpoint is used to set the timers
     AsyncCallbackJsonWebHandler* set_handler = new AsyncCallbackJsonWebHandler("/set", [](AsyncWebServerRequest *request, JsonVariant &json) {
-      new_request();
-
       // Convert the data to a JSON object
       Serial.println("Set new configuration");
       configManager.set_timers_json(json);
@@ -178,22 +176,17 @@ void setup() {
 
     // activate sleep mode
     server.on("/sleep", HTTP_GET, [](AsyncWebServerRequest *request) {
-      new_request();
-
       Serial.println("Schlafmodus aktiviert");
       
-      // go to sleep
-      #if defined(ESP32DEV) || defined(ESP32S3)
-      esp_deep_sleep_start();
-      #elif defined(ESP8266)
-      ESP.deepSleep(0);
-      #endif
+      goToSleep();
 
       request->send(200);
     });
 
     // get current time
     server.on("/time", HTTP_GET, [](AsyncWebServerRequest *request) {
+      new_request();
+      
       // get current time
       ds3231_datetime_t now = alertManager.now();
 
@@ -215,7 +208,7 @@ void setup() {
     // get autosleep remaining time
     server.on("/autosleep", HTTP_GET, [](AsyncWebServerRequest *request) {
       // get remaining time
-      int remaining = remaining_auto_sleep_time();
+      long remaining = remaining_auto_sleep_time();
 
       // create json object
       StaticJsonDocument<JSON_OBJECT_SIZE(1)> json;
@@ -229,8 +222,6 @@ void setup() {
 
     // feed manually
     AsyncCallbackJsonWebHandler* feed_handler = new AsyncCallbackJsonWebHandler("/feed", [](AsyncWebServerRequest *request, JsonVariant &json) {
-      new_request();
-
       startFeeding();
 
       request->send(200);
@@ -242,7 +233,7 @@ void setup() {
     Serial.println("Starte Webserver");
     server.begin();
 
-    setSleepTime(); // Set the sleep task
+    setSleepTime();
   }
 }
 
@@ -274,15 +265,11 @@ void loop() {
 }
 
 void goToSleep() {
-  Serial.println("Going to sleep because of auto sleep");
-
-  // turn the relay off
-  digitalWrite(RELAY_PIN, LOW);
-
   // Set next alert
   alertManager.set_next_alert();
 
   // go to sleep
+  Serial.println("Going to sleep because of auto sleep");
   #if defined(ESP32DEV) || defined(ESP32S3)
   esp_deep_sleep_start();
   #elif defined(ESP8266)
@@ -291,11 +278,7 @@ void goToSleep() {
 }
 
 void setSleepTime() {
-  Serial.println("Reset sleep task");
-
-  unsigned long ft = configManager.get_auto_sleep_after();
-
-  auto_sleep_millis = millis() + ft;
+  auto_sleep_millis = millis() + configManager.get_auto_sleep_after();
 }
 
 // Interrupt handler
