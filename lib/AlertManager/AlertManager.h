@@ -2,6 +2,8 @@
 #define __DEFINE_ALERT_MANAGER_H__
 
 #include <Arduino.h>
+#include <array>
+#include <string>
 
 #ifndef __CLOCK_H__
 #define __CLOCK_H__

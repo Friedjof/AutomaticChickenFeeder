@@ -56,63 +56,48 @@ bool AlertManager::set_new_datetime(int year, int month, int day, int hour, int 
     this->rtc.setHour(hour);
     this->rtc.setMinute(minute);
     this->rtc.setSecond(second);
-    
+
     return true;
 }
 
+#include <unordered_map>
+#include <string>
+
 int AlertManager::weekday_to_int(char *weekday) {
-        if (strcmp(weekday, "mon") == 0)
-        {
-            return 1;
-        }
-        else if (strcmp(weekday, "tue") == 0)
-        {
-            return 2;
-        }
-        else if (strcmp(weekday, "wed") == 0)
-        {
-            return 3;
-        }
-        else if (strcmp(weekday, "thu") == 0)
-        {
-            return 4;
-        }
-        else if (strcmp(weekday, "fri") == 0)
-        {
-            return 5;
-        }
-        else if (strcmp(weekday, "sat") == 0)
-        {
-            return 6;
-        }
-        else if (strcmp(weekday, "son") == 0)
-        {
-            return 7;
-        }
-        else
-        {
-            return 0;
-        }
+    std::unordered_map<std::string, int> weekdays = {
+        {"mon", 1},
+        {"tue", 2},
+        {"wed", 3},
+        {"thu", 4},
+        {"fri", 5},
+        {"sat", 6},
+        {"son", 7}
+    };
+
+    auto it = weekdays.find(weekday);
+    if (it != weekdays.end()) {
+        return it->second;
+    } else {
+        return 0;
+    }
 }
 
 String AlertManager::int_to_weekday(int weekday) {
-    switch (weekday) {
-        case 1:
-            return "mon";
-        case 2:
-            return "tue";
-        case 3:
-            return "wed";
-        case 4:
-            return "thu";
-        case 5:
-            return "fri";
-        case 6:
-            return "sat";
-        case 7:
-            return "son";
-        default:
-            return "mon";
+    std::unordered_map<int, const char*> weekdays = {
+        {1, "mon"},
+        {2, "tue"},
+        {3, "wed"},
+        {4, "thu"},
+        {5, "fri"},
+        {6, "sat"},
+        {7, "son"}
+    };
+
+    auto it = weekdays.find(weekday);
+    if (it != weekdays.end()) {
+        return it->second;
+    } else {
+        return "unknown";
     }
 }
 
