@@ -2,7 +2,7 @@
 #define __DEFINE_ALERT_MANAGER_H__
 
 #include <Arduino.h>
-#include <array>
+#include <unordered_map>
 #include <string>
 
 #ifndef __CLOCK_H__

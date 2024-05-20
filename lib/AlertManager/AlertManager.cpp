@@ -60,9 +60,6 @@ bool AlertManager::set_new_datetime(int year, int month, int day, int hour, int 
     return true;
 }
 
-#include <unordered_map>
-#include <string>
-
 int AlertManager::weekday_to_int(char *weekday) {
     std::unordered_map<std::string, int> weekdays = {
         {"mon", 1},
