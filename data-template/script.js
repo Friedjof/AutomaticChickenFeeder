@@ -1,8 +1,6 @@
 var rowCount = 0;
 var currentId = 0;
 
-var feed_on = false;
-
 async function getTimers() {
     fetch('/get')
         .then(response => response.json())
@@ -402,26 +400,19 @@ function hideLoadingSpinner() {
 }
 
 function feedManual() {
-    feed_on = !feed_on;
-    
     fetch('/feed', {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            on: feed_on
-        })
+        body: JSON.stringify({})
     });
 
-    if (feed_on)
-        showNotification('info', 'Feeding started &#127744;', 3000);
-    else
-        showNotification('info', 'Feeding stopped &#9940;', 3000);
+    showNotification('info', 'Feeding started &#127744;', 3000);
     
     var feed_button = document.getElementById('feed-button');
-    feed_button.innerHTML = "Feed manually (" + (feed_on ? "on" : "off") + ")";
+    feed_button.innerHTML = "Feed manually";
 }
 
 // Display current date and time
@@ -464,7 +455,41 @@ async function getRemainingAutoSleepTime() {
     );
 }
 
+function setCurrentTime() {
+    var currentDateTime = new Date();
+    var data = {
+        'y': currentDateTime.getFullYear(),
+        'm': currentDateTime.getMonth() + 1,
+        'd': currentDateTime.getDate(),
+        'h': currentDateTime.getHours(),
+        'min': currentDateTime.getMinutes(),
+        's': currentDateTime.getSeconds()
+    };
+
+    fetch('/rtc', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+function onloadFunction() {
+    setCurrentTime();
+    getTimers();
+}
+
 setInterval(displayCurrentDateTime, 1000);
 setInterval(getRemainingAutoSleepTime, 1000);
 
-window.onload = getTimers;
+window.onload = onloadFunction;

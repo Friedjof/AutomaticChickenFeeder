@@ -49,6 +49,17 @@ ds3231_datetime_t AlertManager::now() {
     return now;
 }
 
+bool AlertManager::set_new_datetime(int year, int month, int day, int hour, int minute, int second) {
+    this->rtc.setYear(year - 2000);
+    this->rtc.setMonth(month);
+    this->rtc.setDate(day);
+    this->rtc.setHour(hour);
+    this->rtc.setMinute(minute);
+    this->rtc.setSecond(second);
+    
+    return true;
+}
+
 int AlertManager::weekday_to_int(char *weekday) {
         if (strcmp(weekday, "mon") == 0)
         {

@@ -44,7 +44,7 @@ void ConfigManager::load_config() {
     Serial.println("File opened");
 
     // Allocate a buffer to store contents of the file
-    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+    JsonDocument doc;
 
     // Deserialize the JSON document
     DeserializationError error = deserializeJson(doc, file);
@@ -105,7 +105,7 @@ void ConfigManager::save_config() {
     }
 
     // allocate a buffer to store contents of the file
-    DynamicJsonDocument doc(JSON_BUFFER_SIZE);
+    JsonDocument doc;
 
     // Set the values in the document
     doc["wifi"]["ssid"] = this->config.wifi.ssid;
@@ -216,10 +216,10 @@ timer_config_list_t ConfigManager::get_timers() {
     return timers;
 }
 
-StaticJsonDocument<JSON_BUFFER_SIZE> ConfigManager::get_timers_json() {
+JsonDocument ConfigManager::get_timers_json() {
     this->load_config();
 
-    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
+    JsonDocument doc;
 
     JsonArray timers = doc.createNestedArray("timers");
 

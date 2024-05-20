@@ -92,7 +92,7 @@ class ConfigManager {
         timer_config_t get_timer(int index);
         size_t get_num_timers();
         timer_config_list_t get_timers();
-        StaticJsonDocument<JSON_BUFFER_SIZE> get_timers_json();
+        JsonDocument get_timers_json();
         feed_config_t get_feed_config();
         unsigned long get_feeding_time();
         unsigned long get_auto_sleep_after();

@@ -91,6 +91,8 @@ public:
     optional_ds3231_timer_t get_earliest_timer_of_the_day(timer_config_list_t timers, int weekday);
     bool timer_is_active_on_weekday(timer_config_t timer, int weekday);
 
+    bool set_new_datetime(int year, int month, int day, int hour, int minute, int second);
+
     void setup_interrupt();
     void disable_alarm_2();
 

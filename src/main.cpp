@@ -191,7 +191,7 @@ void setup() {
       ds3231_datetime_t now = alertManager.now();
 
       // create json object
-      StaticJsonDocument<JSON_OBJECT_SIZE(6)> json;
+      JsonDocument json;
       json["year"] = now.year;
       json["month"] = now.month;
       json["day"] = now.day;
@@ -205,13 +205,37 @@ void setup() {
       request->send(200, "application/json", jsonString); 
     });
 
+    server.on("/rtc", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      JsonDocument doc;
+      DeserializationError error = deserializeJson(doc, (const char*)data);
+
+      if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.c_str());
+        return;
+      }
+
+      int year = doc["y"];
+      int month = doc["m"];
+      int day = doc["d"];
+      int hour = doc["h"];
+      int minute = doc["min"];
+      int second = doc["s"];
+
+      Serial.printf("new datime synced: %d-%d-%d %d:%d:%d\n", year, month, day, hour, minute, second);
+
+      alertManager.set_new_datetime(year, month, day, hour, minute, second);
+
+      request->send(200);
+    });
+
     // get autosleep remaining time
     server.on("/autosleep", HTTP_GET, [](AsyncWebServerRequest *request) {
       // get remaining time
       long remaining = remaining_auto_sleep_time();
 
       // create json object
-      StaticJsonDocument<JSON_OBJECT_SIZE(1)> json;
+      JsonDocument json;
       json["remaining"] = remaining;
 
       String jsonString;
