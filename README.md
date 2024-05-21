@@ -1,10 +1,12 @@
 # Automatic chicken feeder
 
+> **>> [Gallery](/media/README.md)**
+
 ## Overview
 The automatic chicken feeder is a project developed to automate chicken feeding. This system aims to enhance efficiency in poultry farming, optimize feed distribution, and minimize the daily maintenance efforts required for poultry care.
 
-<img src="media/Zmf8OmPV7K.jpg" width="49%"></img>
-<img src="media/JljAL2A0pf.jpg" width="49%"></img>
+<img src="media/prototype/Zmf8OmPV7K.jpg" width="49%"></img>
+<img src="media/prototype/JljAL2A0pf.jpg" width="49%"></img>
 
 ## Features
 - Automated feeding at pre-set times
@@ -20,8 +22,8 @@ The automatic chicken feeder is a project developed to automate chicken feeding.
 - Compatible with smartphones, tablets, or computers equipped with a web browser and Wi-Fi
 - Versatile power supply options: battery or power adapter
 
-<img src="media/esp32-front.jpg" width="49%" alt="ESP32"></img>
-<img src="media/esp32s3-front.jpg" width="49%" alt="ESP32S3 microcontroller"></img>
+<img src="media/esp/esp32-front.jpg" width="49%" alt="ESP32"></img>
+<img src="media/esp/esp32s3-front.jpg" width="49%" alt="ESP32S3 microcontroller"></img>
 
 ### 3D Printed Components
 > Note: STL files for 3D printing will be available shortly.
@@ -37,7 +39,7 @@ This section outlines the key 3D printed components essential for assembling the
 
 Each component plays a vital role in the functionality of the feeder, contributing to its overall effectiveness and ease of use.
 
-<img src="media/GFZJfbpgox5U.jpg" width="60%" style="display: block; margin-left: auto; margin-right: auto;"></img>
+<img src="media/printing/GFZJfbpgox5U.jpg" width="60%" style="display: block; margin-left: auto; margin-right: auto;"></img>
 
 The image illustrates the key components of the feeder: the funnel, spreading disc, spreading disc holder, and distance holder. Centrally located, an Allen wrench is utilized to securely attach the spreading disc to the motor.
 
@@ -59,9 +61,6 @@ The web interface provides a user-friendly way to manage your chicken feeder. He
 
 <img src="media/web/78P98s95M5.png" width="49%"></img>
 <img src="media/web/348Di564NY.png" width="49%"></img>
-
-<img src="media/web/54Eh4yKA26.png" width="49%"></img>
-<img src="media/web/y7946Xo49U.png" width="49%"></img>
 
 > Note: While the images show the web interface being accessed via `localhost:5000`, this is for development purposes only. In a production environment, the web interface can be accessed via the IP address `192.168.4.1`.
 
