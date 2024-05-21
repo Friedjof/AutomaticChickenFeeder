@@ -1,7 +1,7 @@
 var rowCount = 0;
 var currentId = 0;
 
-var url = 'http://localhost:5000'
+var url = ''
 
 var timers = {}
 

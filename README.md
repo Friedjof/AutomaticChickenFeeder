@@ -3,11 +3,34 @@
 ## Overview
 The automatic chicken feeder is a project developed to automate chicken feeding. This system aims to enhance efficiency in poultry farming, optimize feed distribution, and minimize the daily maintenance efforts required for poultry care.
 
-<img src="media/Zmf8OmPV7K.jpg" width="32%"></img>
-<img src="media/JljAL2A0pf.jpg" width="32%"></img>
-<img src="media/JNqULSaXMi.png" width="32%"></img>
+<img src="media/Zmf8OmPV7K.jpg" width="49%"></img>
+<img src="media/JljAL2A0pf.jpg" width="49%"></img>
 
-The system operates on an ESP32 microcontroller and features a web-based user interface for configuring feeding schedules and quantities. It can be powered either by a battery or a power adapter and includes a power-saving mode to prolong battery life. Additionally, the system establishes a secure Wi-Fi network to facilitate system configuration and monitoring.
+
+
+## The Web Interface
+
+The web interface provides a user-friendly way to manage your chicken feeder. Here are its main features:
+
+- **Settings**: You can set up to 4 timers, each with its own feed quantity. This allows you to customize the feeding schedule to suit your chickens' needs. You can also set the time and day of the week for each timer, allowing for a feeding schedule that spans multiple days.
+
+- **Timer Activation/Deactivation**: Each timer can be individually activated or deactivated. This gives you the flexibility to temporarily disable a feeding without deleting the timer.
+
+- **Manual Feeding**: In addition to the scheduled feedings, you can also trigger a manual feeding at any time.
+
+- **Export Settings**: You can export your settings for backup or for use on another device. This creates a .csv file that can be imported back into the web interface.
+
+- **Time Synchronization**: The time on your browser is automatically synchronized with the real-time clock (RTC) on the chicken feeder when you access the web interface.
+
+- **Current Time Display**: The web interface displays the current time, updated every second. This allows you to easily check the time and ensure that the feeding schedule is running as expected.
+
+<img src="media/web/54Eh4yKA26.png" width="49%"></img>
+<img src="media/web/y7946Xo49U.png" width="49%"></img>
+
+<img src="media/web/78P98s95M5.png" width="49%"></img>
+<img src="media/web/348Di564NY.png" width="49%"></img>
+
+> Note: While the images show the web interface being accessed via `localhost:5000`, this is for development purposes only. In a production environment, the web interface can be accessed via the IP address `192.168.4.1`.
 
 ## Features
 - Automated feeding at pre-set times
