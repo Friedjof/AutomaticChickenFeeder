@@ -5,8 +5,8 @@
 ## Overview
 The automatic chicken feeder is a project developed to automate chicken feeding. This system aims to enhance efficiency in poultry farming, optimize feed distribution, and minimize the daily maintenance efforts required for poultry care.
 
-<img src="media/prototype/Zmf8OmPV7K.jpg" width="49%"></img>
-<img src="media/prototype/JljAL2A0pf.jpg" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/Zmf8OmPV7K.jpeg" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/JljAL2A0pf.jpeg" width="49%"></img>
 
 ## Features
 - Automated feeding at pre-set times
@@ -22,8 +22,8 @@ The automatic chicken feeder is a project developed to automate chicken feeding.
 - Compatible with smartphones, tablets, or computers equipped with a web browser and Wi-Fi
 - Versatile power supply options: battery or power adapter
 
-<img src="media/esp/esp32-front.jpg" width="49%" alt="ESP32"></img>
-<img src="media/esp/esp32s3-front.jpg" width="49%" alt="ESP32S3 microcontroller"></img>
+<img src="https://images.noweck.info/images/2024/05/21/esp32-front00b76273fecef8ae.jpeg" width="49%" alt="ESP32"></img>
+<img src="https://images.noweck.info/images/2024/05/21/esp32s3-fronte0960978e74e4928.jpeg" width="49%" alt="ESP32S3 microcontroller"></img>
 
 ### 3D Printed Components
 > Note: STL files for 3D printing will be available shortly.
@@ -39,7 +39,7 @@ This section outlines the key 3D printed components essential for assembling the
 
 Each component plays a vital role in the functionality of the feeder, contributing to its overall effectiveness and ease of use.
 
-<img src="media/printing/GFZJfbpgox5U.jpg" width="60%" style="display: block; margin-left: auto; margin-right: auto;"></img>
+<img src="https://images.noweck.info/images/2024/05/21/GFZJfbpgox5U.jpeg" width="60%" style="display: block; margin-left: auto; margin-right: auto;"></img>
 
 The image illustrates the key components of the feeder: the funnel, spreading disc, spreading disc holder, and distance holder. Centrally located, an Allen wrench is utilized to securely attach the spreading disc to the motor.
 
@@ -59,8 +59,8 @@ The web interface provides a user-friendly way to manage your chicken feeder. He
 
 - **Current Time Display**: The web interface displays the current time, updated every second. This allows you to easily check the time and ensure that the feeding schedule is running as expected.
 
-<img src="media/web/78P98s95M5.png" width="49%"></img>
-<img src="media/web/348Di564NY.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/78P98s95M5.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/348Di564NY.png" width="49%"></img>
 
 > Note: While the images show the web interface being accessed via `localhost:5000`, this is for development purposes only. In a production environment, the web interface can be accessed via the IP address `192.168.4.1`.
 
