@@ -47,6 +47,11 @@ function showTimer(id, timer) {
     enabled.innerHTML = '<input type="checkbox" class="checked" ' + (timer.enabled ? 'checked' : '') + '>';
     row.appendChild(enabled);
 
+    var popup_button = document.createElement('td');
+    popup_button.innerHTML = '<button onclick="showPopup(' + id + ')" class="input_buttons">&#128197;</button>';
+    popup_button.id = 'popup-' + id;
+    row.appendChild(popup_button);
+
     var name = document.createElement('td');
     name.innerHTML = '<input type="text" placeholder="Name" class="name" maxlength="10" value="' + timer.name + '">';
     row.appendChild(name);
@@ -54,11 +59,6 @@ function showTimer(id, timer) {
     var time = document.createElement('td');
     time.innerHTML = '<input type="time" required class="time" value="' + timer.time + '">';
     row.appendChild(time);
-
-    var popup_button = document.createElement('td');
-    popup_button.innerHTML = '<button onclick="showPopup(' + id + ')" class="input_buttons">&#128336;</button>';
-    popup_button.id = 'popup-' + id;
-    row.appendChild(popup_button);
 
     var remove = document.createElement('td');
     remove.innerHTML = '<button onclick="removeRow(' + id + ')" class="input_buttons">&#x1F5D1;</button>';
@@ -69,7 +69,6 @@ function showTimer(id, timer) {
 }
 
 function showPopup(id) {
-    // Erstellen Sie ein Overlay
     var overlay = document.createElement('div');
     overlay.className = 'overlay';
     overlay.onclick = function() {
@@ -78,11 +77,9 @@ function showPopup(id) {
 
     document.body.appendChild(overlay);
 
-    // Erstellen Sie ein Div für das Modal
     var modal = document.createElement('div');
     modal.className = 'modal';
 
-    // Erstellen Sie einen Schließen-Button für das Modal
     var closeButton = document.createElement('button');
     closeButton.innerHTML = '&#x2715;';
     closeButton.className = 'close-button';
@@ -92,15 +89,13 @@ function showPopup(id) {
 
     modal.appendChild(closeButton);
 
-    // Fügen Sie einen Text zum Modal hinzu
     var text = document.createElement('h2');
     text.className = 'schedule-header';
     text.textContent = '⏰ ' + timers[id].time + ' - ' + timers[id].name;
     modal.appendChild(text);
 
-    // Füge die Wochentage hinzu
     var daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    var dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    var dayNames = daysOfWeek.map(day => day.charAt(0).toUpperCase() + day.slice(1));
 
     var days = document.createElement('div');
     days.className = 'days';
@@ -128,7 +123,43 @@ function showPopup(id) {
         days.appendChild(dayContainer);
     });
     
+    var outer_feed_container = document.createElement('div');
+    outer_feed_container.className = 'outer-feed-container';
+    modal.appendChild(outer_feed_container);
 
+    var feed_container = document.createElement('div');
+    feed_container.className = 'feed-container';
+    outer_feed_container.appendChild(feed_container);
+
+    var feed_label = document.createElement('label');
+    feed_label.textContent = 'Feed quantity [g]';
+    feed_label.htmlFor = 'feed-' + id;
+    feed_label.className = 'feed-label';
+
+    var feed_input = document.createElement('input');
+    feed_input.type = 'number';
+    feed_input.id = 'feed-' + id;
+
+    if (timers[id].quantity == 0) {
+        feed_input.value = parseInt(document.getElementById('feed').value);
+    } else {
+        feed_input.value = timers[id].quantity;
+    }
+
+    feed_input.min = 0;
+    feed_input.max = 100;
+    feed_input.className = 'feed-input';
+    feed_input.onchange = function() {
+        timers[id].quantity = feed_input.value;
+    }
+    feed_container.appendChild(feed_label);
+    feed_container.appendChild(feed_input);
+
+    feeding_info = document.createElement('div');
+    feeding_info.className = 'feeding-info';
+    feeding_info.innerHTML = '*If the feed quantity is set to 0, the default quantity will be used (see main page).';
+
+    outer_feed_container.appendChild(feeding_info);
 
     // Fügen Sie das Modal zum Body hinzu
     document.body.appendChild(modal);
@@ -148,8 +179,6 @@ function removeRow(id) {
     document.getElementById('row-' + id).remove();
     delete timers[id];
 
-    console.log(timers);
-
     showNotification('info', 'Line removed', 1000);
 
     rowCount--;
@@ -165,6 +194,7 @@ function addRow() {
         id: currentId,
         enabled: false,
         name: 'Alert ' + (currentId + 1),
+        quantity: 0,
         time: '12:00',
         days: {
             monday: false,
@@ -186,34 +216,11 @@ function addRow() {
 }
 
 async function saveTimers() {
-    var rows = document.getElementById('timers').getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-
     if (parseInt(document.getElementById('feed').value) < 0 || isNaN(parseInt(document.getElementById('feed').value))) {
         showNotification('error', 'Error when saving the schedule (feed quantity invalid &#128290; )', 5000);
         return;
     }
-    var feed_quantity = parseInt(document.getElementById('feed').value);
-
-    var timers = [];
-
-    for (var i = 0; i < rows.length; i++) {
-        var timer = {
-            'enabled': rows[i].getElementsByTagName('input')[0].checked,
-            'name': rows[i].getElementsByTagName('input')[1].value,
-            'time': rows[i].getElementsByTagName('input')[2].value,
-            'days': {
-                'monday': rows[i].getElementsByTagName('input')[3].checked,
-                'tuesday': rows[i].getElementsByTagName('input')[4].checked,
-                'wednesday': rows[i].getElementsByTagName('input')[5].checked,
-                'thursday': rows[i].getElementsByTagName('input')[6].checked,
-                'friday': rows[i].getElementsByTagName('input')[7].checked,
-                'saturday': rows[i].getElementsByTagName('input')[8].checked,
-                'sunday': rows[i].getElementsByTagName('input')[9].checked
-            }
-        };
-
-        timers.push(timer);
-    }
+    const feed_quantity = parseInt(document.getElementById('feed').value);
 
     await fetch(url + '/set', {
         method: 'POST',
@@ -296,6 +303,10 @@ function sleep_mode() {
     }
 }
 
+function getFilename() {
+    return 'chicken-feeder-schedule-export.csv';
+}
+
 function export2CSV() {
     const table = document.getElementById('timers-body');
     const rows = table.getElementsByTagName('tr');
@@ -310,7 +321,7 @@ function export2CSV() {
         return;
     }
 
-    var csv = 'enabled;name;time;mon;tue;wed;thu;fri;sat;sun\n';
+    var csv = 'enabled;name;time;quantity;mon;tue;wed;thu;fri;sat;sun\n';
     var seperator = ';';
 
     Object.values(timers).forEach(timer => {
@@ -319,6 +330,8 @@ function export2CSV() {
         csv += timer.name;
         csv += seperator;
         csv += timer.time;
+        csv += seperator;
+        csv += parseInt(timer.quantity);
         csv += seperator;
         csv += timer.days.monday ? '1' : '0';
         csv += seperator;
@@ -339,7 +352,9 @@ function export2CSV() {
     var link = document.createElement('a');
     link.id = 'download';
     link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
-    link.setAttribute('download', 'schedule.csv');
+
+    link.setAttribute('download', getFilename());
+
     document.body.appendChild(link);
     document.querySelector('#download').click();
 
@@ -384,25 +399,42 @@ function importCSV() {
             for (var i = 0; i < rows.length; i++) {
                 var cols = rows[i].split(';');
 
-                if (cols.length != 10) {
+                if (cols.length == 10) {
+                    timers[currentId] = {
+                        'enabled': cols[0] == '1',
+                        'name': cols[1],
+                        'time': cols[2],
+                        'quantity': 0,
+                        'days': {
+                            'monday': cols[3] == '1',
+                            'tuesday': cols[4] == '1',
+                            'wednesday': cols[5] == '1',
+                            'thursday': cols[6] == '1',
+                            'friday': cols[7] == '1',
+                            'saturday': cols[8] == '1',
+                            'sunday': cols[9] == '1'
+                        }
+                    };
+                } else if (cols.length == 11) {
+                    timers[currentId] = {
+                        'enabled': cols[0] == '1',
+                        'name': cols[1],
+                        'time': cols[2],
+                        'quantity': cols[3],
+                        'days': {
+                            'monday': cols[4] == '1',
+                            'tuesday': cols[5] == '1',
+                            'wednesday': cols[6] == '1',
+                            'thursday': cols[7] == '1',
+                            'friday': cols[8] == '1',
+                            'saturday': cols[9] == '1',
+                            'sunday': cols[10] == '1'
+                        }
+                    };
+                } else {
                     showNotification('error', 'Error importing the schedule (wrong format &#128269; )', 5000);
                     return;
                 }
-
-                timers[currentId] = {
-                    'enabled': cols[0] == '1',
-                    'name': cols[1],
-                    'time': cols[2],
-                    'days': {
-                        'monday': cols[3] == '1',
-                        'tuesday': cols[4] == '1',
-                        'wednesday': cols[5] == '1',
-                        'thursday': cols[6] == '1',
-                        'friday': cols[7] == '1',
-                        'saturday': cols[8] == '1',
-                        'sunday': cols[9] == '1'
-                    }
-                };
 
                 showTimer(currentId, timers[currentId]);
 
@@ -469,7 +501,6 @@ function feedManual() {
     feed_button.innerHTML = "Feed manually";
 }
 
-// Display current date and time
 function displayCurrentDateTime() {
     fetch(url + '/time')
         .then(response => response.json())
@@ -482,7 +513,6 @@ function displayCurrentDateTime() {
             var date_options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             var time_options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
 
-            // Display date and time
             document.getElementById('date-text').innerHTML = date.toLocaleDateString('en-GB', date_options);
             document.getElementById('time-text').innerHTML = date.toLocaleTimeString('en-GB', time_options);
         }).catch(error => {
@@ -490,7 +520,6 @@ function displayCurrentDateTime() {
         });
 }
 
-// Get remaining time until sleep
 async function getRemainingAutoSleepTime() {
     fetch(url + '/autosleep')
         .then(response => response.json())
