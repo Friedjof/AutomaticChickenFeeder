@@ -16,11 +16,6 @@
 <img src="https://images.noweck.info/images/2024/05/21/OPq1gLqzJ6.jpeg" width="49%"></img>
 <img src="https://images.noweck.info/images/2024/05/21/rMbm4YbAUG.jpeg" width="49%"></img>
 
-<video width="860" height="400" controls>
-  <source src="https://youtu.be/wXtHqptJNww" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
 ## Prototype
 
 <img src="https://images.noweck.info/images/2024/05/21/JljAL2A0pf.jpeg" width="49%"></img>
