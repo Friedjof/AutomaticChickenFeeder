@@ -1,15 +1,15 @@
 # Gallery
 ## Hardware
 
-<img src="https://images.noweck.info/images/2024/05/21/V287vSB5a7.png" width="49%"></img>
-<img src="https://images.noweck.info/images/2024/05/21/7a8d66N3E9.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/V287vSB5a7.th.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/7a8d66N3E9.th.png" width="49%"></img>
 
-<img src="https://images.noweck.info/images/2024/05/21/6vH59GHg53.png" width="49%"></img>
-<img src="https://images.noweck.info/images/2024/05/21/56eJS2655m.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/6vH59GHg53.th.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/56eJS2655m.th.png" width="49%"></img>
 
 ## Printing
 
-<img src="https://images.noweck.info/images/2024/05/21/5jhe74H6Q6.png" width="32%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/5jhe74H6Q6.th.png" width="32%"></img>
 <img src="https://images.noweck.info/images/2024/05/21/7usY77e7Z8.png" width="32%"></img>
 <img src="https://images.noweck.info/images/2024/05/21/9X95m4GF5B.png" width="32%"></img>
 
