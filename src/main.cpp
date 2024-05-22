@@ -30,9 +30,6 @@
 #define CSS_FILE "/style.css"
 #define JS_FILE "/script.js"
 
-// Debugging mode
-#define DEBUG false
-
 #if defined(ESP32DEV) || defined(ESP8266)
 #define RELAY_PIN 2    // D2 (Onboard LED)
 #define CLINT 4        // RTC interrupt pin for alarm 1
@@ -148,15 +145,6 @@ void setup() {
 
     server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request) {
       request->send(LittleFS, JS_FILE, "text/javascript");
-    });
-
-    // for debugging only (this will dump the config to the browser including the wifi password)
-    server.on("/config.json", HTTP_GET, [](AsyncWebServerRequest *request) {
-      if (DEBUG) {
-        request->send(LittleFS, CONFIG_FILE, "application/json");
-      } else {
-        request->send(404);
-      }
     });
 
     server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
