@@ -30,15 +30,16 @@ jobs:
 
     - name: Build FS Images
       run: |
-        mv data/config.json-template data/config.json
+        cp -r ./data-template/ ./data/
         platformio run -t buildfs
 
     - name: Archive binaries
       run: |
-        mkdir -p binaries/esp32dev binaries/esp8266
+        mkdir -p binaries/esp32dev binaries/esp8266 binaries/esp32s3
 
         mv .pio/build/esp32dev/*.bin binaries/esp32dev/
         mv .pio/build/esp8266/*.bin binaries/esp8266/
+        mv .pio/build/esp32s3/*.bin binaries/esp32s3/
 
     - name: Create Release
       id: create_release
@@ -49,4 +50,5 @@ jobs:
         files: >
           ./binaries/esp32dev/
           ./binaries/esp8266/
+          ./binaries/esp32s3/
         gzip: folders

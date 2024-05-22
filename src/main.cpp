@@ -107,7 +107,9 @@ void setup()
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
 
+
   pinMode(CLINT, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(CLINT), startFeeding, FALLING);
   attachInterrupt(digitalPinToInterrupt(CLINT), startFeeding, FALLING);
 
 #if defined(ESP32DEV)
@@ -230,9 +232,12 @@ void setup()
 
       // Setup the new alert (if necessary)
       alertManager.set_next_alert();
+      // Setup the new alert (if necessary)
+      alertManager.set_next_alert();
 
       request->send(200); });
 
+    server.addHandler(set_handler);
     server.addHandler(set_handler);
 
     // activate sleep mode
@@ -319,6 +324,7 @@ void setup()
 
       request->send(200); });
 
+    server.addHandler(feed_handler);
     server.addHandler(feed_handler);
 
     // Webserver starten

@@ -9,19 +9,24 @@
     <script src="/script.js"></script>
 </head>
 <body>
-    <!-- Wolken -->
+    <!-- Clouds -->
     <div id="clouds">
         <span class="cloud" style="font-size:200px;">&#127781;</span>
     </div>
     <div id="notification-container" class="notification-container">
-        <!-- Hier werden die Benachrichtigungen eingefügt -->
+        <!-- Here the notifications are inserted -->
     </div>
-    <!-- Zeitplan -->
+    <!-- Schedule -->
     <div class="container">
         <div id="time">
             &#8986;
             <span id="date-text">00.00.0000</span>
             <span id="time-text">00:00</span>
+        </div>
+        <div id="autosleep-remaining">
+            <span>Auto sleep mode in</span>
+            <span id="autosleep-remaining-time">00</span>
+            <span>seconds</span>
         </div>
         <h1>Schedule &#128020;&#128467;</h1>
         <h3>Here you can set the times of feeding the chickens.</h3>
@@ -30,20 +35,14 @@
                 <thead>
                     <tr>
                         <th>&#9200;</th>
+                        <th></th>
                         <th>Name</th>
                         <th>&#128337;</th>
-                        <th>Mo</th>
-                        <th>Thu</th>
-                        <th>Mi</th>
-                        <th>Thu</th>
-                        <th>Fri</th>
-                        <th>Sa</th>
-                        <th>Sun</th>
-                        <th></th> <!-- Leere Spalte für den - Button -->
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody id="timers-body">
-                    <!-- Hier werden die Zeilen eingefügt -->
+                    <!-- Here the timers are inserted -->
                 </tbody>
             </table>
         </div>
@@ -60,7 +59,7 @@
             <button id="reload" onclick="getTimers()">Reload &#128229;</button>
             <button id="save" onclick="saveTimers()">Save &#128190;</button>
             <button id="add" onclick="addRow()">&#10133;</button>
-            <button id="feed-button" onclick="feedManual()">Feed manually (off)</button>
+            <button id="feed-button" onclick="feedManual()">Feed manually</button>
         </div>
     </div>
     <!-- Farm -->

@@ -13,6 +13,8 @@ on:
 
       - '!.github/workflows/release.yml'
       - '!**/README.md'
+      - '!**/LICENSE'
+      - '!/media/**'
 
 jobs:
   platformio-build-esp32dev:
@@ -37,11 +39,48 @@ jobs:
 
     - name: Build fs image
       run: |
-        mv data/config.json-template data/config.json
+        cp -r ./data-template/ ./data/
         pio run -t buildfs -e esp32dev
 
         mkdir -p artifacts/esp32dev
         mv .pio/build/esp32dev/*.bin artifacts/esp32dev/
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: platformio-build
+        path: artifacts
+
+    - name: Cleanup
+      run: rm -rf .pio
+
+  platformio-build-esp32s3:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install PlatformIO
+      run: |
+        pip install platformio
+        platformio update
+
+    - name: Build PlatformIO Project for ESP32
+      run: platformio run -e esp32s3
+
+    - name: Build fs image
+      run: |
+        cp -r ./data-template/ ./data/
+        pio run -t buildfs -e esp32s3
+
+        mkdir -p artifacts/esp32s3
+        mv .pio/build/esp32s3/*.bin artifacts/esp32s3/
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3
@@ -75,7 +114,7 @@ jobs:
 
     - name: Build fs image
       run:  |
-        mv data/config.json-template data/config.json
+        cp -r ./data-template/ ./data/
         pio run -t buildfs -e esp8266
 
         mkdir -p artifacts/esp8266

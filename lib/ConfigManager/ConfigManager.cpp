@@ -332,9 +332,8 @@ void ConfigManager::set_timers_json(JsonVariant &json)
   this->save_config();
 }
 
-unsigned long ConfigManager::get_auto_sleep_after()
-{
-  return this->config.system.auto_sleep_after * 1000;
+unsigned long ConfigManager::get_auto_sleep_after() {
+    return this->config.system.auto_sleep_after * 1000;
 }
 
 int ConfigManager::get_quantity(int timer_id)

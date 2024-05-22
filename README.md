@@ -1,58 +1,110 @@
 # Automatic chicken feeder
 
-## Overview
-The automatic chicken feeder is a project developed to automate the feeding of chickens. This system is designed to increase efficiency in poultry farming, optimize feeding, and reduce the daily maintenance effort for poultry care.
+> **>> [Gallery](/media/README.md)**
 
-![Feeder](images/screenshot_desktop.png)
+## Overview
+The automatic chicken feeder is a project developed to automate chicken feeding. This system aims to enhance efficiency in poultry farming, optimize feed distribution, and minimize the daily maintenance efforts required for poultry care.
+
+<img src="https://images.noweck.info/images/2024/05/21/Zmf8OmPV7K.jpeg" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/JljAL2A0pf.jpeg" width="49%"></img>
 
 ## Features
-- Automated feeding at scheduled times
-- Configurable feeding schedules and quantities through a web-based user interface
-- Secure storage of feeding data in the microcontroller's permanent memory
-- Creates a secure Wi-Fi network for system configuration and monitoring
-- Can enter a power-saving mode to extend battery life
+- Automated feeding at pre-set times
+- Customizable feeding schedules and quantities via a web-based user interface
+- Secure storage of feeding data in the microcontroller's non-volatile memory
+- Establishment of a secure Wi-Fi network for system configuration and monitoring
+- Power-saving mode capability to extend battery life
 
 ## Hardware
-- ESP32 microcontroller
-- Motor control module (e.g., servo motor)
-- DS3231 Real-Time Clock module for accurate timekeeping
-- Smartphones, tablets, or computers with a web browser and Wi-Fi
-- Power supply (battery or power adapter)
+- ESP32DEV or ESP32S3 microcontroller (refer to images below)
+- Motor control module, such as a servo motor
+- DS3231 Real-Time Clock module for precise timekeeping
+- Compatible with smartphones, tablets, or computers equipped with a web browser and Wi-Fi
+- Versatile power supply options: battery or power adapter
+
+<img src="https://images.noweck.info/images/2024/05/21/esp32-front00b76273fecef8ae.jpeg" width="49%" alt="ESP32"></img>
+<img src="https://images.noweck.info/images/2024/05/21/esp32s3-fronte0960978e74e4928.jpeg" width="49%" alt="ESP32S3 microcontroller"></img>
+
+### 3D Printed Components
+> Note: STL files for 3D printing will be available shortly.
+
+This section outlines the key 3D printed components essential for assembling the automatic chicken feeder. These parts have been meticulously designed to ensure easy assembly and efficient operation of the feeder.
+
+- **Funnel at the top**: Serves as the primary entry point for the feed, guiding it smoothly into the system.
+- **Spreading Disc**: A critical component responsible for evenly distributing the feed.
+- **Spreading Disc Holder**: Provides stable support to the spreading disc, ensuring reliable operation.
+- **Distance Holder**: Aids in maintaining the correct spacing between various components.
+- **Battery Pack Holder**: Securely houses the battery, ensuring a consistent power supply.
+- **Allen Wrench**: A tool included for easy assembly and adjustment of the components.
+
+Each component plays a vital role in the functionality of the feeder, contributing to its overall effectiveness and ease of use.
+
+<img src="https://images.noweck.info/images/2024/05/21/GFZJfbpgox5U.jpeg" width="60%" style="display: block; margin-left: auto; margin-right: auto;"></img>
+
+The image illustrates the key components of the feeder: the funnel, spreading disc, spreading disc holder, and distance holder. Centrally located, an Allen wrench is utilized to securely attach the spreading disc to the motor.
+
+## The Web Interface
+
+The web interface provides a user-friendly way to manage your chicken feeder. Here are its main features:
+
+- **Settings**: You can set up to 4 timers, each with its own feed quantity. This allows you to customize the feeding schedule to suit your chickens' needs. You can also set the time and day of the week for each timer, allowing for a feeding schedule that spans multiple days.
+
+- **Timer Activation/Deactivation**: Each timer can be individually activated or deactivated. This gives you the flexibility to temporarily disable a feeding without deleting the timer.
+
+- **Manual Feeding**: In addition to the scheduled feedings, you can also trigger a manual feeding at any time.
+
+- **Export Settings**: You can export your settings for backup or for use on another device. This creates a .csv file that can be imported back into the web interface.
+
+- **Time Synchronization**: The time on your browser is automatically synchronized with the real-time clock (RTC) on the chicken feeder when you access the web interface.
+
+- **Current Time Display**: The web interface displays the current time, updated every second. This allows you to easily check the time and ensure that the feeding schedule is running as expected.
+
+<img src="https://images.noweck.info/images/2024/05/21/78P98s95M5.png" width="49%"></img>
+<img src="https://images.noweck.info/images/2024/05/21/348Di564NY.png" width="49%"></img>
+
+> Note: While the images show the web interface being accessed via `localhost:5000`, this is for development purposes only. In a production environment, the web interface can be accessed via the IP address `192.168.4.1`.
 
 ## Installation and Configuration
 1. Clone this repository.
 2. Rename `data/config.json-template` to `data/config.json` and change the default values to your preferences.
 ```bash
-cp data/config.json-template data/config.json
+mv data/config.json-template data/config.json
 ```
 3. Install dependencies (VSCode extension PlatformIO IDE and PlatformIO Core).
 4. Configure the `platformio.ini` file to select the correct board and port, or start a Nix shell.
+
 ```bash
 nix-shell
 ```
 
-## Usage
-When you use the ESP32 in Access Point mode, the ESP32 creates its own WiFi network. The default IP address to access the ESP32's web server is: http://192.168.4.1 You can open your web browser and enter this IP address to access the web services and features provided by the ESP32.
+## Usage Instructions for ESP in Access Point Mode
+When operating the ESP in Access Point mode, it generates a dedicated WiFi network. To access the ESP's web server, use the following default IP address: http://192.168.4.1. Simply open a web browser and input this IP address to interact with the web services and functionalities offered by the ESP32.
 
-### Pinout
-The following table shows the pinout of the ESP32 microcontroller. The pinout of the DS3231 RTC module and the motor control module may vary depending on the manufacturer.
+### ESP32 Microcontroller Pinout
+The table below details the pinout configuration of the ESP32 microcontroller. Please note that the pinout for the DS3231 RTC module and the motor control module may differ based on the manufacturer's specifications.
 
-| ESP32 | RTC | Motor   |
-| ----- | --- | ------- |
-| 21    | SDA | -       |
-| 22    | SCL | -       |
-| 4     | INT | -       |
-| 2     | -   | CONTROL |
-| 3.3V  | VCC | VCC     |
-| GND   | GND | GND     |
+| ESP32S3 | ESP32DEV | RTC | Motor   |
+| ------- | -------- | --- | ------- |
+| 4       | 21       | SDA | -       |
+| 5       | 22       | SCL | -       |
+| 7       | 4        | INT | -       |
+| 8       | 2        | -   | CONTROL |
+| 3.3V    | 3.3V     | VCC | VCC     |
+| GND     | GND      | GND | GND     |
 
-### Flashing
-In the release section, you can find the latest binary files for the microcontrollers. You can use the following commands to flash the binary files to the `ESP32` or `ESP8266` microcontroller.
+### Flashing Firmware from the Release Section
+> Before proceeding, it's essential to create your own littlefs.bin file. For guidance on building this file, refer to the section about the [Makefile](#build-the-project-with-the-makefile). Without this, the configuration file will be absent, leading to improper functioning of the system.
 
-You need to install the esptool first.
+In the release section, the latest firmware binaries for the microcontrollers are available. Use the commands below to flash these binaries onto the ESP32DEV or ESP32S3 microcontroller.
+
+**First, you must install the `esptool`:**
+
 ```bash
 pip install esptool
 ```
+
+> Note: Ensure you have Python and pip installed on your system before running the above command.
+
 #### firmware.bin, bootloader.bin and partitions.bin (ESP32)
 ```bash
 esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard_reset write_flash -z --flash_mode dio --flash_freq 40m --flash_size detect 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
@@ -71,37 +123,57 @@ esptool.py --port /dev/ttyUSB0 --baud 921600 --before default_reset --after hard
 ```
 Change the `--port` parameter to match your system configuration and the path to the binary files.
 
-## Contributions and Collaboration
-We welcome contributions and collaboration on this project. If you would like to make improvements, fix bugs, or add new features, please create an issue or a pull request.
+## Contributions and Collaboration Opportunities
 
-### Build project
-Change the `BOARD` variable in the Makefile to select the correct board. The default value is `esp32dev`. You can use the following command to build the project.
+This project thrives on community involvement and we wholeheartedly welcome contributions and collaboration. Whether you're looking to implement new features, optimize existing functionalities, or fix bugs, your input is invaluable. 
+
+- **Creating Issues**: If you encounter a bug or have a suggestion for an enhancement, please open a new issue on our repository. This helps us track and address diverse user needs and feedback.
+- **Pull Requests**: Feel encouraged to fork the repository and submit pull requests. Whether it’s a minor fix or a substantial feature addition, your contributions help drive the project forward.
+- **Code Review and Discussion**: Engage in discussions or review code changes submitted by others. Your insights and feedback are crucial for maintaining high-quality code and innovative features.
+- **Sharing Expertise and Knowledge**: If you have expertise in a specific area relevant to the project, such as advanced programming techniques, efficient algorithms, or user interface design, please share your knowledge to enhance the project's development.
+
+We're excited to see how you can help shape and evolve this project. Together, we can achieve more!
+
+### Build the project with the `Makefile`
+> To select the appropriate board for your project, modify the BOARD variable in the Makefile. The default setting for this variable is `esp32s3`.
+
+To build the project with your specified settings, use the command below:
+
 ```bash
 make build
 ```
-You can use the following command to flash the project to the microcontroller.
+
+To flash the project onto the microcontroller, use the command provided below:
+
 ```bash
 make flash
 ```
-For the file system, you can use the following commands. You have to move or change the `config.json` file in the `data` folder. Visit the `config.json-template` file for more information.
+
+To set up the file system, utilize the commands outlined below.
+> It is necessary to relocate or modify the `config.json` file within the `./data` folder. For detailed instructions on configuring this file, please refer to the `config.json-template` file.
+
 ```bash
 make fs
 make uploadfs
 ```
 
-For more advanced commands, you can use the help command.
+For access to more advanced commands, utilize the **help** command.
+
 ```bash
 make help
 ```
-## Helpful Links
-* [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html)
-* [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf)
-* [DS3231 RTC](https://www.analog.com/media/en/technical-documentation/data-sheets/DS3231.pdf)
-* [RTC Interrupt](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt)
-* [RTC Synchronization](https://github.com/Friedjof/SyncRTC)
-* [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/)
-* [ESP32 deep sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/)
 
-## Author
+## Sources and helpful links
+- [PlatformIO and ESP32](https://docs.platformio.org/en/latest/platforms/espressif32.html): Comprehensive guide for using PlatformIO with ESP32 microcontrollers.
+- [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf): Detailed technical specifications of the ESP32 microcontroller.
+- [DS3231 RTC](https://www.analog.com/media/en/technical-documentation/data-sheets/DS3231.pdf): Technical datasheet for the DS3231 Real-Time Clock module.
+- [RTC Interrupt](https://github.com/IowaDave/RTC-DS3231-Arduino-Interrupt): Guide to using interrupts with the DS3231 RTC on Arduino.
+- [RTC Synchronization](https://github.com/Friedjof/SyncRTC): Project for synchronizing the RTC with external time sources.
+- [Battery Operation](https://randomnerdtutorials.com/power-esp32-esp8266-solar-panels-battery-level-monitoring/): Guide to powering ESP32 and ESP8266 with solar panels and battery level monitoring.
+- [ESP32 Deep Sleep](https://randomnerdtutorials.com/esp32-deep-sleep-arduino-ide-wake-up-sources/): Instructions on using the ESP32's deep sleep mode and its wake-up sources.
+- [ESP32S3 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf): Technical details and specifications of the ESP32S3 microcontroller.
+
+
+## Authors
 - [Friedjof Noweck](https://github.com/Friedjof)
 - [Bernhard schlagheck](https://github.com/bschlagheck)

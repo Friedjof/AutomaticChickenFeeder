@@ -12,7 +12,7 @@ UPLOAD_PORT = /dev/ttyUSB0
 # Serial baud rate (you may need to adjust this)
 UPLOAD_SPEED = 115200
 
-# Define the ESP32 board model (e.g., esp32, esp32dev, etc.)
+# Define the ESP32 board model (esp8266, esp32dev or esp32s3)
 BOARD = esp32dev
 
 # Location of the SPIFFS filesystem directory
