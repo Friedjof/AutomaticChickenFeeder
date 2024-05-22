@@ -48,7 +48,7 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: platformio-build
+        name: esp32dev-build
         path: artifacts
 
     - name: Cleanup
@@ -85,7 +85,7 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: platformio-build
+        name: esp32s3-build
         path: artifacts
 
     - name: Cleanup
@@ -123,7 +123,7 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: platformio-build
+        name: esp8266-build
         path: artifacts
 
     - name: Cleanup
