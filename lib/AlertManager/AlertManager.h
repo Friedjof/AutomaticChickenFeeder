@@ -1,6 +1,15 @@
-#pragma once
+#ifndef __DEFINE_ALERT_MANAGER_H__
+#define __DEFINE_ALERT_MANAGER_H__
 
+#include <Arduino.h>
+#include <unordered_map>
 #include <string>
+
+#ifndef __CLOCK_H__
+#define __CLOCK_H__
+#include <Wire.h>
+#include <DS3231.h>
+#endif
 
 #include <ClockService.h>
 #include <ConfigManager.h>
@@ -10,63 +19,71 @@
 #define ALERT_BITS 0b00010000 // Alarm when day, hours, minutes, and seconds match
 
 // type definitions
-typedef struct {
-  unsigned int year;
-  unsigned int month;
-  unsigned int day;
-  unsigned int hour;
-  unsigned int minute;
-  unsigned int second;
+typedef struct
+{
+    unsigned int year;
+    unsigned int month;
+    unsigned int day;
+    unsigned int hour;
+    unsigned int minute;
+    unsigned int second;
 
-  unsigned int weekday;
+    unsigned int weekday;
 
-  float temperature;
+    float temperature;
 } ds3231_datetime_t;
 
-typedef struct {
-  int hour;
-  int minute;
-  int weekday;
+typedef struct
+{
+    int hour;
+    int minute;
+    int weekday;
+
+    // optional timer id
+    int optional_id;
 } ds3231_timer_t;
 
-typedef struct {
-  ds3231_timer_t* timers;
-  size_t num_timers;
+typedef struct
+{
+    ds3231_timer_t *timers;
+    size_t num_timers;
 } ds3231_timer_list_t;
 
-typedef struct {
-  ds3231_timer_t timer;
-  bool empty;
+typedef struct
+{
+    ds3231_timer_t timer;
+    bool empty;
 } optional_ds3231_timer_t;
 
-typedef struct {
-  byte day;
-  byte hour;
-  byte minute;
-  byte second;
-  byte alert_bits;
-  bool day_is_day;
-  bool h12;
-  bool pm;
-  volatile byte alarm_flag;
+typedef struct
+{
+    byte day;
+    byte hour;
+    byte minute;
+    byte second;
+    byte alert_bits;
+    bool day_is_day;
+    bool h12;
+    bool pm;
+    volatile byte alarm_flag;
 } rtc_alert_t;
 
-class AlertManager {
-  private:
-    ConfigManager& configManager;
-    ClockService& clockService;
-    LoggingManager& loggingManager;
+class AlertManager
+{
+private:
+    ConfigManager &configManager;
+    ClockService &clockService;
+    LoggingManager &loggingManager;
 
     byte alarmDay, alarmHour, alarmMinute, alarmSecond, alarmBits;
 
     bool initialized = false;
 
-  public:
-    AlertManager(ConfigManager& configManager, LoggingManager& loggingManager, ClockService& clockService);
+public:
+    AlertManager(ConfigManager &configManager, LoggingManager &loggingManager, ClockService &clockService);
     ~AlertManager();
 
     void begin();
-    bool is_initialized();
 
     // debugging functions
     void print_now();
@@ -87,8 +104,13 @@ class AlertManager {
     optional_ds3231_timer_t get_earliest_timer_of_the_day(timer_config_list_t timers, int weekday);
     bool timer_is_active_on_weekday(timer_config_t timer, int weekday);
 
+    bool set_new_datetime(int year, int month, int day, int hour, int minute, int second);
+
     void setup_interrupt();
+    void disable_alarm_2();
 
     int weekday_to_int(char *weekday);
     String int_to_weekday(int weekday);
 };
+
+#endif

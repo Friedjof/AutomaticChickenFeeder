@@ -1,22 +1,26 @@
 #include "LoggingManager.h"
 
-
-LoggingManager::LoggingManager(ClockService& clockService) : clockService(clockService) {
+LoggingManager::LoggingManager(ClockService &clockService) : clockService(clockService)
+{
   this->filename = DEFAULT_LOG_FILE;
   this->log_level = LOG_LEVEL_DEBUG;
 }
 
-LoggingManager::~LoggingManager() {
+LoggingManager::~LoggingManager()
+{
   // nothing to do here
 }
 
-void LoggingManager::begin() {
-  if (this->initialized) {
+void LoggingManager::begin()
+{
+  if (this->initialized)
+  {
     return;
   }
 
   // check if file exists
-  if (!LittleFS.exists(this->filename)) {
+  if (!LittleFS.exists(this->filename))
+  {
     // create file
     File file = LittleFS.open(this->filename, "w");
     file.close();
@@ -27,11 +31,13 @@ void LoggingManager::begin() {
   this->initialized = true;
 }
 
-bool LoggingManager::is_initialized() {
+bool LoggingManager::is_initialized()
+{
   return this->initialized;
 }
 
-String LoggingManager::log_string(log_level_t level) {
+String LoggingManager::log_string(log_level_t level)
+{
   String log_message = "(";
 
   log_message += this->clockService.datetime_as_string();
@@ -45,242 +51,300 @@ String LoggingManager::log_string(log_level_t level) {
   return log_message;
 }
 
-String LoggingManager::log_level_to_string(log_level_t level) {
+String LoggingManager::log_level_to_string(log_level_t level)
+{
   String log_level_string;
 
-  if (level == LOG_LEVEL_DEBUG) {
-  log_level_string = "DEBUG";
-  } else if (level == LOG_LEVEL_INFO) {
-  log_level_string = "INFO";
-  } else if (level == LOG_LEVEL_INFO_FILE) {
-  log_level_string = "INFO";
-  } else if (level == LOG_LEVEL_WARNING) {
-  log_level_string = "WARNING";
-  } else if (level == LOG_LEVEL_ERROR) {
-  log_level_string = "ERROR";
+  if (level == LOG_LEVEL_DEBUG)
+  {
+    log_level_string = "DEBUG";
+  }
+  else if (level == LOG_LEVEL_INFO)
+  {
+    log_level_string = "INFO";
+  }
+  else if (level == LOG_LEVEL_INFO_FILE)
+  {
+    log_level_string = "INFO";
+  }
+  else if (level == LOG_LEVEL_WARNING)
+  {
+    log_level_string = "WARNING";
+  }
+  else if (level == LOG_LEVEL_ERROR)
+  {
+    log_level_string = "ERROR";
   }
 
   return log_level_string;
 }
 
-void LoggingManager::log(log_level_t level, const char* message) {
-  if (level >= this->log_level || !this->log_sequence) {
-  String log_message = this->log_string(level);
+void LoggingManager::log(log_level_t level, const char *message)
+{
+  if (level >= this->log_level || !this->log_sequence)
+  {
+    String log_message = this->log_string(level);
 
-  log_message += message;
-  log_message += "\"\n";
+    log_message += message;
+    log_message += "\"\n";
 
-  // write to file
-  this->append_to_file(level, log_message.c_str());
+    // write to file
+    this->append_to_file(level, log_message.c_str());
 
-  // Serial output
-  Serial.print(log_message.c_str());
+    // Serial output
+    Serial.print(log_message.c_str());
   }
 }
 
-void LoggingManager::log(log_level_t level, String message) {
+void LoggingManager::log(log_level_t level, String message)
+{
   this->log(level, message.c_str());
 }
 
-void LoggingManager::log(log_level_t level, bool message) {
+void LoggingManager::log(log_level_t level, bool message)
+{
   this->log(level, message ? "true" : "false");
 }
 
-void LoggingManager::log(log_level_t level, int message) {
+void LoggingManager::log(log_level_t level, int message)
+{
   this->log(level, String(message).c_str());
 }
 
-void LoggingManager::log(log_level_t level, unsigned int message) {
+void LoggingManager::log(log_level_t level, unsigned int message)
+{
   this->log(level, String(message).c_str());
 }
 
-void LoggingManager::log(log_level_t level, long message) {
+void LoggingManager::log(log_level_t level, long message)
+{
   this->log(level, String(message).c_str());
 }
 
-void LoggingManager::log(log_level_t level, unsigned long message) {
+void LoggingManager::log(log_level_t level, unsigned long message)
+{
   this->log(level, String(message).c_str());
 }
 
-void LoggingManager::log(log_level_t level, float message) {
+void LoggingManager::log(log_level_t level, float message)
+{
   this->log(level, String(message).c_str());
 }
 
-void LoggingManager::log(log_level_t level, double message) {
+void LoggingManager::log(log_level_t level, double message)
+{
   this->log(level, String(message).c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, const char* message) {
-  if (level >= this->log_level && !this->log_sequence) {
-  this->log_sequence = true;
-  this->log_sequence_level = level;
+void LoggingManager::start_seq(log_level_t level, const char *message)
+{
+  if (level >= this->log_level && !this->log_sequence)
+  {
+    this->log_sequence = true;
+    this->log_sequence_level = level;
 
-  String log_message = this->log_string(level);
-  log_message += message;
+    String log_message = this->log_string(level);
+    log_message += message;
 
-  // write to file
-  this->append_to_file(this->log_sequence_level, log_message.c_str());
+    // write to file
+    this->append_to_file(this->log_sequence_level, log_message.c_str());
 
-  // Serial output
-  Serial.print(log_message.c_str());
+    // Serial output
+    Serial.print(log_message.c_str());
   }
 }
 
-void LoggingManager::start_seq(log_level_t level, String message) {
+void LoggingManager::start_seq(log_level_t level, String message)
+{
   this->start_seq(level, message.c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, bool message) {
+void LoggingManager::start_seq(log_level_t level, bool message)
+{
   this->start_seq(level, message ? "true" : "false");
 }
 
-void LoggingManager::start_seq(log_level_t level, int message) {
+void LoggingManager::start_seq(log_level_t level, int message)
+{
   this->start_seq(level, String(message).c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, unsigned int message) {
+void LoggingManager::start_seq(log_level_t level, unsigned int message)
+{
   this->start_seq(level, String(message).c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, long message) {
+void LoggingManager::start_seq(log_level_t level, long message)
+{
   this->start_seq(level, String(message).c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, unsigned long message) {
+void LoggingManager::start_seq(log_level_t level, unsigned long message)
+{
   this->start_seq(level, String(message).c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, float message) {
+void LoggingManager::start_seq(log_level_t level, float message)
+{
   this->start_seq(level, String(message).c_str());
 }
 
-void LoggingManager::start_seq(log_level_t level, double message) {
+void LoggingManager::start_seq(log_level_t level, double message)
+{
   this->start_seq(level, String(message).c_str());
 }
 
-void LoggingManager::append_seq(const char* message) {
-  if (this->log_sequence) {
-  String log_message = message;
+void LoggingManager::append_seq(const char *message)
+{
+  if (this->log_sequence)
+  {
+    String log_message = message;
 
-  // write to file
-  this->append_to_file(this->log_sequence_level, log_message.c_str());
+    // write to file
+    this->append_to_file(this->log_sequence_level, log_message.c_str());
 
-  // Serial output
-  Serial.print(log_message.c_str());
+    // Serial output
+    Serial.print(log_message.c_str());
   }
 }
 
-void LoggingManager::append_seq(String message) {
+void LoggingManager::append_seq(String message)
+{
   this->append_seq(message.c_str());
 }
 
-void LoggingManager::append_seq(bool message) {
+void LoggingManager::append_seq(bool message)
+{
   this->append_seq(message ? "true" : "false");
 }
 
-void LoggingManager::append_seq(int message) {
+void LoggingManager::append_seq(int message)
+{
   this->append_seq(String(message).c_str());
 }
 
-void LoggingManager::append_seq(unsigned int message) {
+void LoggingManager::append_seq(unsigned int message)
+{
   this->append_seq(String(message).c_str());
 }
 
-void LoggingManager::append_seq(long message) {
+void LoggingManager::append_seq(long message)
+{
   this->append_seq(String(message).c_str());
 }
 
-void LoggingManager::append_seq(unsigned long message) {
+void LoggingManager::append_seq(unsigned long message)
+{
   this->append_seq(String(message).c_str());
 }
 
-void LoggingManager::append_seq(float message) {
+void LoggingManager::append_seq(float message)
+{
   this->append_seq(String(message).c_str());
 }
 
-void LoggingManager::append_seq(double message) {
+void LoggingManager::append_seq(double message)
+{
   this->append_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq(const char* message) {
-  if (this->log_sequence) {
+void LoggingManager::end_seq(const char *message)
+{
+  if (this->log_sequence)
+  {
 
-  String log_message = message;
-  log_message += "\"\n";
+    String log_message = message;
+    log_message += "\"\n";
 
-  // write to file
-  this->append_to_file(this->log_sequence_level, log_message.c_str());
+    // write to file
+    this->append_to_file(this->log_sequence_level, log_message.c_str());
 
-  // Serial output
-  Serial.print(log_message.c_str());
-  
-  this->log_sequence = false;
+    // Serial output
+    Serial.print(log_message.c_str());
+
+    this->log_sequence = false;
   }
 }
 
-void LoggingManager::end_seq(String message) {
+void LoggingManager::end_seq(String message)
+{
   this->end_seq(message.c_str());
 }
 
-void LoggingManager::end_seq(bool message) {
+void LoggingManager::end_seq(bool message)
+{
   this->end_seq(message ? "true" : "false");
 }
 
-void LoggingManager::end_seq(int message) {
+void LoggingManager::end_seq(int message)
+{
   this->end_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq(unsigned int message) {
+void LoggingManager::end_seq(unsigned int message)
+{
   this->end_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq(long message) {
+void LoggingManager::end_seq(long message)
+{
   this->end_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq(unsigned long message) {
+void LoggingManager::end_seq(unsigned long message)
+{
   this->end_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq(float message) {
+void LoggingManager::end_seq(float message)
+{
   this->end_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq(double message) {
+void LoggingManager::end_seq(double message)
+{
   this->end_seq(String(message).c_str());
 }
 
-void LoggingManager::end_seq() {
-  if (this->log_sequence) {
-  // write to file
-  this->append_to_file(this->log_sequence_level, "\"\n");
+void LoggingManager::end_seq()
+{
+  if (this->log_sequence)
+  {
+    // write to file
+    this->append_to_file(this->log_sequence_level, "\"\n");
 
-  // Serial output
-  Serial.print("\"\n");
-  
-  this->log_sequence = false;
+    // Serial output
+    Serial.print("\"\n");
+
+    this->log_sequence = false;
   }
 }
 
-void LoggingManager::set_filename(const char* filename) {
+void LoggingManager::set_filename(const char *filename)
+{
   this->filename = filename;
 }
 
-const char* LoggingManager::get_filename() {
+const char *LoggingManager::get_filename()
+{
   return this->filename;
 }
 
-int LoggingManager::get_file_line_counter() {
+int LoggingManager::get_file_line_counter()
+{
   return this->file_line_counter;
 }
 
-void LoggingManager::append_to_file(log_level_t level, String message) {
-  if (level < this->file_log_level) {
+void LoggingManager::append_to_file(log_level_t level, String message)
+{
+  if (level < this->file_log_level)
+  {
     return;
   }
 
   // check if file exists
-  if (!LittleFS.exists(this->filename)) {
+  if (!LittleFS.exists(this->filename))
+  {
     return;
   }
 
@@ -291,12 +355,14 @@ void LoggingManager::append_to_file(log_level_t level, String message) {
   file.print(message.c_str());
 
   // check if \n is in the message to count the lines
-  if (message.indexOf('\n') != -1) {
+  if (message.indexOf('\n') != -1)
+  {
     this->file_line_counter++;
   }
 
   // check if file is too big
-  if (this->file_line_counter > MAX_NR_OF_LINES) {
+  if (this->file_line_counter > MAX_NR_OF_LINES)
+  {
     this->cut_log_file();
   }
 
@@ -304,26 +370,33 @@ void LoggingManager::append_to_file(log_level_t level, String message) {
   file.close();
 }
 
-void LoggingManager::cut_log_file() {
+void LoggingManager::cut_log_file()
+{
   // check if file exists
-  if (!LittleFS.exists(this->filename)) {
+  if (!LittleFS.exists(this->filename))
+  {
     return;
   }
 
   // delete first n lines
-  if (this->delete_first_n_lines(this->file_line_counter - REDUCE_LOG_FILE_TO)) {
+  if (this->delete_first_n_lines(this->file_line_counter - REDUCE_LOG_FILE_TO))
+  {
     // reset line counter
     this->file_line_counter = REDUCE_LOG_FILE_TO;
 
     this->log(LOG_LEVEL_INFO, "Log file was cut");
-  } else {
+  }
+  else
+  {
     this->log(LOG_LEVEL_ERROR, "Log file could not be cut");
   }
 }
 
-bool LoggingManager::delete_first_n_lines(int n) {
+bool LoggingManager::delete_first_n_lines(int n)
+{
   // check if file exists
-  if (!LittleFS.exists(this->filename)) {
+  if (!LittleFS.exists(this->filename))
+  {
     return false;
   }
 
@@ -337,8 +410,10 @@ bool LoggingManager::delete_first_n_lines(int n) {
 
   // count \n in file
   int line_counter = 0;
-  while (file.available()) {
-    if (file.read() == '\n') {
+  while (file.available())
+  {
+    if (file.read() == '\n')
+    {
       line_counter++;
     }
   }
@@ -347,7 +422,8 @@ bool LoggingManager::delete_first_n_lines(int n) {
   file.close();
 
   // check if n is bigger than the number of lines
-  if (n > line_counter) {
+  if (n > line_counter)
+  {
     return false;
   }
 
@@ -359,14 +435,17 @@ bool LoggingManager::delete_first_n_lines(int n) {
 
   // delete first n lines
   int line_counter_tmp = 0;
-  while (file.available()) {
+  while (file.available())
+  {
     char c = file.read();
 
-    if (c == '\n') {
+    if (c == '\n')
+    {
       line_counter_tmp++;
     }
 
-    if (line_counter_tmp >= n) {
+    if (line_counter_tmp >= n)
+    {
       tmp_file.write(c);
     }
   }
@@ -386,9 +465,11 @@ bool LoggingManager::delete_first_n_lines(int n) {
   return true;
 }
 
-String LoggingManager::get_logs() {
+String LoggingManager::get_logs()
+{
   // check if file exists
-  if (!LittleFS.exists(this->filename)) {
+  if (!LittleFS.exists(this->filename))
+  {
     return "";
   }
 
@@ -397,7 +478,8 @@ String LoggingManager::get_logs() {
 
   // read file
   String logs = "";
-  while (file.available()) {
+  while (file.available())
+  {
     logs += (char)file.read();
   }
 
@@ -407,9 +489,11 @@ String LoggingManager::get_logs() {
   return logs;
 }
 
-int LoggingManager::count_log_lines() {
+int LoggingManager::count_log_lines()
+{
   // check if file exists
-  if (!LittleFS.exists(this->filename)) {
+  if (!LittleFS.exists(this->filename))
+  {
     return 0;
   }
 
@@ -418,8 +502,10 @@ int LoggingManager::count_log_lines() {
 
   // count \n in file
   int line_counter = 0;
-  while (file.available()) {
-    if (file.read() == '\n') {
+  while (file.available())
+  {
+    if (file.read() == '\n')
+    {
       line_counter++;
     }
   }
@@ -430,18 +516,22 @@ int LoggingManager::count_log_lines() {
   return line_counter;
 }
 
-void LoggingManager::set_log_level(log_level_t level) {
+void LoggingManager::set_log_level(log_level_t level)
+{
   this->log_level = level;
 }
 
-log_level_t LoggingManager::get_log_level() {
+log_level_t LoggingManager::get_log_level()
+{
   return this->log_level;
 }
 
-void LoggingManager::set_file_log_level(log_level_t level) {
+void LoggingManager::set_file_log_level(log_level_t level)
+{
   this->file_log_level = level;
 }
 
-log_level_t LoggingManager::get_file_log_level() {
+log_level_t LoggingManager::get_file_log_level()
+{
   return this->file_log_level;
 }

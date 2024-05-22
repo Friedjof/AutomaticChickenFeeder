@@ -1,16 +1,17 @@
-#pragma once
+#ifndef __CONFIG_CONFIG_MANAGER_H__
+#define __CONFIG_CONFIG_MANAGER_H__
 
 // constants (changes may lead to crashes)
-#define MAX_TIMERS 4                                // maximum number of timers
-#define MAX_TIMER_NAME_LENGTH 32                    // maximum length of timer name
-#define MAX_TIMER_TIME_LENGTH 6                     // maximum length of timer time string
-#define MAX_WIFI_SSID_LENGTH 32                     // maximum length of wifi ssid
-#define MAX_WIFI_PASSWORD_LENGTH 64                 // maximum length of wifi password
-#define MAX_FILENAME_LENGTH 32                      // maximum length of filename
-#define JSON_BUFFER_SIZE 4096                       // size of json buffer
-#define DEFAULT_CONFIG_FILE "/config.json"          // default config file
-#define TEMPLAT_CONFIG_FILE "/config.json-template" // default config file template
+#define MAX_TIMERS 4                       // maximum number of timers
+#define MAX_TIMER_NAME_LENGTH 32           // maximum length of timer name
+#define MAX_TIMER_TIME_LENGTH 6            // maximum length of timer time string
+#define MAX_WIFI_SSID_LENGTH 32            // maximum length of wifi ssid
+#define MAX_WIFI_PASSWORD_LENGTH 64        // maximum length of wifi password
+#define MAX_FILENAME_LENGTH 32             // maximum length of filename
+#define JSON_BUFFER_SIZE 4096              // size of json buffer
+#define DEFAULT_CONFIG_FILE "/config.json" // default config file
 
+#include <Arduino.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 
@@ -25,6 +26,7 @@ typedef struct {
 typedef struct {
   bool auto_sleep;
   int auto_sleep_after;
+  int next_timer_id;
 } system_t;
 
 typedef struct {
@@ -36,6 +38,7 @@ typedef struct {
   char name[MAX_TIMER_NAME_LENGTH];
   timer_time_t time;
   bool enabled;
+  int quantity;
 
   bool monday;
   bool tuesday;
@@ -44,6 +47,9 @@ typedef struct {
   bool friday;
   bool saturday;
   bool sunday;
+
+  // optional timer id
+  int optional_id;
 } timer_config_t;
 
 typedef struct {
@@ -74,7 +80,6 @@ class ConfigManager {
     const char* filename;
     LoggingManager& loggingManager;
 
-    bool initialized = false;
   public:
     ConfigManager(const char* filename, LoggingManager& loggingManager);
     ConfigManager(LoggingManager &loggingManager);
@@ -83,8 +88,6 @@ class ConfigManager {
     config_t config;
 
     void begin();
-    bool is_initialized();
-
     void load_config();
     void save_config();
 
@@ -95,13 +98,19 @@ class ConfigManager {
     const char* get_wifi_password();
     void set_wifi_password(const char* password);
 
+    void set_next_timer_id(int id);
+    int get_next_timer_id();
+
     timer_config_t get_timer(int index);
     size_t get_num_timers();
     timer_config_list_t get_timers();
-    StaticJsonDocument<JSON_BUFFER_SIZE> get_timers_json();
+    void get_timers_json(JsonDocument &json);
     feed_config_t get_feed_config();
+    unsigned long get_feeding_time();
+    unsigned long get_auto_sleep_after();
     system_t get_system_config();
     int get_quantity();
+    int get_quantity(int timer_id);
     float get_factor();
 
     void set_factor(float factor);
@@ -109,8 +118,6 @@ class ConfigManager {
 
     String time_to_string(timer_time_t time);
     timer_time_t get_time_from_string(String time);
-
-    // debugging functions
-    void print_config();
-    void print_timers();
 };
+
+#endif
