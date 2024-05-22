@@ -107,7 +107,6 @@ void setup()
   pinMode(RELAY_PIN, OUTPUT);
   digitalWrite(RELAY_PIN, LOW);
 
-
   pinMode(CLINT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(CLINT), startFeeding, FALLING);
   attachInterrupt(digitalPinToInterrupt(CLINT), startFeeding, FALLING);
@@ -280,8 +279,9 @@ void setup()
       DeserializationError error = deserializeJson(doc, (const char*)data);
 
       if (error) {
-        Serial.print("[ERROR] deserializeJson() failed: ");
-        Serial.println(error.c_str());
+        loggingManager.start_seq(LOG_LEVEL_ERROR, "deserializeJson() failed: ");
+        loggingManager.append_seq(error.c_str());
+        loggingManager.end_seq();
         return;
       }
 
@@ -294,7 +294,19 @@ void setup()
 
       doc.clear();
 
-      Serial.printf("[INFO] new datime synced: %d-%d-%d %d:%d:%d\n", year, month, day, hour, minute, second);
+      loggingManager.start_seq(LOG_LEVEL_INFO, "Syncronize RTC with browser time [");
+      loggingManager.append_seq(year < 10 ? "0" + String(year) : String(year));
+      loggingManager.append_seq("-");
+      loggingManager.append_seq(month < 10 ? "0" + String(month) : String(month));
+      loggingManager.append_seq("-");
+      loggingManager.append_seq(day < 10 ? "0" + String(day) : String(day));
+      loggingManager.append_seq(" ");
+      loggingManager.append_seq(hour < 10 ? "0" + String(hour) : String(hour));
+      loggingManager.append_seq(":");
+      loggingManager.append_seq(minute < 10 ? "0" + String(minute) : String(minute));
+      loggingManager.append_seq(":");
+      loggingManager.append_seq(second < 10 ? "0" + String(second) : String(second));
+      loggingManager.end_seq("]");
 
       alertManager.set_new_datetime(year, month, day, hour, minute, second);
 
@@ -328,7 +340,7 @@ void setup()
     server.addHandler(feed_handler);
 
     // Webserver starten
-    Serial.println("[INFO] Starte Webserver");
+    loggingManager.log(LOG_LEVEL_INFO, "Starte Webserver");
     server.begin();
 
     setSleepTime();
@@ -339,14 +351,14 @@ void loop()
 {
   if (feeding[0] && !feeding[1])
   {
-    Serial.println("[INFO] feeding");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "start feeding");
 
     digitalWrite(RELAY_PIN, HIGH);
     feeding[1] = true;
   }
   else if (feeding[1] && !feeding[0])
   {
-    Serial.println("[INFO] stop feeding");
+    loggingManager.log(LOG_LEVEL_INFO_FILE, "stop feeding");
 
     digitalWrite(RELAY_PIN, LOW);
 

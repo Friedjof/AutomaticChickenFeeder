@@ -26,7 +26,7 @@ void AlertManager::set_next_alert()
   {
     this->set_alert(this->convert_to_rtc_alert(next_alert.timer));
 
-    loggingManager.start_seq(LOG_LEVEL_INFO, "[INFO] next timer id: ");
+    loggingManager.start_seq(LOG_LEVEL_INFO, "next timer id: ");
     loggingManager.append_seq(next_alert.timer.optional_id);
     loggingManager.end_seq();
 
@@ -35,7 +35,7 @@ void AlertManager::set_next_alert()
   }
   else
   {
-    loggingManager.log(LOG_LEVEL_WARNING, "[WARNING] no next alert found!");
+    loggingManager.log(LOG_LEVEL_WARNING, "no next alert found!");
   }
 }
 
@@ -436,7 +436,7 @@ void AlertManager::print_now()
   ds3231_datetime_t now = this->now();
 
   // Display the date
-  loggingManager.start_seq(LOG_LEVEL_INFO, "[INFO] date: ");
+  loggingManager.start_seq(LOG_LEVEL_INFO, "date: ");
   loggingManager.append_seq(now.year);
   loggingManager.append_seq("-");
   loggingManager.append_seq(now.month);
