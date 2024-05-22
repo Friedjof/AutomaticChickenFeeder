@@ -30,7 +30,8 @@
 #define CSS_FILE "/style.css"
 #define JS_FILE "/script.js"
 
-#define FEED_FACTOR 1  // factor to match the mass of the food
+// Debugging mode
+#define DEBUG false
 
 #if defined(ESP32DEV) || defined(ESP8266)
 #define RELAY_PIN 2    // D2 (Onboard LED)
@@ -79,7 +80,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  Serial.println("Starte Hühner-Futterautomat");
+  Serial.println("[INFO] Starte Hühner-Futterautomat");
 
   // Setup of the alert manager
   alertManager.setup();
@@ -110,25 +111,25 @@ void setup() {
   #endif
 
   if (timer_wakeup) {
-    Serial.println("Wakeup caused by external signal using RTC_IO");
+    Serial.println("[INFO] Wakeup caused by external signal using RTC_IO");
     awakened = true;
 
     // feed the chickens
     startFeeding();
   } else {
     // Setup WiFi
-    Serial.print("Waiting for SSID and password…");
+    Serial.print("[INFO] Waiting for SSID and password…");
     while (strcmp(configManager.get_wifi_ssid(), "") == 0 || strcmp(configManager.get_wifi_password(), "") == 0) {
       Serial.print(".");
       delay(1000);
     }
-    Serial.println("Done");
+    Serial.println("[INFO] Done");
 
-    Serial.println("Starte WiFi Access Point");
+    Serial.println("[INFO] Starte WiFi Access Point");
     WiFi.softAP(configManager.get_wifi_ssid(), configManager.get_wifi_password());
 
     Serial.println();
-    Serial.print("Hotspot-SSID: ");
+    Serial.print("[INFO] Hotspot-SSID: ");
     Serial.println(configManager.get_wifi_ssid());
     Serial.print("Hotspot-IP-Adresse: ");
     Serial.println(WiFi.softAPIP());
@@ -149,13 +150,28 @@ void setup() {
       request->send(LittleFS, JS_FILE, "text/javascript");
     });
 
+    // for debugging only (this will dump the config to the browser including the wifi password)
+    server.on("/config.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+      if (DEBUG) {
+        request->send(LittleFS, CONFIG_FILE, "application/json");
+      } else {
+        request->send(404);
+      }
+    });
+
     server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request) {
       new_request();
 
       String jsonString;
-      serializeJson(configManager.get_timers_json(), jsonString);
+      
+      JsonDocument json;
+      configManager.get_timers_json(json);
 
-      Serial.println("Get configuration");
+      serializeJson(json, jsonString);
+
+      json.clear();
+
+      Serial.println("[INFO] Get configuration");
 
       request->send(200, "application/json", jsonString);
     });
@@ -163,7 +179,8 @@ void setup() {
     // This endpoint is used to set the timers
     AsyncCallbackJsonWebHandler* set_handler = new AsyncCallbackJsonWebHandler("/set", [](AsyncWebServerRequest *request, JsonVariant &json) {
       // Convert the data to a JSON object
-      Serial.println("Set new configuration");
+      Serial.println("[INFO] Set new configuration");
+
       configManager.set_timers_json(json);
 
       // Setup the new alert (if necessary)
@@ -176,7 +193,7 @@ void setup() {
 
     // activate sleep mode
     server.on("/sleep", HTTP_GET, [](AsyncWebServerRequest *request) {
-      Serial.println("Schlafmodus aktiviert");
+      Serial.println("[INFO] Schlafmodus aktiviert");
       
       goToSleep();
 
@@ -202,6 +219,8 @@ void setup() {
       String jsonString;
       serializeJson(json, jsonString);
 
+      json.clear();
+
       request->send(200, "application/json", jsonString); 
     });
 
@@ -210,7 +229,7 @@ void setup() {
       DeserializationError error = deserializeJson(doc, (const char*)data);
 
       if (error) {
-        Serial.print(F("deserializeJson() failed: "));
+        Serial.print("[ERROR] deserializeJson() failed: ");
         Serial.println(error.c_str());
         return;
       }
@@ -222,7 +241,9 @@ void setup() {
       int minute = doc["min"];
       int second = doc["s"];
 
-      Serial.printf("new datime synced: %d-%d-%d %d:%d:%d\n", year, month, day, hour, minute, second);
+      doc.clear();
+
+      Serial.printf("[INFO] new datime synced: %d-%d-%d %d:%d:%d\n", year, month, day, hour, minute, second);
 
       alertManager.set_new_datetime(year, month, day, hour, minute, second);
 
@@ -241,6 +262,8 @@ void setup() {
       String jsonString;
       serializeJson(json, jsonString);
 
+      json.clear();
+
       request->send(200, "application/json", jsonString); 
     });
 
@@ -254,7 +277,7 @@ void setup() {
     server.addHandler(feed_handler);
 
     // Webserver starten
-    Serial.println("Starte Webserver");
+    Serial.println("[INFO] Starte Webserver");
     server.begin();
 
     setSleepTime();
@@ -263,12 +286,12 @@ void setup() {
 
 void loop() {
   if (feeding[0] && !feeding[1]) {
-    Serial.println("feeding");
+    Serial.println("[INFO] feeding");
 
     digitalWrite(RELAY_PIN, HIGH);
     feeding[1] = true;
   } else if (feeding[1] && !feeding[0]) {
-    Serial.println("stop feeding");
+    Serial.println("[INFO] stop feeding");
 
     digitalWrite(RELAY_PIN, LOW);
 
@@ -293,7 +316,7 @@ void goToSleep() {
   alertManager.set_next_alert();
 
   // go to sleep
-  Serial.println("Going to sleep because of auto sleep");
+  Serial.println("[INFO] Going to sleep because of auto sleep");
   #if defined(ESP32DEV) || defined(ESP32S3)
   esp_deep_sleep_start();
   #elif defined(ESP8266)
@@ -310,6 +333,7 @@ void IRAM_ATTR startFeeding() {
   interrupt_flag = true;
   feeding[0] = true;
 
+  // set the time when the feeding should stop
   feed_millis = millis() + configManager.get_feeding_time();
 }
 

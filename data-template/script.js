@@ -222,6 +222,18 @@ async function saveTimers() {
     }
     const feed_quantity = parseInt(document.getElementById('feed').value);
 
+    // convert timers dict to list and make sure that the sequence is in the right order
+    var list_timers = [];
+    for (var i = 0; i < currentId; i++) {
+        if (timers[i] == undefined) {
+            continue;
+        }
+        
+        list_timers.push(timers[i]);
+    }
+
+    console.log(list_timers);
+
     await fetch(url + '/set', {
         method: 'POST',
         headers: {
@@ -229,7 +241,7 @@ async function saveTimers() {
         'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            timers: timers,
+            timers: list_timers,
             feed: {
                 quantity: feed_quantity
             }

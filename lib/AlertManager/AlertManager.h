@@ -34,6 +34,9 @@ typedef struct {
     int hour;
     int minute;
     int weekday;
+
+    // optional timer id
+    int optional_id;
 } ds3231_timer_t;
 
 typedef struct {

@@ -5,10 +5,11 @@
     },
     "system": {
         "auto_sleep": true,
-        "auto_sleep_after": 300
+        "auto_sleep_after": 30,
+        "next_timer_id": 0
     },
     "feed": {
-        "quantity": 100,
+        "quantity": 5,
         "factor": 1.0
     },
     "timers": [
@@ -16,6 +17,7 @@
             "name": "Morning",
             "time": "07:00",
             "enabled": true,
+            "quantity": 7,
             "days": {
                 "monday": true,
                 "tuesday": true,
@@ -30,6 +32,7 @@
             "name": "Evening",
             "time": "19:00",
             "enabled": false,
+            "quantity": 0,
             "days": {
                 "monday": true,
                 "tuesday": true,
@@ -44,6 +47,7 @@
             "name": "Weekend",
             "time": "09:00",
             "enabled": true,
+            "quantity": 0,
             "days": {
                 "monday": false,
                 "tuesday": false,
@@ -58,6 +62,7 @@
             "name": "Night",
             "time": "23:00",
             "enabled": true,
+            "quantity": 0,
             "days": {
                 "monday": true,
                 "tuesday": true,

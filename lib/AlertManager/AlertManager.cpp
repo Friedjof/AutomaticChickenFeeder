@@ -29,8 +29,14 @@ void AlertManager::set_next_alert() {
 
     if (!next_alert.empty) {
         this->set_alert(this->convert_to_rtc_alert(next_alert.timer));
+
+        Serial.print("[INFO] next timer id: ");
+        Serial.println(next_alert.timer.optional_id);
+
+        this->configManager.set_next_timer_id(next_alert.timer.optional_id);
+        this->configManager.save_config();
     } else {
-        Serial.println("No next alert found!");
+        Serial.println("[WARNING] No next alert found!");
     }
 }
 
@@ -117,7 +123,7 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
             if (weekday == current_weekday) {
                 timer_config_list_t sorted_timers = this->configManager.sort_timers_by_time(timers_by_weekday.timers);
 
-                // Search for the next timer
+                // search for the next timer
                 for (size_t j = 0; j < sorted_timers.num_timers; j++) {
                     timer_config_t next_alert = sorted_timers.timers[j];
 
@@ -125,6 +131,7 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
                         earliest_timer.hour = next_alert.time.hour;
                         earliest_timer.minute = next_alert.time.minute;
                         earliest_timer.weekday = weekday;
+                        earliest_timer.optional_id = next_alert.optional_id;
 
                         optional_earliest_timer.empty = false;
                         optional_earliest_timer.timer = earliest_timer;
@@ -136,6 +143,7 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
                         earliest_timer.hour = next_alert.time.hour;
                         earliest_timer.minute = next_alert.time.minute;
                         earliest_timer.weekday = weekday;
+                        earliest_timer.optional_id = next_alert.optional_id;
 
                         optional_earliest_timer.empty = false;
                         optional_earliest_timer.timer = earliest_timer;
@@ -158,7 +166,7 @@ optional_ds3231_timer_t AlertManager::get_next_alert() {
         return optional_earliest_timer;
     }
 
-    // Deaktiviert den Alarm, wenn kein Timer aktiv ist
+    // deactivate the alarm if no timer is active
     this->rtc.turnOffAlarm(1);
 
     ds3231_timer_t next_alert;
@@ -205,6 +213,7 @@ optional_timer_config_list_t AlertManager::get_timers_by_weekday(int weekday, ti
 
     for (size_t i = 0; i < timers.num_timers; i++) {
         timer_config_t timer = timers.timers[i];
+        timer.optional_id = i;
 
         if (timer.enabled) {
             if (timer.monday && weekday == 1) {
@@ -260,6 +269,7 @@ optional_ds3231_timer_t AlertManager::get_earliest_timer_of_the_day(timer_config
             next_alert.hour = timer_time.hour;
             next_alert.minute = timer_time.minute;
             next_alert.weekday = weekday;
+            next_alert.optional_id = timer.optional_id;
 
             if (next_alert.hour < earliest_timer.hour) {
                 earliest_timer = next_alert;
@@ -322,7 +332,7 @@ void AlertManager::set_alert(rtc_alert_t alert) {
     this->rtc.turnOnAlarm(1);
 
     // Print the new alert
-    Serial.print("New alert: ");
+    Serial.print("[INFO] New alert: ");
     Serial.printf("%02d", alert.hour);
     Serial.print(":");
     Serial.printf("%02d", alert.minute);
@@ -363,6 +373,7 @@ void AlertManager::print_now() {
 	ds3231_datetime_t now = this->now();
 
     // Display the date
+    Serial.print("[INFO] date: ");
     Serial.print(now.year);
     Serial.print("-");
     Serial.printf("%02d", now.month);
@@ -381,13 +392,13 @@ void AlertManager::print_now() {
 }
 
 void AlertManager::print_temperature() {
-    Serial.print("temperature: ");
+    Serial.print("[INFO] temperature: ");
     Serial.print(this->now().temperature);
     Serial.println("°C");
 }
 
 void AlertManager::print_timer(ds3231_timer_t timer) {
-    Serial.print("timer: ");
+    Serial.print("[INFO] timer: ");
     Serial.printf("%02d", timer.hour);
     Serial.print(":");
     Serial.printf("%02d", timer.minute);
@@ -396,7 +407,7 @@ void AlertManager::print_timer(ds3231_timer_t timer) {
 }
 
 void AlertManager::print_timer(timer_config_t timer) {
-    Serial.print("timer: ");
+    Serial.print("[INFO] timer: ");
     Serial.printf("%02d", timer.time.hour);
     Serial.print(":");
     Serial.printf("%02d", timer.time.minute);
@@ -405,7 +416,7 @@ void AlertManager::print_timer(timer_config_t timer) {
 }
 
 void AlertManager::print_timer_list(ds3231_timer_list_t timers) {
-    Serial.print("[ ");
+    Serial.print("[INFO] [ ");
     for (size_t i = 0; i < timers.num_timers; i++) {
         ds3231_timer_t timer = timers.timers[i];
 

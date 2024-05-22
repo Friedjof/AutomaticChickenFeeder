@@ -6,7 +6,7 @@ ConfigManager::ConfigManager(const char* filename) {
 
     // start LittleFS
     if (!LittleFS.begin()) {
-        Serial.println("Could not initialize LittleFS");
+        Serial.println("[ERROR] Could not initialize LittleFS");
         return;
     }
     
@@ -19,7 +19,7 @@ ConfigManager::ConfigManager() {
 
     // start LittleFS
     if (!LittleFS.begin()) {
-        Serial.println("Could not initialize LittleFS");
+        Serial.println("[ERROR] Could not initialize LittleFS");
         return;
     }
 
@@ -31,17 +31,17 @@ ConfigManager::~ConfigManager() { }
 
 // load config from LittleFS
 void ConfigManager::load_config() {
-    Serial.println("Loading config");
-    Serial.print("Filename: ");
+    Serial.println("[INFO] Loading config");
+    Serial.print("[INFO] Filename: ");
     Serial.println(this->filename);
     // Open file for reading
     File file = LittleFS.open(this->filename, "r");
 
     if (!file) {
-        Serial.println("Failed to open config file");
+        Serial.println("[ERROR] Failed to open config file");
         return;
     }
-    Serial.println("File opened");
+    Serial.println("[INFO] File opened");
 
     // Allocate a buffer to store contents of the file
     JsonDocument doc;
@@ -49,17 +49,21 @@ void ConfigManager::load_config() {
     // Deserialize the JSON document
     DeserializationError error = deserializeJson(doc, file);
     if (error) {
-        Serial.println("Failed to read file, using default configuration");
+        Serial.println("[ERROR] Failed to read file, using default configuration");
         return;
     }
 
     // Copy values from the JsonDocument to the Config
     strlcpy(this->config.wifi.ssid, doc["wifi"]["ssid"] | "", sizeof(this->config.wifi.ssid));
     strlcpy(this->config.wifi.password, doc["wifi"]["password"] | "", sizeof(this->config.wifi.password));
-    
+
     // Copy system config
     this->config.system.auto_sleep = doc["system"]["auto_sleep"] | false;
     this->config.system.auto_sleep_after = doc["system"]["auto_sleep_after"] | 300;
+    this->config.system.next_timer_id = doc["system"]["next_timer_id"] | 0;
+
+    //Serial.print("[DEBUG] Next timer ID: ");
+    //Serial.println(this->config.system.next_timer_id);
 
     // Feed
     this->config.feed.quantity = doc["feed"]["quantity"] | 0;
@@ -67,6 +71,9 @@ void ConfigManager::load_config() {
 
     // Number of timers in config file
     int timers = doc["timers"].size();
+
+    //Serial.print("[DEBUG] Number of timers: ");
+    //Serial.println(timers);
 
     this->config.timer_list.timers = (timer_config_t*) malloc(timers * sizeof(timer_config_t));
     this->config.timer_list.num_timers = timers;
@@ -76,6 +83,7 @@ void ConfigManager::load_config() {
         this->config.timer_list.timers[i].time = this->get_time_from_string(doc["timers"][i]["time"]);
         this->config.timer_list.timers[i].enabled = doc["timers"][i]["enabled"] | false;
         strlcpy(this->config.timer_list.timers[i].name, doc["timers"][i]["name"] | "", sizeof(this->config.timer_list.timers[i].name));
+        this->config.timer_list.timers[i].quantity = doc["timers"][i]["quantity"] | 0;
 
         this->config.timer_list.timers[i].monday = doc["timers"][i]["days"]["monday"] | false;
         this->config.timer_list.timers[i].tuesday = doc["timers"][i]["days"]["tuesday"] | false;
@@ -92,6 +100,12 @@ void ConfigManager::load_config() {
 
     // Close the file (Curiously, File's destructor doesn't close the file)
     file.close();
+
+    // free memory
+    doc.clear();
+
+    // print info to Serial
+    Serial.println("[INFO] Config loaded");
 }
 
 // save config to LittleFS
@@ -100,7 +114,7 @@ void ConfigManager::save_config() {
     File file = LittleFS.open(this->filename, "w");
 
     if (!file) {
-        Serial.println("Failed to create file");
+        Serial.println("[ERROR] Failed to create file");
         return;
     }
 
@@ -114,6 +128,7 @@ void ConfigManager::save_config() {
     // Set system config
     doc["system"]["auto_sleep"] = this->config.system.auto_sleep;
     doc["system"]["auto_sleep_after"] = this->config.system.auto_sleep_after;
+    doc["system"]["next_timer_id"] = this->config.system.next_timer_id;
 
     // feed
     doc["feed"]["quantity"] = this->config.feed.quantity;
@@ -126,6 +141,10 @@ void ConfigManager::save_config() {
         timer["time"] = this->time_to_string(this->config.timer_list.timers[i].time);
         timer["enabled"] = this->config.timer_list.timers[i].enabled;
         timer["name"] = this->config.timer_list.timers[i].name;
+        timer["quantity"] = this->config.timer_list.timers[i].quantity;
+        
+        //Serial.print("[DEBUG] quantity: ");
+        //Serial.println(this->config.timer_list.timers[i].quantity);
 
         JsonObject days = timer.createNestedObject("days");
         days["monday"] = this->config.timer_list.timers[i].monday;
@@ -139,7 +158,7 @@ void ConfigManager::save_config() {
 
     // serialize JSON to file
     if (serializeJson(doc, file) == 0) {
-        Serial.println("Failed to write to file");
+        Serial.println("[ERROR] Failed to write to file");
     }
 
     // print file to Serial
@@ -148,13 +167,21 @@ void ConfigManager::save_config() {
 
     // Close the file
     file.close();
+
+    // free memory
+    doc.clear();
+
+    // print config to Serial
+    Serial.println("[INFO] Config saved");
 }
 
 timer_time_t ConfigManager::get_time_from_string(String time) {
     timer_time_t timer_time = {0, 0};
 
     if (time.length() != 5) {
-        Serial.println("Time string has wrong length");
+        Serial.print("[WARNING] Time string has wrong length: ");
+        Serial.println(time);
+
         return timer_time;
     }
 
@@ -162,12 +189,12 @@ timer_time_t ConfigManager::get_time_from_string(String time) {
     int minute = time.substring(3, 5).toInt();
 
     if (hour < 0 || hour > 23) {
-        Serial.println("Hour out of range");
+        Serial.println("[WARNING] Hour out of range");
         return timer_time;
     }
 
     if (minute < 0 || minute > 59) {
-        Serial.println("Minute out of range");
+        Serial.println("[WARNING] Minute out of range");
         return timer_time;
     }
 
@@ -197,7 +224,7 @@ const char* ConfigManager::get_wifi_password() {
 // timer getter and setter
 timer_config_t ConfigManager::get_timer(int id) {
     if (id < 0 || id >= (int)this->config.timer_list.num_timers) {
-        Serial.println("timer ID out of range");
+        Serial.println("[WARNING] timer ID out of range");
         return this->config.timer_list.timers[id];
     }
 
@@ -216,12 +243,10 @@ timer_config_list_t ConfigManager::get_timers() {
     return timers;
 }
 
-JsonDocument ConfigManager::get_timers_json() {
+void ConfigManager::get_timers_json(JsonDocument &json) {
     this->load_config();
 
-    JsonDocument doc;
-
-    JsonArray timers = doc.createNestedArray("timers");
+    JsonArray timers = json.createNestedArray("timers");
 
     for (size_t i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++) {
         JsonObject timer = timers.createNestedObject();
@@ -229,6 +254,7 @@ JsonDocument ConfigManager::get_timers_json() {
         timer["time"] = this->time_to_string(this->config.timer_list.timers[i].time);
         timer["enabled"] = this->config.timer_list.timers[i].enabled;
         timer["name"] = this->config.timer_list.timers[i].name;
+        timer["quantity"] = this->config.timer_list.timers[i].quantity;
 
         JsonObject days = timer.createNestedObject("days");
         days["monday"] = this->config.timer_list.timers[i].monday;
@@ -241,18 +267,23 @@ JsonDocument ConfigManager::get_timers_json() {
     }
 
     // feed
-    doc["feed"]["quantity"] = this->config.feed.quantity;
-
-    return doc;
+    json["feed"]["quantity"] = this->config.feed.quantity;
 }
 
 void ConfigManager::set_timers_json(JsonVariant &json) {
-
     // feed
     this->config.feed.quantity = json["feed"]["quantity"] | 0;
 
     // timers
     JsonArray timers = json["timers"];
+
+    // display JsonArray
+    //Serial.println("[DEBUG] Timers:");
+    //serializeJson(timers, Serial);
+    //Serial.println();
+
+    Serial.print("[INFO] Number of timers: ");
+    Serial.println(timers.size());
 
     for (size_t i = 0; i < timers.size() && i <= MAX_TIMERS; i++) {
         JsonObject timer = timers[i];
@@ -260,6 +291,12 @@ void ConfigManager::set_timers_json(JsonVariant &json) {
         this->config.timer_list.timers[i].time = this->get_time_from_string(timer["time"]);
         this->config.timer_list.timers[i].enabled = timer["enabled"] | false;
         strlcpy(this->config.timer_list.timers[i].name, timer["name"] | "", sizeof(this->config.timer_list.timers[i].name));
+        this->config.timer_list.timers[i].quantity = timer["quantity"].as<int>();
+
+        //Serial.print("[DEBUG] quantity: ");
+        //Serial.print(this->config.timer_list.timers[i].quantity);
+        //Serial.print(", ");
+        //Serial.println(timer["quantity"].as<int>());
 
         this->config.timer_list.timers[i].monday = timer["days"]["monday"] | false;
         this->config.timer_list.timers[i].tuesday = timer["days"]["tuesday"] | false;
@@ -287,12 +324,28 @@ unsigned long ConfigManager::get_auto_sleep_after() {
     return this->config.system.auto_sleep_after * 1000;
 }
 
+int ConfigManager::get_quantity(int timer_id) {
+    if (timer_id < 0 || timer_id >= (int)this->config.timer_list.num_timers) {
+        Serial.println("[WARNING] timer ID out of range");
+        return 0;
+    }
+
+    return this->config.timer_list.timers[timer_id].quantity;
+}
+
 int ConfigManager::get_quantity() {
     return this->config.feed.quantity;
 }
 
 unsigned long ConfigManager::get_feeding_time() {
-    return this->config.feed.factor * this->config.feed.quantity * 1000;
+    int quantity = this->get_quantity(this->get_next_timer_id());
+
+    // if the timer specific quantity is 0, use the default quantity
+    if (quantity <= 0) {
+        return this->get_factor() * this->get_quantity() * 1000;
+    } else {
+        return this->get_factor() * quantity * 1000;
+    }
 }
 
 float ConfigManager::get_factor() {
@@ -301,6 +354,14 @@ float ConfigManager::get_factor() {
 
 void ConfigManager::set_factor(float factor) {
     this->config.feed.factor = factor;
+}
+
+void ConfigManager::set_next_timer_id(int id) {
+    this->config.system.next_timer_id = id;
+}
+
+int ConfigManager::get_next_timer_id() {
+    return this->config.system.next_timer_id;
 }
 
 String ConfigManager::time_to_string(timer_time_t time) {
@@ -386,7 +447,7 @@ system_t ConfigManager::get_system_config() {
 
 // debugging functions
 void ConfigManager::print_config() {
-    Serial.println("Config:");
+    Serial.println("[INFO] Config:");
     Serial.println("Wifi:");
     Serial.print("  SSID: ");
     Serial.println(this->config.wifi.ssid);
@@ -425,7 +486,7 @@ void ConfigManager::print_config() {
 }
 
 void ConfigManager::print_timers() {
-    Serial.print("[");
+    Serial.print("[INFO] [");
 
     for (size_t i = 0; i < this->config.timer_list.num_timers; i++) {
         Serial.print("{");

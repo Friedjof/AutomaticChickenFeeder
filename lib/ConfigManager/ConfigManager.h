@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
     bool auto_sleep;
     int auto_sleep_after;
+    int next_timer_id;
 } system_t;
 
 typedef struct {
@@ -35,6 +36,7 @@ typedef struct {
     char name[MAX_TIMER_NAME_LENGTH];
     timer_time_t time;
     bool enabled;
+    int quantity;
 
     bool monday;
     bool tuesday;
@@ -43,6 +45,9 @@ typedef struct {
     bool friday;
     bool saturday;
     bool sunday;
+
+    // optional timer id
+    int optional_id;
 } timer_config_t;
 
 typedef struct {
@@ -89,15 +94,19 @@ class ConfigManager {
         const char* get_wifi_password();
         void set_wifi_password(const char* password);
 
+        void set_next_timer_id(int id);
+        int get_next_timer_id();
+
         timer_config_t get_timer(int index);
         size_t get_num_timers();
         timer_config_list_t get_timers();
-        JsonDocument get_timers_json();
+        void get_timers_json(JsonDocument &json);
         feed_config_t get_feed_config();
         unsigned long get_feeding_time();
         unsigned long get_auto_sleep_after();
         system_t get_system_config();
         int get_quantity();
+        int get_quantity(int timer_id);
         float get_factor();
 
         void set_factor(float factor);
