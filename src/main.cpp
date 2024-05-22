@@ -211,10 +211,9 @@ void setup()
       loggingManager.log(LOG_LEVEL_INFO, "GET /get");
 
       String jsonString;
-      
       JsonDocument json;
-      configManager.get_timers_json(json);
 
+      configManager.get_timers_json(json);
       serializeJson(json, jsonString);
 
       json.clear();

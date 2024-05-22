@@ -232,8 +232,6 @@ async function saveTimers() {
         list_timers.push(timers[i]);
     }
 
-    console.log(list_timers);
-
     await fetch(url + '/set', {
         method: 'POST',
         headers: {

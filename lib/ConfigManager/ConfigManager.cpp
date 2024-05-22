@@ -264,7 +264,7 @@ void ConfigManager::get_timers_json(JsonDocument &json)
 {
   this->load_config();
 
-  JsonArray timers = json["timers"].add<JsonArray>();
+  JsonArray timers = json["timers"].to<JsonArray>();
 
   for (size_t i = 0; i < this->config.timer_list.num_timers && i <= MAX_TIMERS; i++)
   {
