@@ -1,78 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automatic chicken feeder</title>
-    <!-- CSS & JS -->
-    <link rel="stylesheet" href="/style.css">
-    <script src="/script.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automatic chicken feeder</title>
+  <!-- CSS & JS -->
+  <link rel="stylesheet" href="/style.css">
+  <script src="/script.js"></script>
 </head>
+
 <body>
-    <!-- Logs Button -->
-    <div class="log-button">
-        <button id="log-button" onclick=showLogs()>Logs &#128221;</button>
+  <!-- Logs Button -->
+  <div class="log-button">
+    <button id="log-button" onclick=showLogs()>Logs &#128221;</button>
+  </div>
+  <!-- Clouds -->
+  <div id="clouds">
+    <span class="cloud" style="font-size:200px;">&#127781;</span>
+  </div>
+  <div id="notification-container" class="notification-container">
+    <!-- Here the notifications are inserted -->
+  </div>
+  <!-- Schedule -->
+  <div class="container">
+    <div id="time">
+      &#8986;
+      <span id="date-text">00.00.0000</span>
+      <span id="time-text">00:00</span>
     </div>
-    <!-- Clouds -->
-    <div id="clouds">
-        <span class="cloud" style="font-size:200px;">&#127781;</span>
+    <div id="autosleep-remaining">
+      <span>Auto sleep mode in</span>
+      <span id="autosleep-remaining-time">00</span>
+      <span>seconds</span>
     </div>
-    <div id="notification-container" class="notification-container">
-        <!-- Here the notifications are inserted -->
+    <h1>Schedule &#128020;&#128467;</h1>
+    <h3>Here you can set the times of feeding the chickens.</h3>
+    <div class="form">
+      <table id="timers">
+        <thead>
+          <tr>
+            <th>&#9200;</th>
+            <th></th>
+            <th>Name</th>
+            <th>&#128337;</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="timers-body">
+          <!-- Here the timers are inserted -->
+        </tbody>
+      </table>
     </div>
-    <!-- Schedule -->
-    <div class="container">
-        <div id="time">
-            &#8986;
-            <span id="date-text">00.00.0000</span>
-            <span id="time-text">00:00</span>
-        </div>
-        <div id="autosleep-remaining">
-            <span>Auto sleep mode in</span>
-            <span id="autosleep-remaining-time">00</span>
-            <span>seconds</span>
-        </div>
-        <h1>Schedule &#128020;&#128467;</h1>
-        <h3>Here you can set the times of feeding the chickens.</h3>
-        <div class="form">
-            <table id="timers">
-                <thead>
-                    <tr>
-                        <th>&#9200;</th>
-                        <th></th>
-                        <th>Name</th>
-                        <th>&#128337;</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="timers-body">
-                    <!-- Here the timers are inserted -->
-                </tbody>
-            </table>
-        </div>
-        <div class="singel-config">
-            <label for="feed">Feed quantity [g]</label>
-            <input type="number" id="feed" name="feed" min="0" max="1000" value="100">
-        </div>
-        <!-- Buttons -->
-        <div class="buttons">
-            <button id="export" onclick="export2CSV()">&#128229;</button>
-            <button id="import" onclick="importCSV()">&#128228;</button>
+    <div class="singel-config">
+      <label for="feed">Feed quantity [g]</label>
+      <input type="number" id="feed" name="feed" min="0" max="1000" value="100">
+    </div>
+    <!-- Buttons -->
+    <div class="buttons">
+      <button id="export" onclick="export2CSV()">&#128229;</button>
+      <button id="import" onclick="importCSV()">&#128228;</button>
 
-            <button id="sleep_mode" onclick="sleep_mode()">Sleep mode &#128564;</button>
-            <button id="reload" onclick="getTimers()">Reload &#128229;</button>
-            <button id="save" onclick="saveTimers()">Save &#128190;</button>
-            <button id="add" onclick="addRow()">&#10133;</button>
-            <button id="feed-button" onclick="feedManual()">Feed manually</button>
-        </div>
+      <button id="sleep_mode" onclick="sleep_mode()">Sleep mode &#128564;</button>
+      <button id="reload" onclick="getTimers()">Reload &#128229;</button>
+      <button id="save" onclick="saveTimers()">Save &#128190;</button>
+      <button id="add" onclick="addRow()">&#10133;</button>
+      <button id="feed-button" onclick="feedManual()">Feed manually</button>
     </div>
-    <!-- Farm -->
-    <div id="farm">
-        <span id="tractor" style='font-size:100px;'>&#128668;</span>
+  </div>
+  <!-- Farm -->
+  <div id="farm">
+    <span id="tractor" style='font-size:100px;'>&#128668;</span>
 
-        <span class="chicken" id="chicken1">&#128019;</span>
-        <span class="chicken" id="chicken2">&#128019;</span>
-        <span class="chicken" id="chicken3">&#128019;</span>
-    </div>
+    <span class="chicken" id="chicken1">&#128019;</span>
+    <span class="chicken" id="chicken2">&#128019;</span>
+    <span class="chicken" id="chicken3">&#128019;</span>
+  </div>
 </body>
+
 </html>

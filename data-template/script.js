@@ -14,22 +14,22 @@ async function getTimers() {
                 showNotification('error', 'Error loading the schedule (no connection &#128268; )', 5000);
                 return;
             }
-            
+
             document.getElementById('timers-body').innerHTML = '';
-            
+
             rowCount = 0;
             currentId = 0;
 
             data["timers"].forEach(timer => {
                 showTimer(currentId, timer);
-                
+
                 currentId++;
                 rowCount++;
             });
 
             var feed = document.getElementById('feed');
             feed.value = data["feed"]["quantity"]
-            
+
             showNotification('success', 'Schedule loaded', 3000);
         })
         .catch(error => {
@@ -71,7 +71,7 @@ function showTimer(id, timer) {
 function showPopup() {
     var overlay = document.createElement('div');
     overlay.className = 'overlay';
-    overlay.onclick = function() {
+    overlay.onclick = function () {
         closePopup(overlay, modal);
     }
 
@@ -83,7 +83,7 @@ function showPopup() {
     var closeButton = document.createElement('button');
     closeButton.innerHTML = '&#x2715;';
     closeButton.className = 'close-button';
-    closeButton.onclick = function() {
+    closeButton.onclick = function () {
         closePopup(overlay, modal);
     }
 
@@ -118,7 +118,7 @@ function showLogs() {
     var refresh_button = document.createElement('button');
     refresh_button.innerHTML = 'Refresh';
     refresh_button.className = 'refresh-button';
-    refresh_button.onclick = function() {
+    refresh_button.onclick = function () {
         iframe.src = url + '/logging';
     }
     button_div.appendChild(refresh_button);
@@ -126,7 +126,7 @@ function showLogs() {
     var link_button = document.createElement('button');
     link_button.innerHTML = 'Open in new tab';
     link_button.className = 'link-button';
-    link_button.onclick = function() {
+    link_button.onclick = function () {
         window.open(url + '/logging', '_blank');
     }
     button_div.appendChild(link_button);
@@ -134,7 +134,7 @@ function showLogs() {
     var clear_button = document.createElement('button');
     clear_button.innerHTML = 'Clear logs';
     clear_button.className = 'clear-button';
-    clear_button.onclick = function() {
+    clear_button.onclick = function () {
         fetch(url + '/reset_logs')
             .then(response => {
                 if (!response.ok) {
@@ -145,7 +145,7 @@ function showLogs() {
             .catch((error) => {
                 console.error('Error:', error);
             });
-        
+
         iframe.src = url + '/logging';
     }
     button_div.appendChild(clear_button);
@@ -167,29 +167,29 @@ function showWeekdayConfig(id) {
     var days = document.createElement('div');
     days.className = 'days';
     modal.appendChild(days);
-    
+
     daysOfWeek.forEach((day, index) => {
         var dayContainer = document.createElement('div');
         dayContainer.className = 'day-container';
-    
+
         var dayLabel = document.createElement('label');
         dayLabel.textContent = dayNames[index];
         dayLabel.htmlFor = day + '-' + id;
         dayLabel.className = 'day-label';
-    
+
         var dayCheckbox = document.createElement('input');
         dayCheckbox.type = 'checkbox';
         dayCheckbox.id = day + '-' + id;
         dayCheckbox.checked = timers[id].days[day];
-        dayCheckbox.onclick = function() {
+        dayCheckbox.onclick = function () {
             timers[id].days[day] = !timers[id].days[day];
         }
-    
+
         dayContainer.appendChild(dayLabel);
         dayContainer.appendChild(dayCheckbox);
         days.appendChild(dayContainer);
     });
-    
+
     var outer_feed_container = document.createElement('div');
     outer_feed_container.className = 'outer-feed-container';
     modal.appendChild(outer_feed_container);
@@ -216,7 +216,7 @@ function showWeekdayConfig(id) {
     feed_input.min = 0;
     feed_input.max = 100;
     feed_input.className = 'feed-input';
-    feed_input.onchange = function() {
+    feed_input.onchange = function () {
         timers[id].quantity = feed_input.value;
     }
     feed_container.appendChild(feed_label);
@@ -295,15 +295,15 @@ async function saveTimers() {
         if (timers[i] == undefined) {
             continue;
         }
-        
+
         list_timers.push(timers[i]);
     }
 
     await fetch(url + '/set', {
         method: 'POST',
         headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             timers: list_timers,
@@ -364,7 +364,7 @@ function sleep_mode() {
         .catch(error => {
             showNotification('error', 'Error when activating the sleep mode (no connection &#128268; )', 5000);
         });
-    
+
     var count = 10;
     var counter = setInterval(timer, 1000);
     function timer() {
@@ -446,11 +446,11 @@ function importCSV() {
     var input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
-    input.onchange = function() {
+    input.onchange = function () {
         var file = input.files[0];
         var reader = new FileReader();
         reader.readAsText(file);
-        reader.onload = function() {
+        reader.onload = function () {
             var csv = reader.result;
             var rows = csv.split('\n');
 
@@ -467,7 +467,7 @@ function importCSV() {
                 showNotification('error', 'A maximum of 4 timers are possible &#128679;', 3000);
                 return;
             }
-            
+
             if (rows.length < 1) {
                 showNotification('error', 'At least one timer must be present &#128679;', 3000);
                 return;
@@ -573,7 +573,7 @@ function feedManual() {
     });
 
     showNotification('info', 'Feeding started &#127744;', 3000);
-    
+
     var feed_button = document.getElementById('feed-button');
     feed_button.innerHTML = "Feed manually";
 }
@@ -609,10 +609,10 @@ async function getRemainingAutoSleepTime() {
             var remaining_text = document.getElementById('autosleep-remaining-time');
             remaining_text.innerHTML = remaining;
         }
-    ).catch(error => {
-        showNotification('error', 'Error loading the remaining time until sleep (no connection &#128268; )', 5000);
-    }
-    );
+        ).catch(error => {
+            showNotification('error', 'Error loading the remaining time until sleep (no connection &#128268; )', 5000);
+        }
+        );
 }
 
 function setCurrentTime() {
@@ -633,15 +633,15 @@ function setCurrentTime() {
         },
         body: JSON.stringify(data),
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
 }
 
 function onloadFunction() {
