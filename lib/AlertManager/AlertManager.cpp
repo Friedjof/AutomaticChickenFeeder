@@ -24,7 +24,27 @@ void AlertManager::set_next_alert()
 
   if (!next_alert.empty)
   {
-    this->set_alert(this->convert_to_rtc_alert(next_alert.timer));
+    DateTime now = this->clockService.get_datetime();
+    DateTime this_monday = DateTime(now.year(), now.month(), now.day() - now.dayOfTheWeek() + 1, 0, 0, 0);
+
+    DateTime alert = DateTime(
+        this_monday.year(), this_monday.month(), this_monday.day() + next_alert.timer.weekday - 1, next_alert.timer.hour, next_alert.timer.minute, 0);
+
+    loggingManager.start_seq(LOG_LEVEL_INFO_FILE, "next feedings alert: ");
+    loggingManager.append_seq(this->int_to_weekday(next_alert.timer.weekday));
+    loggingManager.append_seq(", ");
+    loggingManager.append_seq(alert.year());
+    loggingManager.append_seq("-");
+    loggingManager.append_seq(alert.month() < 10 ? "0" + String(alert.month()) : String(alert.month()));
+    loggingManager.append_seq("-");
+    loggingManager.append_seq(alert.day() < 10 ? "0" + String(alert.day()) : String(alert.day()));
+    loggingManager.append_seq(" ");
+    loggingManager.append_seq(alert.hour() < 10 ? "0" + String(alert.hour()) : String(alert.hour()));
+    loggingManager.append_seq(":");
+    loggingManager.append_seq(alert.minute() < 10 ? "0" + String(alert.minute()) : String(alert.minute()));
+    loggingManager.end_seq();
+
+    this->set_alert(alert);
 
     loggingManager.start_seq(LOG_LEVEL_INFO, "next timer id: ");
     loggingManager.append_seq(next_alert.timer.optional_id);
@@ -64,13 +84,13 @@ bool AlertManager::set_new_datetime(int year, int month, int day, int hour, int 
 int AlertManager::weekday_to_int(char *weekday)
 {
   std::unordered_map<std::string, int> weekdays = {
-      {"mon", 1},
-      {"tue", 2},
-      {"wed", 3},
-      {"thu", 4},
-      {"fri", 5},
-      {"sat", 6},
-      {"son", 7}};
+      {"Monday", 1},
+      {"Tuesday", 2},
+      {"Wednesday", 3},
+      {"Thursday", 4},
+      {"Friday", 5},
+      {"Saturday", 6},
+      {"Sunday", 7}};
 
   auto it = weekdays.find(weekday);
   if (it != weekdays.end())
@@ -86,13 +106,13 @@ int AlertManager::weekday_to_int(char *weekday)
 String AlertManager::int_to_weekday(int weekday)
 {
   std::unordered_map<int, const char *> weekdays = {
-      {1, "mon"},
-      {2, "tue"},
-      {3, "wed"},
-      {4, "thu"},
-      {5, "fri"},
-      {6, "sat"},
-      {7, "son"}};
+      {1, "Monday"},
+      {2, "Tuesday"},
+      {3, "Wednesday"},
+      {4, "Thursday"},
+      {5, "Friday"},
+      {6, "Saturday"},
+      {7, "Sunday"}};
 
   auto it = weekdays.find(weekday);
   if (it != weekdays.end())
@@ -357,40 +377,12 @@ ds3231_timer_list_t AlertManager::convert_to_timer_list(timer_config_list_t time
   return timer_list;
 }
 
-rtc_alert_t AlertManager::convert_to_rtc_alert(ds3231_timer_t timer)
-{
-  rtc_alert_t alert;
-  alert.day = timer.weekday;
-  alert.hour = timer.hour;
-  alert.minute = timer.minute;
-  alert.second = 0;
-  alert.alert_bits = ALERT_BITS; // See the header file for more information
-  alert.day_is_day = true;       // Use day of the week and not day of the month
-  alert.h12 = false;             // Use 24 hour format
-  alert.pm = false;              // Ignore AM/PM
-  alert.alarm_flag = 0;          // Reset the alarm flag
-
-  return alert;
-}
-
-void AlertManager::set_alert(rtc_alert_t alert)
+void AlertManager::set_alert(DateTime alert)
 {
   // Set the alarm
   this->clockService.turnOffAlarm(1);
-  this->clockService.setA1Time(
-      alert.day, alert.hour, alert.minute, alert.second,
-      alert.alert_bits, alert.day_is_day);
-  this->clockService.checkIfAlarm(1);
-  this->clockService.turnOnAlarm(1);
 
-  // Print the new alert
-  loggingManager.start_seq(LOG_LEVEL_INFO, "new alert: ");
-  loggingManager.append_seq(alert.hour);
-  loggingManager.append_seq(":");
-  loggingManager.append_seq(alert.minute);
-  loggingManager.append_seq(" ");
-  loggingManager.append_seq(this->int_to_weekday(alert.day));
-  loggingManager.end_seq();
+  this->clockService.setA1Time(alert);
 }
 
 bool AlertManager::timer_is_active_on_weekday(timer_config_t timer, int weekday)

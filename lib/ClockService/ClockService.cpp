@@ -1,17 +1,8 @@
 #include "ClockService.h"
 
-ClockService::ClockService(bool century, bool h12, bool pm)
-{
-  this->century = century;
-  this->h12Flag = h12;
-  this->pmFlag = pm;
-}
-
 ClockService::ClockService()
 {
-  this->century = false;
-  this->h12Flag = false;
-  this->pmFlag = false;
+  // Nothing to do here
 }
 
 ClockService::~ClockService()
@@ -26,13 +17,31 @@ void ClockService::begin()
     return;
   }
 
-  delay(1000);
+  delay(500);
 
   Wire.begin(SDA_PIN, SCL_PIN);
 
-  delay(1000);
+  delay(500);
 
-  this->rtc.setClockMode(this->h12Flag);
+  // Initialize RTC
+  if (!rtc.begin())
+  {
+    Serial.println("[ERROR] Couldn't find RTC");
+    while (1)
+      ;
+  }
+
+  // Check if RTC lost power and if so, set the time
+  if (rtc.lostPower())
+  {
+    Serial.println("[INFO] RTC lost power, you need to set the time!");
+  }
+
+  this->rtc.writeSqwPinMode(DS3231_OFF);
+  this->rtc.disable32K();
+  
+  this->rtc.disableAlarm(1);
+  this->rtc.disableAlarm(2);
 
   this->initialized = true;
 }
@@ -42,6 +51,16 @@ bool ClockService::is_initialized()
   return this->initialized;
 }
 
+void ClockService::set_datetime(DateTime datetime)
+{
+  if (!this->initialized)
+  {
+    return;
+  }
+
+  this->rtc.adjust(datetime);
+}
+
 void ClockService::set_datetime(uint16_t year, uint16_t month, uint16_t day, uint16_t hour, uint16_t minute, uint16_t second)
 {
   if (!this->initialized)
@@ -49,51 +68,18 @@ void ClockService::set_datetime(uint16_t year, uint16_t month, uint16_t day, uin
     return;
   }
 
-  this->rtc.setYear(year - CENTURY);
-  this->rtc.setMonth(month);
-  this->rtc.setDate(day);
-  this->rtc.setHour(hour);
-  this->rtc.setMinute(minute);
-  this->rtc.setSecond(second);
+  DateTime datetime(year, month, day, hour, minute, second);
+  this->rtc.adjust(datetime);
 }
 
 DateTime ClockService::get_datetime()
 {
-  DateTime datetime(
-      this->getYear(), this->getMonth(), this->getDay(),
-      this->getHour(), this->getMinute(), this->getSecond());
+  if (!this->initialized)
+  {
+    return DateTime();
+  }
 
-  return datetime;
-}
-
-void ClockService::set_century(bool century)
-{
-  this->century = century;
-}
-
-bool ClockService::get_century()
-{
-  return this->century;
-}
-
-void ClockService::set_h12(bool h12)
-{
-  this->h12Flag = h12;
-}
-
-bool ClockService::get_h12()
-{
-  return this->h12Flag;
-}
-
-void ClockService::set_pm(bool pm)
-{
-  this->pmFlag = pm;
-}
-
-bool ClockService::get_pm()
-{
-  return this->pmFlag;
+  return this->rtc.now();
 }
 
 uint16_t ClockService::getYear()
@@ -103,7 +89,8 @@ uint16_t ClockService::getYear()
     return 0;
   }
 
-  return this->rtc.getYear() + CENTURY;
+  DateTime now = this->rtc.now();
+  return now.year();
 }
 
 uint16_t ClockService::getMonth()
@@ -113,7 +100,8 @@ uint16_t ClockService::getMonth()
     return 0;
   }
 
-  return this->rtc.getMonth(this->century);
+  DateTime now = this->rtc.now();
+  return now.month();
 }
 
 uint16_t ClockService::getDay()
@@ -123,7 +111,8 @@ uint16_t ClockService::getDay()
     return 0;
   }
 
-  return this->rtc.getDate();
+  DateTime now = this->rtc.now();
+  return now.day();
 }
 
 uint16_t ClockService::getHour()
@@ -133,7 +122,8 @@ uint16_t ClockService::getHour()
     return 0;
   }
 
-  return this->rtc.getHour(this->h12Flag, this->pmFlag);
+  DateTime now = this->rtc.now();
+  return now.hour();
 }
 
 uint16_t ClockService::getMinute()
@@ -143,7 +133,8 @@ uint16_t ClockService::getMinute()
     return 0;
   }
 
-  return this->rtc.getMinute();
+  DateTime now = this->rtc.now();
+  return now.minute();
 }
 
 uint16_t ClockService::getSecond()
@@ -153,7 +144,8 @@ uint16_t ClockService::getSecond()
     return 0;
   }
 
-  return this->rtc.getSecond();
+  DateTime now = this->rtc.now();
+  return now.second();
 }
 
 uint16_t ClockService::getDoW()
@@ -163,7 +155,19 @@ uint16_t ClockService::getDoW()
     return 0;
   }
 
-  return this->rtc.getDoW();
+  DateTime now = this->rtc.now();
+  return now.dayOfTheWeek();
+}
+
+String ClockService::getDoWString()
+{
+  if (!this->initialized)
+  {
+    return "";
+  }
+
+  String daysOfTheWeek[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+  return daysOfTheWeek[this->getDoW() - 1];
 }
 
 uint16_t ClockService::getTemperature()
@@ -183,37 +187,17 @@ void ClockService::turnOffAlarm(byte alarm)
     return;
   }
 
-  this->rtc.turnOffAlarm(alarm);
+  this->rtc.disableAlarm((uint8_t)alarm);
 }
 
-void ClockService::turnOnAlarm(byte alarm)
+void ClockService::setA1Time(DateTime datetime)
 {
   if (!this->initialized)
   {
     return;
   }
 
-  this->rtc.turnOnAlarm(alarm);
-}
-
-void ClockService::setA1Time(byte day, byte hour, byte minute, byte second, byte alarmBits, bool day_is_day)
-{
-  if (!this->initialized)
-  {
-    return;
-  }
-
-  this->rtc.setA1Time(day, hour, minute, second, alarmBits, day_is_day, this->h12Flag, this->pmFlag);
-}
-
-bool ClockService::checkIfAlarm(byte alarm)
-{
-  if (!this->initialized)
-  {
-    return false;
-  }
-
-  return this->rtc.checkIfAlarm(alarm);
+  this->rtc.setAlarm1(datetime, DS3231_A1_Date);
 }
 
 void ClockService::disableAlarm2()
@@ -223,29 +207,35 @@ void ClockService::disableAlarm2()
     return;
   }
 
-  this->rtc.setA2Time(0x00, 0x00, 0xff, 0x60, false, false, false); // 0x60 = 0b01100000 => Alarm when minutes match (never because of 0xff)
-  this->rtc.turnOffAlarm(2);
-  this->rtc.checkIfAlarm(2);
+  this->rtc.disableAlarm(2);
 }
 
-/*
-  @Return datetime as string in format: YYYY-MM-DD HH:MM:SS
-  Important: the year is 2000 + the actual year and every value should have 2 digits
-*/
+double ClockService::getTemperatureInCelsius()
+{
+  if (!this->initialized)
+  {
+    return 0;
+  }
+
+  return this->rtc.getTemperature();
+}
+
+double ClockService::getTemperatureInFahrenheit()
+{
+  if (!this->initialized)
+  {
+    return 0;
+  }
+
+  return this->rtc.getTemperature() * 1.8 + 32;
+}
+
 String ClockService::datetime_as_string()
 {
-  String yyyy = String(CENTURY + this->getYear());
-  String mm = String(this->getMonth());
-  String dd = String(this->getDay());
-  String hh = String(this->getHour());
-  String ii = String(this->getMinute());
-  String ss = String(this->getSecond());
+  if (!this->initialized)
+  {
+    return "";
+  }
 
-  mm = mm.length() == 1 ? "0" + mm : mm;
-  dd = dd.length() == 1 ? "0" + dd : dd;
-  hh = hh.length() == 1 ? "0" + hh : hh;
-  ii = ii.length() == 1 ? "0" + ii : ii;
-  ss = ss.length() == 1 ? "0" + ss : ss;
-
-  return yyyy + "-" + mm + "-" + dd + " " + hh + ":" + ii + ":" + ss;
+  return this->rtc.now().timestamp(DateTime::TIMESTAMP_FULL);
 }

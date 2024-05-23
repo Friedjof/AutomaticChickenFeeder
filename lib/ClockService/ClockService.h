@@ -1,6 +1,6 @@
 #pragma once
 
-#include <DS3231.h>
+#include <RTClib.h>
 #include <time.h>
 
 #define CENTURY 2000
@@ -19,21 +19,18 @@
 class ClockService
 {
 private:
-  DS3231 rtc;
-  bool century = false;
-  bool h12Flag;
-  bool pmFlag;
+  RTC_DS3231 rtc;
 
   bool initialized = false;
 
 public:
-  ClockService(bool century, bool h12, bool pm);
   ClockService();
   ~ClockService();
 
   void begin();
   bool is_initialized();
 
+  void set_datetime(DateTime datetime);
   void set_datetime(uint16_t year, uint16_t month, uint16_t day, uint16_t hour, uint16_t minute, uint16_t second);
   DateTime get_datetime();
 
@@ -55,13 +52,15 @@ public:
   uint16_t getDoW();
   uint16_t getTemperature();
 
+  String getDoWString();
+
   void turnOffAlarm(byte alarm);
-  void turnOnAlarm(byte alarm);
-
-  void setA1Time(byte day, byte hour, byte minute, byte second, byte alarmBits, bool day_is_day);
-  bool checkIfAlarm(byte alarm);
-
   void disableAlarm2();
+
+  void setA1Time(DateTime time);
+
+  double getTemperatureInCelsius();
+  double getTemperatureInFahrenheit();
 
   String datetime_as_string();
 };

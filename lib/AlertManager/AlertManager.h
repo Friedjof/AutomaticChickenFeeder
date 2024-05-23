@@ -5,12 +5,6 @@
 #include <unordered_map>
 #include <string>
 
-#ifndef __CLOCK_H__
-#define __CLOCK_H__
-#include <Wire.h>
-#include <DS3231.h>
-#endif
-
 #include <ClockService.h>
 #include <ConfigManager.h>
 #include <LoggingManager.h>
@@ -55,19 +49,6 @@ typedef struct
     bool empty;
 } optional_ds3231_timer_t;
 
-typedef struct
-{
-    byte day;
-    byte hour;
-    byte minute;
-    byte second;
-    byte alert_bits;
-    bool day_is_day;
-    bool h12;
-    bool pm;
-    volatile byte alarm_flag;
-} rtc_alert_t;
-
 class AlertManager
 {
 private:
@@ -95,8 +76,7 @@ public:
     ds3231_datetime_t now();
 
     void set_next_alert();
-    rtc_alert_t convert_to_rtc_alert(ds3231_timer_t timer);
-    void set_alert(rtc_alert_t alert);
+    void set_alert(DateTime alert);
     optional_ds3231_timer_t get_next_alert();
     ds3231_timer_list_t convert_to_timer_list(timer_config_list_t timers);
     int get_next_weekday_from_timer(timer_config_t timer, int current_weekday);
