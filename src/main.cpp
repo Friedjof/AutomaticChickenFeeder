@@ -18,7 +18,7 @@
 #ifndef __CLOCK_H__
 #define __CLOCK_H__
 #include <Wire.h>
-#include <DS3231.h>
+#include <RTClib.h>
 #endif
 
 #include <ClockService.h>
@@ -44,15 +44,15 @@
 
 // Prototypes
 void IRAM_ATTR interrupt_handler();
-void setup_wifi(); // Setup WiFi
-void setup_aws();  // Setup AsyncWebServer
+void setup_wifi();     // Setup WiFi
+void setup_aws();      // Setup AsyncWebServer
 
-void startFeeding(); // Feed the chickens
-void stopFeeding();  // Stop feeding the chickens
+void startFeeding();   // Feed the chickens
+void stopFeeding();    // Stop feeding the chickens
 
-void new_request();  // Will be executed when a new request is received
-void goToSleep();    // Go to sleep
-void setSleepTime(); // Reset sleep
+void new_request();    // Will be executed when a new request is received
+void startSleepMode(); // Go to sleep
+void setSleepTime();   // Reset sleep
 long remaining_auto_sleep_time();
 
 // Global variables
@@ -98,10 +98,18 @@ void setup()
 
   // begin the managers
   loggingManager.begin();
+
+  loggingManager.log(LOG_LEVEL_INFO_FILE, "-- Start Chicken Feeder --");
+  loggingManager.start_seq(LOG_LEVEL_INFO, "Datetime: ");
+  loggingManager.append_seq(clockService.datetime_as_string());
+  loggingManager.append_seq(", ");
+  loggingManager.append_seq(clockService.getDoWString());
+  loggingManager.append_seq(" (");
+  loggingManager.append_seq(clockService.getTemperatureInCelsius());
+  loggingManager.end_seq("°C)");
+
   configManager.begin();
   alertManager.begin();
-
-  loggingManager.log(LOG_LEVEL_INFO_FILE, "Start Chicken Feeder");
 
   // Setup PIN interrupt
   pinMode(RELAY_PIN, OUTPUT);
@@ -226,6 +234,11 @@ void setup()
       // Convert the data to a JSON object
       loggingManager.log(LOG_LEVEL_INFO, "POST /set");
 
+      // Print the JSON object
+      Serial.println("Received JSON object:");
+      serializeJsonPretty(json, Serial);
+      Serial.println();
+
       configManager.set_timers_json(json);
 
       // Setup the new alert (if necessary)
@@ -243,7 +256,7 @@ void setup()
               {
       loggingManager.log(LOG_LEVEL_INFO, "GET /sleep");
       
-      goToSleep();
+      startSleepMode();
 
       request->send(200); });
 
@@ -372,7 +385,7 @@ void loop()
 
     if (awakened)
     {
-      goToSleep();
+      startSleepMode();
     }
   }
 
@@ -383,16 +396,16 @@ void loop()
 
   if (auto_sleep_millis < millis() && !feeding[1])
   {
-    goToSleep();
+    startSleepMode();
   }
 }
 
-void goToSleep()
+void startSleepMode()
 {
   // Set next alert
   alertManager.set_next_alert();
 
-  loggingManager.log(LOG_LEVEL_INFO_FILE, "Go to sleep");
+  loggingManager.log(LOG_LEVEL_INFO_FILE, "start sleep mode");
 
 // go to sleep
 #if defined(ESP32DEV)

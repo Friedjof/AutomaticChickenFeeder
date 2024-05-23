@@ -126,7 +126,11 @@ void LoggingManager::log(log_level_t level, const char *message)
     this->append_to_file(level, log_message.c_str());
 
     // Serial output
-    Serial.print(log_message.c_str());
+    if (level >= this->log_level && Serial.available())
+    {
+      Serial.print(log_message.c_str());
+    }
+
   }
 }
 
@@ -168,6 +172,50 @@ void LoggingManager::log(log_level_t level, float message)
 void LoggingManager::log(log_level_t level, double message)
 {
   this->log(level, String(message).c_str());
+}
+
+void LoggingManager::log(log_level_t level, DateTime message)
+{
+  String log_message = this->log_string(level);
+
+  log_message += message.year();
+  log_message += "-";
+  log_message += message.month();
+  log_message += "-";
+  log_message += message.day();
+  log_message += " ";
+  log_message += message.hour();
+  log_message += ":";
+  log_message += message.minute();
+  log_message += ":";
+  log_message += message.second();
+  log_message += "\"\n";
+
+  // write to file
+  this->append_to_file(level, log_message.c_str());
+
+  // Serial output
+  Serial.print(log_message.c_str());
+}
+
+void LoggingManager::log(log_level_t level, TimeSpan message)
+{
+  String log_message = this->log_string(level);
+
+  log_message += message.days();
+  log_message += " days, ";
+  log_message += message.hours();
+  log_message += " hours, ";
+  log_message += message.minutes();
+  log_message += " minutes, ";
+  log_message += message.seconds();
+  log_message += " seconds\"";
+
+  // write to file
+  this->append_to_file(level, log_message.c_str());
+
+  // Serial output
+  Serial.print(log_message.c_str());
 }
 
 void LoggingManager::start_seq(log_level_t level, const char *message)
@@ -228,6 +276,50 @@ void LoggingManager::start_seq(log_level_t level, double message)
   this->start_seq(level, String(message).c_str());
 }
 
+void LoggingManager::start_seq(log_level_t level, DateTime message)
+{
+  String log_message = this->log_string(level);
+
+  log_message += message.year();
+  log_message += "-";
+  log_message += message.month();
+  log_message += "-";
+  log_message += message.day();
+  log_message += " ";
+  log_message += message.hour();
+  log_message += ":";
+  log_message += message.minute();
+  log_message += ":";
+  log_message += message.second();
+  log_message += " ";
+
+  // write to file
+  this->append_to_file(this->log_sequence_level, log_message.c_str());
+
+  // Serial output
+  Serial.print(log_message.c_str());
+}
+
+void LoggingManager::start_seq(log_level_t level, TimeSpan message)
+{
+  String log_message = this->log_string(level);
+
+  log_message += message.days();
+  log_message += " days, ";
+  log_message += message.hours();
+  log_message += " hours, ";
+  log_message += message.minutes();
+  log_message += " minutes, ";
+  log_message += message.seconds();
+  log_message += " seconds ";
+
+  // write to file
+  this->append_to_file(this->log_sequence_level, log_message.c_str());
+
+  // Serial output
+  Serial.print(log_message.c_str());
+}
+
 void LoggingManager::append_seq(const char *message)
 {
   if (this->log_sequence)
@@ -280,6 +372,39 @@ void LoggingManager::append_seq(float message)
 void LoggingManager::append_seq(double message)
 {
   this->append_seq(String(message).c_str());
+}
+
+void LoggingManager::append_seq(DateTime message)
+{
+  String log_message = "";
+  log_message += message.year();
+  log_message += "-";
+  log_message += message.month();
+  log_message += "-";
+  log_message += message.day();
+  log_message += " ";
+  log_message += message.hour();
+  log_message += ":";
+  log_message += message.minute();
+  log_message += ":";
+  log_message += message.second();
+
+  this->append_seq(log_message.c_str());
+}
+
+void LoggingManager::append_seq(TimeSpan message)
+{
+  String log_message = "";
+  log_message += message.days();
+  log_message += " days, ";
+  log_message += message.hours();
+  log_message += " hours, ";
+  log_message += message.minutes();
+  log_message += " minutes, ";
+  log_message += message.seconds();
+  log_message += " seconds";
+
+  this->append_seq(log_message.c_str());
 }
 
 void LoggingManager::end_seq(const char *message)
@@ -352,6 +477,39 @@ void LoggingManager::end_seq()
 
     this->log_sequence = false;
   }
+}
+
+void LoggingManager::end_seq(DateTime message)
+{
+  String log_message = "";
+  log_message += message.year();
+  log_message += "-";
+  log_message += message.month();
+  log_message += "-";
+  log_message += message.day();
+  log_message += " ";
+  log_message += message.hour();
+  log_message += ":";
+  log_message += message.minute();
+  log_message += ":";
+  log_message += message.second();
+
+  this->end_seq(log_message.c_str());
+}
+
+void LoggingManager::end_seq(TimeSpan message)
+{
+  String log_message = "";
+  log_message += message.days();
+  log_message += " days, ";
+  log_message += message.hours();
+  log_message += " hours, ";
+  log_message += message.minutes();
+  log_message += " minutes, ";
+  log_message += message.seconds();
+  log_message += " seconds";
+
+  this->end_seq(log_message.c_str());
 }
 
 void LoggingManager::set_filename(const char *filename)

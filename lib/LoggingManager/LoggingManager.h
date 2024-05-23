@@ -57,6 +57,8 @@ public:
   void log(log_level_t level, unsigned long message);
   void log(log_level_t level, float message);
   void log(log_level_t level, double message);
+  void log(log_level_t level, DateTime message);
+  void log(log_level_t level, TimeSpan message);
 
   void start_seq(log_level_t level, const char *message);
   void start_seq(log_level_t level, String message);
@@ -67,6 +69,8 @@ public:
   void start_seq(log_level_t level, unsigned long message);
   void start_seq(log_level_t level, float message);
   void start_seq(log_level_t level, double message);
+  void start_seq(log_level_t level, DateTime message);
+  void start_seq(log_level_t level, TimeSpan message);
 
   void append_seq(const char *message);
   void append_seq(String message);
@@ -77,6 +81,8 @@ public:
   void append_seq(unsigned long message);
   void append_seq(float message);
   void append_seq(double message);
+  void append_seq(DateTime message);
+  void append_seq(TimeSpan message);
 
   void end_seq(const char *message);
   void end_seq(String message);
@@ -87,6 +93,8 @@ public:
   void end_seq(unsigned long message);
   void end_seq(float message);
   void end_seq(double message);
+  void end_seq(DateTime message);
+  void end_seq(TimeSpan message);
 
   void end_seq();
 
