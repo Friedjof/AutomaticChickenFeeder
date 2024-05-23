@@ -49,7 +49,7 @@ void ClockService::set_datetime(uint16_t year, uint16_t month, uint16_t day, uin
     return;
   }
 
-  this->rtc.setYear(year - 2000);
+  this->rtc.setYear(year - CENTURY);
   this->rtc.setMonth(month);
   this->rtc.setDate(day);
   this->rtc.setHour(hour);
@@ -103,7 +103,7 @@ uint16_t ClockService::getYear()
     return 0;
   }
 
-  return this->rtc.getYear();
+  return this->rtc.getYear() + CENTURY;
 }
 
 uint16_t ClockService::getMonth()
