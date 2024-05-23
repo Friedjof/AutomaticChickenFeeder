@@ -46,6 +46,7 @@ public:
 
   void begin();
   bool is_initialized();
+  bool reset_logs();
 
   void log(log_level_t level, const char *message);
   void log(log_level_t level, String message);

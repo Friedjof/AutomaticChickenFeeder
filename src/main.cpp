@@ -182,7 +182,7 @@ void setup()
       int line_counter = loggingManager.count_log_lines() + 1;
       int file_line_counter = loggingManager.get_file_line_counter() + 1;
 
-      loggingManager.start_seq(LOG_LEVEL_INFO_FILE, "GET /log_lines [");
+      loggingManager.start_seq(LOG_LEVEL_INFO, "GET /log_lines [");
       loggingManager.append_seq(line_counter);
       loggingManager.append_seq(", ");
       loggingManager.append_seq(file_line_counter);
@@ -242,7 +242,6 @@ void setup()
     server.on("/sleep", HTTP_GET, [](AsyncWebServerRequest *request)
               {
       loggingManager.log(LOG_LEVEL_INFO, "GET /sleep");
-      loggingManager.log(LOG_LEVEL_INFO_FILE, "Schlafmodus aktiviert");
       
       goToSleep();
 
@@ -308,6 +307,14 @@ void setup()
       loggingManager.end_seq("]");
 
       alertManager.set_new_datetime(year, month, day, hour, minute, second);
+
+      request->send(200); });
+
+    // reset the logs (delete and create new file)
+    server.on("/reset_logs", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+      loggingManager.log(LOG_LEVEL_INFO, "GET /reset_logs");
+      loggingManager.reset_logs();
 
       request->send(200); });
 
@@ -384,6 +391,8 @@ void goToSleep()
 {
   // Set next alert
   alertManager.set_next_alert();
+
+  loggingManager.log(LOG_LEVEL_INFO_FILE, "Go to sleep");
 
 // go to sleep
 #if defined(ESP32DEV)

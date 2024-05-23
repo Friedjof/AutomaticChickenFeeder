@@ -36,6 +36,40 @@ bool LoggingManager::is_initialized()
   return this->initialized;
 }
 
+bool LoggingManager::reset_logs()
+{
+  // check if file exists
+  if (!LittleFS.exists(this->filename))
+  {
+    File file = LittleFS.open(this->filename, "w");
+    file.close();
+
+    this->file_line_counter = 0;
+
+    this->log(LOG_LEVEL_INFO, "No log file found, new log file was created");
+
+    return true;
+  }
+
+  // delete file
+  if (LittleFS.remove(this->filename))
+  {
+    // create file
+    File file = LittleFS.open(this->filename, "w");
+    file.close();
+
+    this->file_line_counter = 0;
+
+    this->log(LOG_LEVEL_INFO, "Log file was reset");
+
+    return true;
+  }
+
+  this->log(LOG_LEVEL_ERROR, "Log file could not be reset");
+  
+  return false;
+}
+
 String LoggingManager::log_string(log_level_t level)
 {
   String log_message = "(";

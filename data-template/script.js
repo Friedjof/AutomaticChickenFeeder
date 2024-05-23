@@ -48,7 +48,7 @@ function showTimer(id, timer) {
     row.appendChild(enabled);
 
     var popup_button = document.createElement('td');
-    popup_button.innerHTML = '<button onclick="showPopup(' + id + ')" class="input_buttons">&#128197;</button>';
+    popup_button.innerHTML = '<button onclick="showWeekdayConfig(' + id + ')" class="input_buttons">&#128197;</button>';
     popup_button.id = 'popup-' + id;
     row.appendChild(popup_button);
 
@@ -68,7 +68,7 @@ function showTimer(id, timer) {
     document.getElementById('timers').getElementsByTagName('tbody')[0].appendChild(row);
 }
 
-function showPopup(id) {
+function showPopup() {
     var overlay = document.createElement('div');
     overlay.className = 'overlay';
     overlay.onclick = function() {
@@ -88,6 +88,73 @@ function showPopup(id) {
     }
 
     modal.appendChild(closeButton);
+
+    return modal;
+}
+
+function showLogs() {
+    var modal = showPopup();
+
+    var text = document.createElement('h2');
+    text.className = 'schedule-header';
+    text.textContent = 'Logs 📜';
+    modal.appendChild(text);
+
+    var body = document.createElement('div');
+    body.className = 'log-body';
+    modal.appendChild(body);
+
+    // Show IFrame of /logging
+    var iframe = document.createElement('iframe');
+    iframe.src = url + '/logging';
+    iframe.className = 'logging-iframe';
+    body.appendChild(iframe);
+
+    // Refresh button
+    var button_div = document.createElement('div');
+    button_div.className = 'refresh-div';
+    modal.appendChild(button_div);
+
+    var refresh_button = document.createElement('button');
+    refresh_button.innerHTML = 'Refresh';
+    refresh_button.className = 'refresh-button';
+    refresh_button.onclick = function() {
+        iframe.src = url + '/logging';
+    }
+    button_div.appendChild(refresh_button);
+
+    var link_button = document.createElement('button');
+    link_button.innerHTML = 'Open in new tab';
+    link_button.className = 'link-button';
+    link_button.onclick = function() {
+        window.open(url + '/logging', '_blank');
+    }
+    button_div.appendChild(link_button);
+
+    var clear_button = document.createElement('button');
+    clear_button.innerHTML = 'Clear logs';
+    clear_button.className = 'clear-button';
+    clear_button.onclick = function() {
+        fetch(url + '/reset_logs')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        
+        iframe.src = url + '/logging';
+    }
+    button_div.appendChild(clear_button);
+
+    document.body.appendChild(modal);
+}
+
+function showWeekdayConfig(id) {
+    var modal = showPopup();
 
     var text = document.createElement('h2');
     text.className = 'schedule-header';
