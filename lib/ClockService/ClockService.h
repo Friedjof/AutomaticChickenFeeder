@@ -34,15 +34,6 @@ public:
   void set_datetime(uint16_t year, uint16_t month, uint16_t day, uint16_t hour, uint16_t minute, uint16_t second);
   DateTime get_datetime();
 
-  void set_century(bool century);
-  bool get_century();
-
-  void set_h12(bool h12);
-  bool get_h12();
-
-  void set_pm(bool pm);
-  bool get_pm();
-
   uint16_t getYear();
   uint16_t getMonth();
   uint16_t getDay();
@@ -52,6 +43,7 @@ public:
   uint16_t getDoW();
   uint16_t getTemperature();
 
+  void clear_alerts();
   String getDoWString();
 
   void turnOffAlarm(byte alarm);

@@ -7,13 +7,13 @@ PROJECT_NAME = Automatic chicken feeder
 BUILD_ENV = platformio
 
 # Serial port for uploading (you may need to adjust this)
-UPLOAD_PORT = /dev/ttyUSB0
+UPLOAD_PORT = /dev/ttyACM0
 
 # Serial baud rate (you may need to adjust this)
 UPLOAD_SPEED = 115200
 
 # Define the ESP32 board model (esp8266, esp32dev or esp32s3)
-BOARD = esp32dev
+BOARD = esp32s3
 
 # Location of the SPIFFS filesystem directory
 SPIFFS_DIR = data

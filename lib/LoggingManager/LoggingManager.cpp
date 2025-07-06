@@ -482,17 +482,17 @@ void LoggingManager::end_seq()
 void LoggingManager::end_seq(DateTime message)
 {
   String log_message = "";
-  log_message += message.year();
+  log_message += message.year() < 10 ? "0" + String(message.year()) : String(message.year());
   log_message += "-";
-  log_message += message.month();
+  log_message += message.month() < 10 ? "0" + String(message.month()) : String(message.month());
   log_message += "-";
-  log_message += message.day();
+  log_message += message.day() < 10 ? "0" + String(message.day()) : String(message.day());
   log_message += " ";
-  log_message += message.hour();
+  log_message += message.hour() < 10 ? "0" + String(message.hour()) : String(message.hour());
   log_message += ":";
-  log_message += message.minute();
+  log_message += message.minute() < 10 ? "0" + String(message.minute()) : String(message.minute());
   log_message += ":";
-  log_message += message.second();
+  log_message += message.second() < 10 ? "0" + String(message.second()) : String(message.second());
 
   this->end_seq(log_message.c_str());
 }

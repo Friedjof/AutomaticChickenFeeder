@@ -93,7 +93,7 @@ void setup()
   clockService.begin();
 
   // Setup of the LoggingManager
-  loggingManager.set_log_level(LOG_LEVEL_INFO);
+  loggingManager.set_log_level(LOG_LEVEL_DEBUG);
   loggingManager.set_file_log_level(LOG_LEVEL_INFO_FILE);
 
   // begin the managers
@@ -233,11 +233,6 @@ void setup()
                                                                                {
       // Convert the data to a JSON object
       loggingManager.log(LOG_LEVEL_INFO, "POST /set");
-
-      // Print the JSON object
-      Serial.println("Received JSON object:");
-      serializeJsonPretty(json, Serial);
-      Serial.println();
 
       configManager.set_timers_json(json);
 

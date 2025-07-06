@@ -26,7 +26,7 @@ void ClockService::begin()
   // Initialize RTC
   if (!rtc.begin())
   {
-    Serial.println("[ERROR] Couldn't find RTC");
+    Serial.printf("[ERROR] Couldn't find RTC. Make sure you have connected the RTC to the I2C pins: SDA=%d, SCL=%d\n", SDA_PIN, SCL_PIN);
     while (1)
       ;
   }
@@ -190,6 +190,18 @@ void ClockService::turnOffAlarm(byte alarm)
   this->rtc.disableAlarm((uint8_t)alarm);
 }
 
+void ClockService::clear_alerts()
+{
+  if (!this->initialized)
+  {
+    return;
+  }
+
+  rtc.clearAlarm(1);
+  rtc.clearAlarm(2);
+  rtc.writeSqwPinMode(DS3231_OFF);
+}
+
 void ClockService::setA1Time(DateTime datetime)
 {
   if (!this->initialized)
@@ -197,7 +209,15 @@ void ClockService::setA1Time(DateTime datetime)
     return;
   }
 
+  Serial.println("Setting alarm 1");
+  Serial.print("Alarm 1 time: ");
+  Serial.println(datetime.timestamp(DateTime::TIMESTAMP_FULL));
+
+  this->clear_alerts();
+
   this->rtc.setAlarm1(datetime, DS3231_A1_Date);
+
+  Serial.println("Alarm 1 set");
 }
 
 void ClockService::disableAlarm2()

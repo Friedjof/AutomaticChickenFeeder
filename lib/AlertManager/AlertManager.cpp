@@ -382,7 +382,12 @@ void AlertManager::set_alert(DateTime alert)
   // Set the alarm
   this->clockService.turnOffAlarm(1);
 
+  loggingManager.start_seq(LOG_LEVEL_DEBUG, "set alert: ");
+  loggingManager.end_seq(alert);
+
   this->clockService.setA1Time(alert);
+
+  loggingManager.log(LOG_LEVEL_DEBUG, "alarm set");
 }
 
 bool AlertManager::timer_is_active_on_weekday(timer_config_t timer, int weekday)
