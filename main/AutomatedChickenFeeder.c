@@ -16,18 +16,27 @@ void app_main(void)
         return;
     }
     
-    ESP_LOGI(TAG, "Feeding component initialized successfully");
+    ret = feeding_button_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Button init failed: %s", esp_err_to_name(ret));
+        feeding_deinit();
+        return;
+    }
     
-    uint32_t feed_counter = 0;
+    ret = feeding_servo_power_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Servo power control init failed: %s", esp_err_to_name(ret));
+        feeding_button_deinit();
+        feeding_deinit();
+        return;
+    }
+    
+    ESP_LOGI(TAG, "Feeding component, button, and servo power control initialized successfully");
+    ESP_LOGI(TAG, "System ready - manual feeding available via button");
     
     while(1) {
         feeding_process();
-        
-        if (feeding_is_ready()) {
-            feed_counter++;
-            ESP_LOGI(TAG, "Starting feeding cycle #%lu", feed_counter);
-            feeding_start();
-        }
+        feeding_handle_button_events();
         
         vTaskDelay(pdMS_TO_TICKS(100));
     }

@@ -4,6 +4,9 @@
 #include "esp_err.h"
 #include <stdbool.h>
 
+#define MANUAL_FEED_BUTTON_GPIO 10
+#define SERVO_POWER_CONTROL_GPIO 3
+
 typedef enum {
     FEEDING_STATE_IDLE,
     FEEDING_STATE_INIT,
@@ -24,5 +27,13 @@ esp_err_t feeding_start(void);
 void feeding_process(void);
 feeding_state_t feeding_get_state(void);
 bool feeding_is_ready(void);
+
+esp_err_t feeding_button_init(void);
+void feeding_button_deinit(void);
+void feeding_handle_button_events(void);
+
+esp_err_t feeding_servo_power_init(void);
+void feeding_servo_power_enable(void);
+void feeding_servo_power_disable(void);
 
 #endif
