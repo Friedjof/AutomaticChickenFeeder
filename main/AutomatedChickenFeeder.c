@@ -2,49 +2,33 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "iot_servo.h"
+#include "feeding_component.h"
 
-#define SERVO1_GPIO_PIN 1
-#define SERVO2_GPIO_PIN 2
-
-static const char* TAG = "SERVO_CONTROL";
+static const char* TAG = "CHICKEN_FEEDER";
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "Servo Motor Test gestartet - GPIO1 & GPIO2");
+    ESP_LOGI(TAG, "Automatic Chicken Feeder gestartet");
     
-    // Servo Konfiguration
-    servo_config_t servo_cfg = {
-        .max_angle = 180,
-        .min_width_us = 500,
-        .max_width_us = 2500,
-        .freq = 50,
-        .timer_number = LEDC_TIMER_0,
-        .channels = {
-            .servo_pin = {SERVO1_GPIO_PIN, SERVO2_GPIO_PIN},
-            .ch = {LEDC_CHANNEL_0, LEDC_CHANNEL_1},
-        },
-        .channel_number = 2,
-    };
-    
-    // Servo initialisieren
-    esp_err_t ret = iot_servo_init(LEDC_LOW_SPEED_MODE, &servo_cfg);
+    esp_err_t ret = feeding_init();
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Servo Init fehlgeschlagen: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "Feeding component init failed: %s", esp_err_to_name(ret));
         return;
     }
     
-    ESP_LOGI(TAG, "Servos erfolgreich initialisiert");
+    ESP_LOGI(TAG, "Feeding component initialized successfully");
+    
+    uint32_t feed_counter = 0;
     
     while(1) {
-        ESP_LOGI(TAG, "Beide Servos: 0°");
-        iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 0, 0.0f);
-        iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 1, 180.0f);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        feeding_process();
         
-        ESP_LOGI(TAG, "Beide Servos: 180°");
-        iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 0, 180.0f);
-        iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 1, 0.0f);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        if (feeding_is_ready()) {
+            feed_counter++;
+            ESP_LOGI(TAG, "Starting feeding cycle #%lu", feed_counter);
+            feeding_start();
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

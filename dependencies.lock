@@ -15,6 +15,6 @@ dependencies:
     version: 5.4.1
 direct_dependencies:
 - espressif/servo
-manifest_hash: c7efa3bfdf965946795292b92d7a0a4ea4ea9d717b3b2e205a89f537b5ae779a
+manifest_hash: 228506c1668f87a66f70de60fb8b24f65fe5f562834eda69c85c3e1781101537
 target: esp32c6
 version: 2.0.0
