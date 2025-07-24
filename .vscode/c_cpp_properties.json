@@ -1,0 +1,31 @@
+{
+  "configurations": [
+    {
+      "name": "ESP-IDF",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "~/.esp/esp-idf/components/**",
+        "~/.esp/esp-idf/components/freertos/FreeRTOS-Kernel/include",
+        "~/.esp/esp-idf/components/freertos/esp_additions/include",
+        "~/.esp/esp-idf/components/esp_driver_ledc/include",
+        "~/.esp/esp-idf/components/esp_driver_gpio/include",
+        "~/.esp/esp-idf/components/log/include",
+        "~/.esp/esp-idf/components/hal/include",
+        "~/.esp/esp-idf/components/hal/esp32/include",
+        "~/.esp/esp-idf/components/soc/include",
+        "~/.esp/esp-idf/components/soc/esp32/include",
+        "${workspaceFolder}/build/config"
+      ],
+      "defines": [
+        "ESP_PLATFORM",
+        "IDF_VER=\"v5.1.2\"",
+        "ESP32"
+      ],
+      "compilerPath": "${config:idf.toolsPath}/tools/riscv32-esp-elf/esp-14.2.0_20241119/riscv32-esp-elf/bin/riscv32-esp-elf-gcc",
+      "cStandard": "c11",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "gcc-x64"
+    }
+  ],
+  "version": 4
+}
