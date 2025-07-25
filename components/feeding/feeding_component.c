@@ -8,8 +8,9 @@
 #include "driver/gpio.h"
 #include "hal/gpio_types.h"
 
-#define SERVO1_GPIO_PIN 1
-#define SERVO2_GPIO_PIN 2
+// Servo pins - PWM-capable on Seeed XIAO ESP32-C6
+#define SERVO1_GPIO_PIN 18  // D10/MOSI - PWM-capable
+#define SERVO2_GPIO_PIN 19  // D8/SCK - PWM-capable
 #define FEEDING_TIMEOUT_MS 3000
 #define BUTTON_DEBOUNCE_TIME_MS 50
 

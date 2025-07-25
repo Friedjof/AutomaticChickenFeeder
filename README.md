@@ -3,14 +3,18 @@
 
 An ESP32-C6-based automated chicken feeding system with dual-servo actuation and advanced scheduling, monitoring, and control features.
 
+> This project contains AI-generated code and documentation.
+
 ---
 
 ## Hardware
 
-- **Microcontroller**: ESP32-C6
+- **Microcontroller**: Seeed XIAO ESP32-C6
 - **Servos**: 2x Standard 180° Servos (e.g., MG90S)
-  - Servo 1 (Scoop rotation): GPIO Pin 1
-  - Servo 2 (Scoop tilt): GPIO Pin 2
+  - Servo 1 (Scoop rotation): GPIO18 (D10/MOSI)
+  - Servo 2 (Scoop tilt): GPIO19 (D8/SCK)
+- **Manual Control**: Button on GPIO1 (D1)
+- **Power Control**: NPN Transistor (2N2222) on GPIO21 (D3)
 - **Sensors**:
   - Load cell (HX711) for feed weight monitoring
   - Optional temperature/humidity sensor (DHT22)

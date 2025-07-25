@@ -115,7 +115,36 @@ It is based on the official [Espressif ESP-IDF coding style](https://docs.espres
 
 ---
 
-## 11. Future Work (TODO)
+## 11. Documentation & Diagrams
+
+### Mermaid Color Standards
+For consistent and readable diagram styling across all documentation:
+
+* **Use dark colors only** to ensure text readability
+* **Avoid light colors** like `#ffcc99`, `#99ccff`, etc.
+* **Recommended color palette:**
+  ```
+  classDef vcc fill:#cc4444       // Dark red for VCC/power supply
+  classDef gnd fill:#444444       // Dark gray for GND/ground
+  classDef signal fill:#005555    // Dark teal for signals  
+  classDef control fill:#332200   // Dark brown for control
+  classDef input fill:#774400     // Dark orange for input
+  classDef load fill:#aa6633      // Dark brown for loads
+  ```
+
+* **Power supply standards:**
+  - Always use separate `vcc` and `gnd` classes for visual distinction
+  - VCC includes all positive voltages (3.3V, 5V, etc.)
+  - GND includes all ground/negative connections
+
+### Markdown Standards
+* Use consistent heading levels and structure
+* Include code examples with proper syntax highlighting
+* Provide clear section navigation with TOC when needed
+
+---
+
+## 12. Future Work (TODO)
 
 * Add specific unit testing guidelines.
 * Define code coverage requirements.

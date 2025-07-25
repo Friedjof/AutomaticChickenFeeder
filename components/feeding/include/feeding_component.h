@@ -4,8 +4,9 @@
 #include "esp_err.h"
 #include <stdbool.h>
 
-#define MANUAL_FEED_BUTTON_GPIO 10
-#define SERVO_POWER_CONTROL_GPIO 3
+// Pin definitions for Seeed XIAO ESP32-C6
+#define MANUAL_FEED_BUTTON_GPIO 1   // D1 - Interrupt-capable, ULP-accessible
+#define SERVO_POWER_CONTROL_GPIO 21 // D3 - Digital I/O
 
 typedef enum {
     FEEDING_STATE_IDLE,
