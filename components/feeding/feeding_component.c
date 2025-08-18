@@ -1,6 +1,7 @@
 #include "feeding_component.h"
 #include "iot_servo.h"
 #include "esp_log.h"
+#include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -9,16 +10,58 @@
 #include "hal/gpio_types.h"
 
 // Servo pins - PWM-capable on Seeed XIAO ESP32-C6
-#define SERVO1_GPIO_PIN 18  // D10/MOSI - PWM-capable
-#define SERVO2_GPIO_PIN 19  // D8/SCK - PWM-capable
+#define SERVO1_GPIO_PIN 16  // D6/TX0 - Better PWM support  
+#define SERVO2_GPIO_PIN 17  // D7/RX0 - Better PWM support
 #define FEEDING_TIMEOUT_MS 3000
 #define BUTTON_DEBOUNCE_TIME_MS 50
 
+// PWM configuration for MG90S servos
+#define SERVO_PWM_FREQ 50        // 50Hz for servos
+#define SERVO_PWM_RESOLUTION LEDC_TIMER_16_BIT
+// MG90S optimized pulse widths for full 180° range
+#define SERVO_MIN_PULSE_US 544   // 0.544ms = 0 degrees (MG90S)
+#define SERVO_MAX_PULSE_US 2400  // 2.4ms = 180 degrees (MG90S)
+#define SERVO_CENTER_PULSE_US 1472 // ~1.47ms = 90 degrees
+
+// Two servo positions for feeding mechanism
+#define POSITION_A_SERVO1 0.0f    // Ready/Dropping position
+#define POSITION_A_SERVO2 180.0f
+#define POSITION_B_SERVO1 180.0f  // Loading/Feeding position  
+#define POSITION_B_SERVO2 0.0f
+
 static const char* TAG = "FEEDING";
 static feeding_handle_t feeding_handle = {0};
+static bool servo_initialized = false;
 
 static volatile uint32_t last_button_press_time = 0;
 static QueueHandle_t button_event_queue;
+
+// Direct PWM control functions
+static uint32_t servo_angle_to_duty(float angle) {
+    // Convert angle (0-180) to pulse width (1000-2000 us)
+    uint32_t pulse_us = SERVO_MIN_PULSE_US + (angle / 180.0f) * (SERVO_MAX_PULSE_US - SERVO_MIN_PULSE_US);
+    // Convert pulse width to duty cycle for 16-bit resolution
+    uint32_t period_us = 1000000 / SERVO_PWM_FREQ; // 20000us for 50Hz
+    uint32_t duty = (pulse_us * ((1 << 16) - 1)) / period_us;
+    return duty;
+}
+
+static esp_err_t servo_write_angle_direct(int servo_num, float angle) {
+    ledc_channel_t channel = (servo_num == 0) ? LEDC_CHANNEL_0 : LEDC_CHANNEL_1;
+    uint32_t duty = servo_angle_to_duty(angle);
+    
+    esp_err_t ret = ledc_set_duty(LEDC_LOW_SPEED_MODE, channel, duty);
+    if (ret != ESP_OK) return ret;
+    
+    ret = ledc_update_duty(LEDC_LOW_SPEED_MODE, channel);
+    
+    // Calculate actual pulse width for debugging
+    uint32_t period_us = 1000000 / SERVO_PWM_FREQ; // 20000us for 50Hz
+    uint32_t pulse_us = (duty * period_us) / ((1 << 16) - 1);
+    
+    ESP_LOGI(TAG, "Servo %d: %.1f° → pulse %" PRIu32 "us (duty: %" PRIu32 ")", servo_num, angle, pulse_us, duty);
+    return ret;
+}
 
 static void IRAM_ATTR manual_feed_button_isr_handler(void* arg)
 {
@@ -39,35 +82,26 @@ esp_err_t feeding_init(void)
 {
     ESP_LOGI(TAG, "Initializing feeding component");
     
-    servo_config_t servo_cfg = {
-        .max_angle = 180,
-        .min_width_us = 500,
-        .max_width_us = 2500,
-        .freq = 50,
-        .timer_number = LEDC_TIMER_0,
-        .channels = {
-            .servo_pin = {SERVO1_GPIO_PIN, SERVO2_GPIO_PIN},
-            .ch = {LEDC_CHANNEL_0, LEDC_CHANNEL_1},
-        },
-        .channel_number = 2,
-    };
-    
-    esp_err_t ret = iot_servo_init(LEDC_LOW_SPEED_MODE, &servo_cfg);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Servo init failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-    
+    // Initialize state only - servo init happens in feeding_start()
     feeding_handle.state = FEEDING_STATE_IDLE;
     feeding_handle.feeding_active = false;
+    servo_initialized = false;
     
-    ESP_LOGI(TAG, "Feeding component initialized - servos ready for manual operation");
+    ESP_LOGI(TAG, "Feeding component initialized - ready for operation");
     return ESP_OK;
 }
 
 void feeding_deinit(void)
 {
-    iot_servo_deinit(LEDC_LOW_SPEED_MODE);
+    // Deinitialize servos completely on system shutdown
+    if (servo_initialized) {
+        // Stop PWM output
+        ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0, 0);
+        ledc_stop(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_1, 0);
+        servo_initialized = false;
+    }
+    
+    feeding_servo_power_disable();
     feeding_handle.state = FEEDING_STATE_IDLE;
     feeding_handle.feeding_active = false;
 }
@@ -80,11 +114,82 @@ esp_err_t feeding_start(void)
     }
     
     ESP_LOGI(TAG, "Starting feeding cycle");
+    
+    // Enable servo power FIRST
     feeding_servo_power_enable();
-    feeding_handle.state = FEEDING_STATE_INIT;
+    
+    // Wait for power stabilization
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
+    // Initialize direct PWM control only once (first time)
+    if (!servo_initialized) {
+        // Configure LEDC timer
+        ledc_timer_config_t timer_config = {
+            .speed_mode = LEDC_LOW_SPEED_MODE,
+            .timer_num = LEDC_TIMER_0,
+            .duty_resolution = SERVO_PWM_RESOLUTION,
+            .freq_hz = SERVO_PWM_FREQ,
+            .clk_cfg = LEDC_AUTO_CLK
+        };
+        esp_err_t ret = ledc_timer_config(&timer_config);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "LEDC timer config failed: %s", esp_err_to_name(ret));
+            feeding_servo_power_disable();
+            return ret;
+        }
+        
+        // Configure LEDC channels for servos
+        ledc_channel_config_t servo1_config = {
+            .speed_mode = LEDC_LOW_SPEED_MODE,
+            .channel = LEDC_CHANNEL_0,
+            .timer_sel = LEDC_TIMER_0,
+            .intr_type = LEDC_INTR_DISABLE,
+            .gpio_num = SERVO1_GPIO_PIN,
+            .duty = servo_angle_to_duty(POSITION_A_SERVO1), // Position A: Ready/Dropping
+            .hpoint = 0
+        };
+        
+        ledc_channel_config_t servo2_config = {
+            .speed_mode = LEDC_LOW_SPEED_MODE,
+            .channel = LEDC_CHANNEL_1,
+            .timer_sel = LEDC_TIMER_0,
+            .intr_type = LEDC_INTR_DISABLE,
+            .gpio_num = SERVO2_GPIO_PIN,
+            .duty = servo_angle_to_duty(POSITION_A_SERVO2), // Position A: Ready/Dropping
+            .hpoint = 0
+        };
+        
+        ret = ledc_channel_config(&servo1_config);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Servo 1 channel config failed: %s", esp_err_to_name(ret));
+            feeding_servo_power_disable();
+            return ret;
+        }
+        
+        ret = ledc_channel_config(&servo2_config);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Servo 2 channel config failed: %s", esp_err_to_name(ret));
+            feeding_servo_power_disable();
+            return ret;
+        }
+        
+        servo_initialized = true;
+        ESP_LOGI(TAG, "Direct PWM servos initialized for first time");
+    } else {
+        ESP_LOGI(TAG, "Servos already initialized, power enabled");
+    }
+    
+    // CRITICAL: Send initial PWM signal immediately to prevent MG90S ticking
+    // Set servos to Position A (Ready/Dropping)
+    servo_write_angle_direct(0, POSITION_A_SERVO1);
+    servo_write_angle_direct(1, POSITION_A_SERVO2);
+    ESP_LOGI(TAG, "Servos set to Position A (Ready/Dropping)");
+    
+    feeding_handle.state = FEEDING_STATE_POSITION_B;
     feeding_handle.feeding_active = true;
     feeding_handle.state_start_time = xTaskGetTickCount() * portTICK_PERIOD_MS;
     
+    ESP_LOGI(TAG, "Feeding cycle started");
     return ESP_OK;
 }
 
@@ -98,36 +203,36 @@ void feeding_process(void)
     uint32_t elapsed_time = current_time - feeding_handle.state_start_time;
     
     switch (feeding_handle.state) {
-        case FEEDING_STATE_INIT:
-            ESP_LOGI(TAG, "Moving to emptying position");
-            iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 0, 180.0f);
-            iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 1, 0.0f);
-            feeding_handle.state = FEEDING_STATE_EMPTYING;
+        case FEEDING_STATE_POSITION_B:
+            ESP_LOGI(TAG, "Moving to Position B (Loading/Feeding)");
+            servo_write_angle_direct(0, POSITION_B_SERVO1);
+            servo_write_angle_direct(1, POSITION_B_SERVO2);
+            feeding_handle.state = FEEDING_STATE_POSITION_A;
             feeding_handle.state_start_time = current_time;
             break;
             
-        case FEEDING_STATE_EMPTYING:
+        case FEEDING_STATE_POSITION_A:
             if (elapsed_time >= FEEDING_TIMEOUT_MS) {
-                ESP_LOGI(TAG, "Moving to loading position");
-                iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 0, 0.0f);
-                iot_servo_write_angle(LEDC_LOW_SPEED_MODE, 1, 180.0f);
-                feeding_handle.state = FEEDING_STATE_LOADING;
+                ESP_LOGI(TAG, "Moving to Position A (Ready/Dropping)");
+                servo_write_angle_direct(0, POSITION_A_SERVO1);
+                servo_write_angle_direct(1, POSITION_A_SERVO2);
+                feeding_handle.state = FEEDING_STATE_COMPLETE;
                 feeding_handle.state_start_time = current_time;
             }
             break;
             
-        case FEEDING_STATE_LOADING:
+        case FEEDING_STATE_COMPLETE:
             if (elapsed_time >= FEEDING_TIMEOUT_MS) {
-                ESP_LOGI(TAG, "Feeding complete - ready for next cycle");
+                ESP_LOGI(TAG, "Feeding cycle complete - ready for next feeding");
+                
+                // Keep servos initialized, only disable power for energy saving
                 feeding_servo_power_disable();
-                feeding_handle.state = FEEDING_STATE_READY;
+                
+                feeding_handle.state = FEEDING_STATE_IDLE;
                 feeding_handle.feeding_active = false;
             }
             break;
             
-        case FEEDING_STATE_READY:
-            feeding_handle.state = FEEDING_STATE_IDLE;
-            break;
             
         default:
             break;
@@ -233,18 +338,20 @@ esp_err_t feeding_servo_power_init(void)
     }
     
     feeding_servo_power_disable();
-    ESP_LOGI(TAG, "Servo power control initialized successfully");
+    ESP_LOGI(TAG, "Servo power control initialized successfully (S8550 PNP)");
     return ESP_OK;
 }
 
 void feeding_servo_power_enable(void)
 {
-    gpio_set_level(SERVO_POWER_CONTROL_GPIO, 1);
-    ESP_LOGD(TAG, "Servo power enabled");
+    gpio_set_level(SERVO_POWER_CONTROL_GPIO, 0);  // LOW for PNP transistor (S8550)
+    int level = gpio_get_level(SERVO_POWER_CONTROL_GPIO);
+    ESP_LOGI(TAG, "Servo power enable: GPIO%d set to %d (PNP: LOW=ON)", SERVO_POWER_CONTROL_GPIO, level);
 }
 
 void feeding_servo_power_disable(void)
 {
-    gpio_set_level(SERVO_POWER_CONTROL_GPIO, 0);
-    ESP_LOGD(TAG, "Servo power disabled");
+    gpio_set_level(SERVO_POWER_CONTROL_GPIO, 1);  // HIGH for PNP transistor (S8550)
+    int level = gpio_get_level(SERVO_POWER_CONTROL_GPIO);
+    ESP_LOGI(TAG, "Servo power disable: GPIO%d set to %d (PNP: HIGH=OFF)", SERVO_POWER_CONTROL_GPIO, level);
 }

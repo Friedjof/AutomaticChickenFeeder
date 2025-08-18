@@ -11,10 +11,10 @@ An ESP32-C6-based automated chicken feeding system with dual-servo actuation and
 
 - **Microcontroller**: Seeed XIAO ESP32-C6
 - **Servos**: 2x Standard 180° Servos (e.g., MG90S)
-  - Servo 1 (Scoop rotation): GPIO18 (D10/MOSI)
-  - Servo 2 (Scoop tilt): GPIO19 (D8/SCK)
+  - Servo 1 (Scoop rotation): GPIO16 (D6/TX0)
+  - Servo 2 (Scoop tilt): GPIO17 (D7/RX0)
 - **Manual Control**: Button on GPIO1 (D1)
-- **Power Control**: NPN Transistor (2N2222) on GPIO21 (D3)
+- **Power Control**: PNP Transistor (S8550) on GPIO20 (D9)
 - **Sensors**:
   - Load cell (HX711) for feed weight monitoring
   - Optional temperature/humidity sensor (DHT22)
@@ -27,9 +27,9 @@ An ESP32-C6-based automated chicken feeding system with dual-servo actuation and
 
 The feeding system uses two servos to control a scoop:
 
-1. **Loading Position**: Servo 1 = 0°, Servo 2 = 180°
-2. **Emptying Position**: Servo 1 = 180°, Servo 2 = 0° (3 seconds)
-3. **Return to Loading**: Servo 1 = 0°, Servo 2 = 180° (3 seconds)
+1. **Ready/Dropping Position (A)**: Servo 1 = 0°, Servo 2 = 180°
+2. **Loading/Feeding Position (B)**: Servo 1 = 180°, Servo 2 = 0° (3 seconds)
+3. **Return to Ready**: Servo 1 = 0°, Servo 2 = 180° (3 seconds)
 
 ### Additional Features
 - **Scheduled Feeding** via configurable timetable
@@ -48,15 +48,15 @@ The feeding system uses two servos to control a scoop:
 ├── components/
 │   └── feeding/                # Feeding control component
 │       ├── CMakeLists.txt
-│       ├── idf\_component.yml   # Servo dependency
+│       ├── idf_component.yml   # Servo dependency
 │       ├── include/
-│       │   └── feeding\_component.h
-│       └── feeding\_component.c
+│       │   └── feeding_component.h
+│       └── feeding_component.c
 ├── main/
 │   ├── AutomatedChickenFeeder.c
 │   └── CMakeLists.txt
-└── managed\_components/
-└── espressif\_\_servo/       # ESP-IDF Servo library
+└── managed_components/
+└── espressif_servo/            # ESP-IDF Servo library
 
 ````
 

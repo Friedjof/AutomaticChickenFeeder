@@ -6,14 +6,13 @@
 
 // Pin definitions for Seeed XIAO ESP32-C6
 #define MANUAL_FEED_BUTTON_GPIO 1   // D1 - Interrupt-capable, ULP-accessible
-#define SERVO_POWER_CONTROL_GPIO 21 // D3 - Digital I/O
+#define SERVO_POWER_CONTROL_GPIO 20 // Test: GPIO20 instead of GPIO21
 
 typedef enum {
-    FEEDING_STATE_IDLE,
-    FEEDING_STATE_INIT,
-    FEEDING_STATE_LOADING,
-    FEEDING_STATE_EMPTYING,
-    FEEDING_STATE_READY
+    FEEDING_STATE_IDLE,        // Ready, waiting for trigger
+    FEEDING_STATE_POSITION_B,  // Moving to/holding Position B (Loading)
+    FEEDING_STATE_POSITION_A,  // Moving to/holding Position A (Ready/Dropping)
+    FEEDING_STATE_COMPLETE     // Feeding cycle finished
 } feeding_state_t;
 
 typedef struct {
