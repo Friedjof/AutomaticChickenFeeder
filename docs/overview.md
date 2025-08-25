@@ -67,7 +67,9 @@ The project is based on the ESP32C6 using the Espressif IoT Development Framewor
 - Shake effect during dump.
 - Documentation skeleton (`/docs`).
 
-### Phase 2 – Mechanical Reliability
+### Phase 2 – Time Management & Reliability
+- **DS3231 Real-Time Clock integration** for accurate timekeeping.
+- **Scheduled feeding routines** based on RTC time.
 - Vibration motor control (optional).
 - Scoop motion verification (sensor-based).
 
@@ -88,10 +90,13 @@ The project is based on the ESP32C6 using the Espressif IoT Development Framewor
 ### 4.1 Core Components
 - **MCU:** ESP32C6 (Wi-Fi + ZigBee).
 - **Servos:** 2× MG90S.
+- **RTC:** DS3231 I2C Real-Time Clock (GPIO5/SDA, GPIO6/SCL).
+  - High precision (±2ppm) with temperature compensation.
+  - Battery backup (CR2032) for time retention during power loss.
+  - Alarm functions for scheduled feeding wake-up.
 - **Distance Sensor:** VL53L0X ToF sensor.
 - **Vibration Motor:** Optional, activated before feeding.
 - **Buttons:** Minimum 2 (Feed / AP Mode).
-- **RTC:** for wake-up (optional, integrated).
 
 ### 4.2 Power Switching
 - **Transistor:** NPN-based high-side switching of servo VCC.
@@ -117,10 +122,11 @@ The project is based on the ESP32C6 using the Espressif IoT Development Framewor
 ### 5.2 Component Model (ESP-IDF)
 - Each major function is implemented as a separate component:
   - `feeding_service` → scoop movement logic
+  - `rtc_service` → DS3231 I2C communication and time management
+  - `scheduler_service` → feeding schedule management and alarm handling
   - `sensor_service` → VL53L0X distance measurement
   - `vibration_service` → vibration motor control (optional)
   - `zigbee_service` → ZigBee mock integration
-  - `rtc_service` → timekeeping (if external RTC is used)
 
 ### 5.3 Naming Conventions
 - Functions: `<component>_<function>()`
@@ -154,10 +160,11 @@ The project is based on the ESP32C6 using the Espressif IoT Development Framewor
 │   └── power.md
 ├── software/
 │   ├── feeding_service.md
+│   ├── rtc_service.md
+│   ├── scheduler_service.md
 │   ├── sensor_service.md
 │   ├── zigbee_service.md
-│   ├── vibration_service.md
-│   └── rtc_service.md
+│   └── vibration_service.md
 ├── development/
 │   ├── conventions.md
 │   ├── changelog.md

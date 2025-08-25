@@ -15,6 +15,9 @@ An ESP32-C6-based automated chicken feeding system with dual-servo actuation and
   - Servo 2 (Scoop tilt): GPIO17 (D7/RX0)
 - **Manual Control**: Button on GPIO1 (D1)
 - **Power Control**: PNP Transistor (S8550) on GPIO20 (D9)
+- **Real-Time Clock**: DS3231 RTC via I2C (GPIO5/GPIO6)
+  - Battery backup for time retention during power loss
+  - Alarm functions for scheduled feeding
 - **Sensors**:
   - Load cell (HX711) for feed weight monitoring
   - Optional temperature/humidity sensor (DHT22)

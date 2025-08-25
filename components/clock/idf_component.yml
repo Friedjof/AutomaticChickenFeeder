@@ -1,0 +1,4 @@
+version: "1.0.0"
+description: "Modular Clock Service with DS3231 RTC integration"
+dependencies:
+  idf: ">=5.0"
