@@ -7,6 +7,7 @@
 - Documentation sits in `docs/`; unit and integration tests belong in `test/`, following PlatformIO’s standard layout.
 
 ## Build, Test & Development Commands
+- `make setup` – copy `data-template/` → `data/`, verify PlatformIO CLI, prefetch packages.
 - `pio run` – compile the firmware (defaults to the host `native` environment).
 - `pio run -e esp32c6` – compile for the ESP32-C6 Arduino environment once platforms/libs are available.
 - `pio run -t upload -e esp32c6` – flash the compiled firmware to the device.
@@ -35,3 +36,14 @@
 - System Controller coordinates services via `IService` interface and `ServiceContext`.
 - Only Storage touches LittleFS/NVS; Clock wraps RTC hardware; Power manages deep sleep/WiFi lifecycle.
 - Two buttons are expected: *Feed* (dispense one scoop) and *Settings* (enable WiFi/AP for configuration).
+
+## Environment Options
+- VS Code Dev Container (`.devcontainer/`) provides an all-in-one PlatformIO toolchain; requires Docker Desktop/WSL2 on Windows.
+- Docker CLI alternative:
+  ```bash
+  docker run --rm -it \
+    -v "$PWD":/workspace -w /workspace \
+    platformio/platformio-core pio run -e esp32c6
+  ```
+  Add `--device=/dev/ttyUSB0` (Linux/macOS) when flashing.
+- Local PlatformIO Core/IDE remains supported; Makefile targets wrap common commands.
