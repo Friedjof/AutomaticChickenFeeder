@@ -19,24 +19,39 @@ This repository hosts the next-generation firmware for the Automatic Chicken Fee
 
 ## Working with the Project
 - Source code: `src/`, headers in `include/`, docs under `docs/`, tests in `test/`, LittleFS bundle under `data/` (copied from `data-template/`).
+- First run: `make setup` (copies `data-template/`, verifies PlatformIO, prefetches dependencies).
 - Baseline `platformio.ini`:
--  ```ini
--  [platformio]
--  default_envs = native
--
--  [env:esp32c6]
--  platform = espressif32
--  board = esp32c6-devkitc-1
--  framework = arduino
--  build_flags = -std=gnu++17
--
--  [env:native]
--  platform = native
--  build_flags = -std=gnu++17
--  ```
--  Add `ArduinoJson`, `AsyncTCP`, and `ESP Async WebServer` to the `esp32c6` environment `lib_deps`. The `native` environment exists for host-side builds/tests without hardware.
-- Build: `pio run`; flash: `pio run -t upload`; upload LittleFS assets: `pio run -t uploadfs`; tests: `pio test`.
-- Copy `data-template/` to `data/` on first setup and keep the working `data/` out of version control (store run-time configs and web assets there).
+  ```ini
+  [platformio]
+  default_envs = native
+
+  [env:esp32c6]
+  platform = espressif32
+  board = esp32c6-devkitc-1
+  framework = arduino
+  build_flags = -std=gnu++17
+  lib_deps =
+    bblanchon/ArduinoJson
+    esphome/AsyncTCP-esphome
+    me-no-dev/ESP Async WebServer
+
+  [env:native]
+  platform = native
+  build_flags = -std=gnu++17
+  ```
+  Build hardware with `pio run -e esp32c6`; host builds default to the `native` environment.
+- Flash: `pio run -t upload -e esp32c6`; upload LittleFS assets: `pio run -t uploadfs -e esp32c6`; tests: `pio test` / `pio test -e esp32c6`.
 - Development conventions, module templates, and commit guidelines live in `docs/dev.md` and `AGENTS.md`.
+
+## Development Environment Options
+- **VS Code Dev Container** – open the repository in VS Code and choose “Reopen in Container.” The `.devcontainer/` config uses the official PlatformIO Core image and installs common extensions. Works on Windows/macOS/Linux (Docker Desktop or compatible runtime required). Map USB devices in `devcontainer.json` for flashing inside the container.
+- **Docker CLI** – run commands without local installation:
+  ```bash
+  docker run --rm -it \
+    -v "$PWD":/workspace -w /workspace \
+    platformio/platformio-core pio run -e esp32c6
+  ```
+  Add `--device=/dev/ttyUSB0` (Linux) or the appropriate device mapping when flashing.
+- **Local install** – install PlatformIO Core or the IDE; the provided Makefile targets (`make build`, `make upload`, `make setup`, …) wrap common workflows.
 
 For a deeper dive into module responsibilities and the service lifecycle, start with `docs/README.md` and the individual module documents in `docs/modules/`.

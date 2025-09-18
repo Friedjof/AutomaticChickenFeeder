@@ -1,0 +1,17 @@
+{
+  "name": "Automatic Chicken Feeder",
+  "image": "ghcr.io/platformio/platformio-core:latest",
+  "remoteUser": "platformio",
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "postCreateCommand": "pio pkg update --only-platform --only-library -e esp32c6 || true",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "platformio.platformio-ide",
+        "ms-vscode.cpptools",
+        "ms-python.python"
+      ]
+    }
+  }
+}

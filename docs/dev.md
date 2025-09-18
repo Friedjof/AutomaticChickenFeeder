@@ -97,8 +97,8 @@ Guidelines:
 - Use `monitor_speed = 115200` for serial logs. Swap libraries only after updating docs. The `native` environment enables quick host builds/tests without installing ESP32 toolchains.
 
 ## Build & Test Workflow
-1. Install dependencies (`platformio` CLI, optional `npm` for Web UI assets located in the future `web/` workspace).
-2. Copy `data-template/` → `data/` (ignored by git) and place the built Web UI bundle plus environment-specific `config.json` inside `data/`.
+1. Install dependencies (`platformio` CLI, optional `npm` for Web UI assets located in the future `web/` workspace) or open the repo in the Dev Container (`.devcontainer/`).
+2. Run `make setup` to copy `data-template/` → `data/`, ensure `.pio-home/` exists, and prefetch packages.
 3. Build firmware (host env by default):
    ```bash
    pio run             # native
@@ -135,5 +135,6 @@ Guidelines:
 - Use `clang-format` (if configured) to keep code style consistent.
 - `rg` (ripgrep) is preferred for searching within the repo.
 - Keep VSCode settings under `.vscode/` minimal; rely on repo-level configuration.
+- Dev Container users can add serial devices by editing `.devcontainer/devcontainer.json` (`runArgs` / `mounts`).
 
 Following these guidelines keeps the codebase modular, testable, and easy to reason about as the PlatformIO transition progresses.

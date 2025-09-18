@@ -5,7 +5,7 @@ DATA_DIR := data
 PIO_HOME := $(CURDIR)/.pio-home
 PIO_CMD := PLATFORMIO_HOME_DIR=$(PIO_HOME) $(PIO)
 
-.PHONY: all build upload uploadfs test monitor clean data-init
+.PHONY: all build upload uploadfs test monitor clean data-init setup
 
 all: build
 
@@ -40,3 +40,6 @@ data-init:
 # Run Unity tests (host or device depending on env configuration)
 test:
 	$(PIO_CMD) test -e $(ENV)
+
+setup: scripts/setup.sh
+	bash scripts/setup.sh

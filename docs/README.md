@@ -48,9 +48,13 @@ Use the `native` environment for host-side builds/tests; target hardware builds 
 4. **Wake**: acknowledge RTC/button cause, run pending feed (Feed button = one scoop), re-arm alarm, optionally enable WiFi if Settings button was pressed.
 
 ## Build & Test Workflow
-1. Copy `data-template/` to `data/` (kept out of VCS) and drop built Web UI assets there (`npm run build` output).
+1. Run `make setup` once to copy `data-template/` → `data/`, verify PlatformIO, and prefetch packages.
 2. Compile host build: `pio run` (defaults to `native`); build hardware target with `pio run -e esp32c6`. Flash hardware via `pio run -t upload -e esp32c6`; upload assets with `pio run -t uploadfs -e esp32c6`.
 3. Tests: `pio test` (host) or `pio test -e esp32c6` when running on hardware. Provide mocks for schedule/clock to cover week wrap, disabled slots, and feed outcomes.
+
+## Dev Container & Docker
+- VS Code users can open the project in the provided Dev Container (`.devcontainer/devcontainer.json`) which pulls the PlatformIO Core image and sets up the toolchain automatically. Customize device mappings if you need USB passthrough for flashing.
+- As an alternative, invoke PlatformIO inside Docker: `docker run --rm -it -v "$PWD":/workspace -w /workspace platformio/platformio-core pio run -e esp32c6`. Add the relevant `--device` flag when flashing hardware.
 
 ## Open Items
 - Event bus & logging helper are still TBD; services should surface TODOs where they need structured logging.
