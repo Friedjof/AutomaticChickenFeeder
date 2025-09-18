@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "portion_unit_grams": 12,
+  "schedules": [
+    { "id": 1, "enabled": false, "time": "06:30", "weekday_mask": 62, "portion_units": 1 },
+    { "id": 2, "enabled": false, "time": "12:00", "weekday_mask": 62, "portion_units": 1 },
+    { "id": 3, "enabled": false, "time": "18:00", "weekday_mask": 62, "portion_units": 1 },
+    { "id": 4, "enabled": false, "time": "00:00", "weekday_mask": 0, "portion_units": 1 },
+    { "id": 5, "enabled": false, "time": "00:00", "weekday_mask": 0, "portion_units": 1 }
+  ],
+  "rtc": {
+    "sync_threshold_ms": 3000
+  }
+}
