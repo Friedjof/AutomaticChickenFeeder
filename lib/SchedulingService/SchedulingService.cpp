@@ -110,8 +110,10 @@ DateTime SchedulingService::getNextOccurrence(const Schedule &schedule, const Da
     // Start from today at the scheduled time
     DateTime candidate(from.year(), from.month(), from.day(), hour, minute, 0);
 
-    // If time today has passed, start from tomorrow
-    if (candidate.unixtime() <= from.unixtime()) {
+    // Allow a small grace window so alarms that just fired are still considered "due"
+    const uint32_t GRACE_SECONDS = 60;
+    if (candidate.unixtime() < (from.unixtime() - GRACE_SECONDS)) {
+        // Time is more than the grace window in the past, move to tomorrow
         candidate = DateTime(candidate.unixtime() + 24 * 60 * 60);
     }
 

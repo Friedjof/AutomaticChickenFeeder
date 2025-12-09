@@ -8,17 +8,18 @@
 #include "WebService.hpp"
 #include "SchedulingService.hpp"
 
-#define RTC_INT_PIN 0  // DS3231 INT/SQW (active low) wired here
-#define SERVO2_PIN 2
-#define SERVO1_PIN 3
-#define TRANSISTOR_PIN 5
+#define RTC_INT_PIN 3
 #define BUTTON_PIN 4
+#define SERVO1_PIN 21
+#define SERVO2_PIN 2
+#define TRANSISTOR_PIN 5
 
 // Power management
 static const uint32_t INACTIVITY_SLEEP_MS = 120000;  // 2 minutes
 
 void simpleClickHandler(Button2 &btn);
 void doubleClickHandler(Button2 &btn);
+void longClickHandler(Button2 &btn);
 void enterDeepSleep(const char* reason);
 void markActivity();
 void handleSleepLogic();
@@ -35,6 +36,7 @@ WebService webService(configService, clockService, feedingService, schedulingSer
 bool wokeFromRtcAlarm = false;
 bool wokeFromButton = false;
 unsigned long lastActivityMillis = 0;
+unsigned long ignoreButtonUntil = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -81,6 +83,7 @@ void setup() {
   buttonService.begin();
   buttonService.setSimpleClickHandler(simpleClickHandler);
   buttonService.setDoubleClickHandler(doubleClickHandler);
+  buttonService.setLongClickHandler(longClickHandler);
 
   // Initialize feeding service
   feedingService.setup();
@@ -100,14 +103,26 @@ void setup() {
   }
 
   if (wokeFromButton) {
-    // Bring up AP directly after button wake
+    Serial.println("[BUTTON] Woke from button - AP will start shortly");
+
+    // Ignore button events for 2 seconds to avoid consuming wakeup press
+    ignoreButtonUntil = millis() + 2000;
+
+    // Wait a short moment before starting AP (give button time to settle)
+    delay(1000);
+
+    // Start AP mode
+    Serial.println("[BUTTON] Starting AP mode");
     webService.startAP("ChickenFeeder", "");
+
+    // Mark activity to prevent immediate sleep
     markActivity();
   }
 
   Serial.println("\n[INFO] Setup complete.");
-  Serial.println("[INFO] Press button once to feed manually");
-  Serial.println("[INFO] Press button twice to start AP mode");
+  Serial.println("[INFO] Press button once to start AP mode");
+  Serial.println("[INFO] Press button twice to feed manually");
+  Serial.println("[INFO] Long press button to enter deep sleep");
 }
 
 void loop() {
@@ -119,15 +134,36 @@ void loop() {
 }
 
 void simpleClickHandler(Button2 &btn) {
-  Serial.println("[BUTTON] Single click - Manual feed");
+  // Always mark activity (reset sleep timer), even if ignoring the click action
   markActivity();
-  feedingService.feed(1);
+
+  // Ignore button events if we're in the ignore window (after wakeup)
+  if (millis() < ignoreButtonUntil) {
+    Serial.println("[BUTTON] Ignoring single click (too soon after wakeup) - but timer reset");
+    return;
+  }
+
+  Serial.println("[BUTTON] Single click - Starting AP mode");
+  webService.startAP("ChickenFeeder", "");
 }
 
 void doubleClickHandler(Button2 &btn) {
-  Serial.println("[BUTTON] Double click - Starting AP mode");
+  // Always mark activity (reset sleep timer), even if ignoring the click action
   markActivity();
-  webService.startAP("ChickenFeeder", "");
+
+  // Ignore button events if we're in the ignore window (after wakeup)
+  if (millis() < ignoreButtonUntil) {
+    Serial.println("[BUTTON] Ignoring double click (too soon after wakeup) - but timer reset");
+    return;
+  }
+
+  Serial.println("[BUTTON] Double click - Manual feed");
+  feedingService.feed(1);
+}
+
+void longClickHandler(Button2 &btn) {
+  Serial.println("[BUTTON] Long click - Entering deep sleep");
+  enterDeepSleep("Manual long press");
 }
 
 void markActivity() {

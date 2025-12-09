@@ -7,7 +7,7 @@
 #include "ClockService.hpp"
 
 #ifndef SERVO1_PIN
-#define SERVO1_PIN 3
+#define SERVO1_PIN 21
 #endif
 #ifndef SERVO2_PIN
 #define SERVO2_PIN 2
