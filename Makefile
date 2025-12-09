@@ -96,8 +96,8 @@ list:
 .PHONY: release
 release:
 	@if [ -z "$(VERSION)" ]; then echo "VERSION env var required (e.g. make release VERSION=v2.0.0)"; exit 1; fi
-	@echo "$(VERSION)" > VERSION
-	@cd web && npm version --no-git-tag-version $${VERSION#v}
+	@echo "// $(VERSION)" > VERSION
+	@cd web && npm version --no-git-tag-version --allow-same-version $${VERSION#v}
 	@$(MAKE) web-headers
 	@git add VERSION web/package.json web/package-lock.json
 	@git add -f lib/WebService/generated
