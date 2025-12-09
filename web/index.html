@@ -43,6 +43,10 @@
                         <p class="label">Servo</p>
                         <p class="value" id="servoPosition">Closed</p>
                     </div>
+                    <div class="stat-card">
+                        <p class="label">Last feed</p>
+                        <p class="value" id="lastFeedTime">Never</p>
+                    </div>
                 </div>
             </section>
 
@@ -54,8 +58,10 @@
                         <p class="muted">Enable up to four feedings and tune time, days and portion.</p>
                     </div>
                 </div>
-                <button class="ghost-btn save-full" id="saveScheduleBtn">Save changes</button>
-
+                <div class="portion-unit-row">
+                    <label for="portionUnitInput">Portion size (g per unit)</label>
+                    <input id="portionUnitInput" type="number" min="1" max="100" step="1" value="12">
+                </div>
                 <div class="feed-timers">
                     <div class="timer-row" data-index="0">
                         <div class="timer-main">
@@ -212,7 +218,10 @@
                             </div>
                         </div>
                     </div>
+                
                 </div>
+                
+                <button class="ghost-btn save-full" id="saveScheduleBtn">Save changes</button>
             </section>
 
             <section class="panel guide-panel">
@@ -258,12 +267,30 @@
                     </div>
                 </div>
             </section>
+
+            <section class="panel backup-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Backup</p>
+                        <h3>Export / Import</h3>
+                        <p class="muted">Save or restore your timer configuration as JSON.</p>
+                    </div>
+                </div>
+                <div class="backup-actions">
+                    <button class="ghost-btn" id="exportConfigBtn">Export JSON</button>
+                    <label class="ghost-btn upload-label">
+                        Import JSON
+                        <input type="file" id="importConfigInput" accept="application/json">
+                    </label>
+                </div>
+            </section>
         </main>
 
         <footer class="footer">
             <div class="footer-left">
-                <p>ESP32-C3 Chicken Feeder UI</p>
+                <p>Chicken Feeder WebUI</p>
                 <p class="muted">Freerange-friendly scheduling & portions.</p>
+                <p class="footer-version" id="uiVersion"></p>
             </div>
             <div class="footer-right">
                 <button class="sleep-btn" id="deepSleepBtn">Shut down &amp; sleep</button>

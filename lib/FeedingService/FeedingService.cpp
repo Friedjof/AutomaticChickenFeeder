@@ -141,12 +141,14 @@ void FeedingService::update() {
           // All feedings complete
           state = IDLE;
           isFeedSequence = false;
+          recordFeedEvent();
           Serial.println("[DEBUG] All portions complete");
         }
       } else {
         // Normal movement complete
         state = IDLE;
         isFeedSequence = false;
+        recordFeedEvent();
         Serial.println("[DEBUG] Power OFF, sequence complete");
       }
       break;
@@ -172,4 +174,21 @@ void FeedingService::update() {
 
 uint8_t FeedingService::getPosition() {
   return position;
+}
+
+void FeedingService::recordFeedEvent() {
+  if (clockService) {
+    DateTime now = clockService->now();
+    if (!now.isValid()) {
+      Serial.println("[WARN] ClockService returned invalid time; last feed not stored");
+      lastFeedUnix = 0;
+      return;
+    }
+    lastFeedUnix = now.unixtime();
+    Serial.printf("[INFO] Feed event recorded at %04u-%02u-%02u %02u:%02u:%02u\n",
+                  now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+  } else {
+    lastFeedUnix = 0;
+    Serial.println("[WARN] ClockService unavailable, last feed time not recorded");
+  }
 }

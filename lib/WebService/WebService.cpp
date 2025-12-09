@@ -235,7 +235,16 @@ void WebService::handleGetStatus(AsyncWebServerRequest *request) {
     data["servoPosition"] = position;
 
     // Last feed time (placeholder - would need to track this)
-    data["lastFeedTime"] = nullptr;
+    uint32_t lastFeedTs = feedingService.getLastFeedTimestamp();
+    if (lastFeedTs > 0) {
+        DateTime dt(lastFeedTs);
+        char buf[25];
+        snprintf(buf, sizeof(buf), "%04u-%02u-%02uT%02u:%02u:%02uZ",
+                 dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+        data["lastFeedTime"] = buf;
+    } else {
+        data["lastFeedTime"] = nullptr;
+    }
 
     // Total fed today (placeholder - would need to track this)
     data["totalFedToday"] = 0;

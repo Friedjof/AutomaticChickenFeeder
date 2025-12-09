@@ -46,6 +46,7 @@ void setup() {
 
   // Configure sleep callback for web API
   webService.setSleepCallback([]() { enterDeepSleep("Remote request"); });
+  feedingService.setClockService(&clockService);
 
   // Wake cause detection
   esp_sleep_wakeup_cause_t wakeupReason = esp_sleep_get_wakeup_cause();

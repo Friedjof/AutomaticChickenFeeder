@@ -28,11 +28,16 @@ export class ChickenFeederApp {
         // Status elements
         this.elements.statusIndicator = document.getElementById('statusIndicator');
         this.elements.servoPosition = document.getElementById('servoPosition');
+        this.elements.lastFeedTime = document.getElementById('lastFeedTime');
         
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
         this.elements.saveScheduleBtn = document.getElementById('saveScheduleBtn');
         this.elements.deepSleepBtn = document.getElementById('deepSleepBtn');
+        this.elements.exportConfigBtn = document.getElementById('exportConfigBtn');
+        this.elements.importConfigInput = document.getElementById('importConfigInput');
+        this.elements.portionUnitInput = document.getElementById('portionUnitInput');
+        this.elements.uiVersion = document.getElementById('uiVersion');
         
         // Timer elements
         this.elements.timerRows = document.querySelectorAll('.timer-row');
@@ -57,6 +62,34 @@ export class ChickenFeederApp {
         // Deep sleep button
         if (this.elements.deepSleepBtn) {
             this.bindDeepSleepGesture(this.elements.deepSleepBtn);
+        }
+
+        // Export config
+        if (this.elements.exportConfigBtn) {
+            this.elements.exportConfigBtn.addEventListener('click', () => this.exportConfig());
+        }
+
+        // Import config
+        if (this.elements.importConfigInput) {
+            this.elements.importConfigInput.addEventListener('change', (e) => this.importConfig(e));
+        }
+
+        // Portion unit change
+        if (this.elements.portionUnitInput) {
+            this.elements.portionUnitInput.addEventListener('change', () => this.updatePortionUnit());
+            this.elements.portionUnitInput.addEventListener('input', () => this.updatePortionUnit());
+        }
+
+        // UI/System version display (static fallback)
+        if (this.elements.uiVersion) {
+            const ver = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'v1.0.0';
+            const link = document.createElement('a');
+            link.href = `https://github.com/Friedjof/AutomaticChickenFeeder/releases/tag/${ver}`;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = ver;
+            this.elements.uiVersion.innerHTML = 'Release ';
+            this.elements.uiVersion.appendChild(link);
         }
 
         // Timer events
@@ -317,6 +350,13 @@ export class ChickenFeederApp {
         
         // Update servo position
         this.elements.servoPosition.textContent = this.status.servoPosition;
+
+        // Update last feed time
+        if (this.status.lastFeedTime) {
+            this.elements.lastFeedTime.textContent = this.formatRelativeTime(this.status.lastFeedTime);
+        } else {
+            this.elements.lastFeedTime.textContent = 'Never';
+        }
         
         // Update feed button state
         if (this.status.isFeeding) {
@@ -349,6 +389,10 @@ export class ChickenFeederApp {
                 this.updateTimerRow(index, this.config.schedules[index]);
             }
         });
+
+        if (this.elements.portionUnitInput && this.config.portion_unit_grams) {
+            this.elements.portionUnitInput.value = this.config.portion_unit_grams;
+        }
     }
 
     updateTimerRow(index, schedule) {
@@ -511,7 +555,8 @@ export class ChickenFeederApp {
     async saveScheduleOnly() {
         try {
             const scheduleConfig = {
-                schedules: this.config.schedules
+                schedules: this.config.schedules,
+                portion_unit_grams: this.getPortionUnitGrams()
             };
             
             const response = await this.saveConfig(scheduleConfig);
@@ -554,6 +599,91 @@ export class ChickenFeederApp {
     shouldUseMockFromQuery() {
         const params = new URLSearchParams(window.location.search);
         return params.has('mock') || params.get('api') === 'mock';
+    }
+
+    formatRelativeTime(isoString) {
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return isoString;
+
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMin = Math.floor(diffMs / 60000);
+        const diffHr = Math.floor(diffMin / 60);
+        const diffDay = Math.floor(diffHr / 24);
+
+        if (diffMin < 1) return 'Just now';
+        if (diffMin < 60) return `${diffMin}m ago`;
+        if (diffHr < 24) return `${diffHr}h ago`;
+        if (diffDay < 7) return `${diffDay}d ago`;
+
+        return date.toLocaleString();
+    }
+
+    exportConfig() {
+        if (!this.config || !this.config.schedules) {
+            this.showToast('No config to export', 'error');
+            return;
+        }
+
+        const blob = new Blob([JSON.stringify({ schedules: this.config.schedules, portion_unit_grams: this.getPortionUnitGrams() }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const ts = new Date();
+        const stamp = `${ts.getFullYear()}-${String(ts.getMonth() + 1).padStart(2, '0')}-${String(ts.getDate()).padStart(2, '0')}_${String(ts.getHours()).padStart(2, '0')}-${String(ts.getMinutes()).padStart(2, '0')}`;
+        a.download = `chicken-feeder-config_${stamp}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('Config exported', 'success');
+    }
+
+    importConfig(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (!parsed.schedules || !Array.isArray(parsed.schedules)) {
+                    throw new Error('Invalid config format');
+                }
+                // Trim/extend to available rows
+                this.ensureSchedules(this.elements.timerRows.length);
+                parsed.schedules.slice(0, this.elements.timerRows.length).forEach((sched, idx) => {
+                    this.config.schedules[idx] = {
+                        ...this.config.schedules[idx],
+                        ...sched
+                    };
+                });
+                if (parsed.portion_unit_grams) {
+                    this.config.portion_unit_grams = parsed.portion_unit_grams;
+                }
+                this.updateConfigurationUI();
+                this.showToast('Config imported (not saved yet)', 'info');
+            } catch (err) {
+                console.error('Import failed:', err);
+                this.showToast('Invalid JSON config', 'error');
+            } finally {
+                event.target.value = '';
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    updatePortionUnit() {
+        if (!this.config) return;
+        const val = parseInt(this.elements.portionUnitInput.value, 10);
+        const grams = Math.min(100, Math.max(1, isNaN(val) ? this.getPortionUnitGrams() : val));
+        this.config.portion_unit_grams = grams;
+        this.elements.portionUnitInput.value = grams;
+
+        // Refresh inline displays
+        this.elements.timerRows.forEach((row, index) => {
+            if (this.config.schedules[index]) {
+                this.updatePortionDisplay(row, this.config.schedules[index].portion_units);
+            }
+        });
     }
 
     bindDeepSleepGesture(button) {

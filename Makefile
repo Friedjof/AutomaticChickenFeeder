@@ -92,3 +92,14 @@ list:
 	@echo "NR  PORT          DESCRIPTION"
 	@echo "--- ------------- --------------------------------------------------"
 	@$(PLATFORMIO) device list --json-output | jq -r 'map(select(((.hwid // "") | test("VID:PID=303A:", "i")) or ((.description // "") | test("Espressif|USB JTAG/serial", "i")))) | map(select(.port | test("^/dev/ttyACM[0-9]+"))) | unique_by(.port) | .[] | (.port | capture("ACM(?<n>[0-9]+)").n) + "   " + .port + "  " + (.description // "")'
+
+.PHONY: release
+release:
+	@if [ -z "$(VERSION)" ]; then echo "VERSION env var required (e.g. make release VERSION=v2.0.0)"; exit 1; fi
+	@echo "$(VERSION)" > VERSION
+	@cd web && npm version --no-git-tag-version $${VERSION#v}
+	@$(MAKE) web-headers
+	@git add VERSION web/package.json web/package-lock.json lib/WebService/generated
+	@git commit -m "Release $(VERSION)"
+	@git tag -a $(VERSION) -m "Release $(VERSION)"
+	@echo "Release prepared. Push with: git push origin main && git push origin $(VERSION)"

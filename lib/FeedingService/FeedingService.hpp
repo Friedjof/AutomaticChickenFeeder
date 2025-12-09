@@ -4,6 +4,7 @@
 #include <ESP32Servo.h>
 
 #include "ButtonService.hpp"
+#include "ClockService.hpp"
 
 #ifndef SERVO1_PIN
 #define SERVO1_PIN 3
@@ -44,6 +45,9 @@ public:
 
   uint8_t getPosition();
   bool isFeeding();  // Check if currently in a feed sequence
+  uint32_t getLastFeedTimestamp() const { return lastFeedUnix; }
+  void recordFeedEvent(); // Manually record feed completion (e.g., if needed)
+  void setClockService(ClockService* clock) { clockService = clock; }
 
 private:
   uint8_t position = 0;
@@ -57,6 +61,8 @@ private:
 
   ServoState state = IDLE;
   unsigned long stateStartTime = 0;
+  uint32_t lastFeedUnix = 0;
+  ClockService* clockService = nullptr;
 
   void startMovement(uint8_t target, bool feedSeq = false);
   void open();

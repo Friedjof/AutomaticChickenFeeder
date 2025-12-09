@@ -1,0 +1,83 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build web assets
+        run: |
+          npm run --prefix web build
+          python scripts/web-to-header.py web/dist -o lib/WebService/generated
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION=$(grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' VERSION | head -n1 || true)
+          if [ -z "$VERSION" ]; then VERSION="${GITHUB_REF##*/}"; fi
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version $VERSION"
+
+      - name: Build firmware
+        run: pio run -e esp32c3
+
+      - name: Firmware size
+        run: pio run -e esp32c3 -t size
+
+      - name: Package binaries
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          mkdir -p binaries/esp32c3
+          cp .pio/build/esp32c3/firmware.bin binaries/esp32c3/firmware-${VERSION}.bin
+          cp .pio/build/esp32c3/firmware.elf binaries/esp32c3/firmware-${VERSION}.elf
+          ls -lh binaries/esp32c3
+
+      - name: Publish release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: binaries/esp32c3/*
