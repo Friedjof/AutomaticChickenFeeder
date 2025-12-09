@@ -117,6 +117,7 @@ The system provides:
    - **Double click:** Manual feed (1 portion)
    - **Long press (~600ms):** Enter deep sleep immediately
    - **Wakeup from sleep:** Button press wakes device + starts AP mode after 1 second delay
+   - **Hold during boot (optional):** Enter maintenance mode (keeps WiFi always on, useful for debugging)
 
 2. **Web Interface:**
    - Schedule configuration (6 feeding times with weekday masks)
@@ -124,6 +125,7 @@ The system provides:
    - Time synchronization (browser → RTC, every 10s while page open)
    - Deep sleep control via button
    - Config import/export (JSON)
+   - **OTA firmware update** (upload .bin files directly via browser)
    - Embedded in firmware (no SD card needed)
 
 3. **RTC-Based Scheduling:**
@@ -153,6 +155,14 @@ The system provides:
    - Synchronized open/close sequence
    - Transistor control for servo power (GPIO5)
    - Multiple portions execute back-to-back
+
+6. **OTA Firmware Updates:**
+   - Available anytime when WiFi AP is active
+   - Web-based firmware upload via browser
+   - Progress tracking with visual feedback
+   - Automatic device reboot after successful update
+   - Partition scheme: `min_spiffs.csv` (2x ~1.9MB app partitions)
+   - Configuration preserved during update (stored in NVS)
 
 ## Architecture Overview
 

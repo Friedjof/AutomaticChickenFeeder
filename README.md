@@ -21,6 +21,7 @@ An ESP32-C3 based automatic chicken feeder with RTC-scheduled feeding times, web
 - 🔘 **Physical Button Control** - Single/double/long-press for manual operation
 - 🕒 **Automatic Time Sync** - Browser syncs time to RTC every 10 seconds
 - 🌍 **Timezone Support** - Europe/Berlin (CET/CEST) timezone
+- 🔄 **OTA Firmware Updates** - Update firmware over WiFi without USB cable
 
 ## 🎮 Button Controls
 
@@ -30,6 +31,7 @@ An ESP32-C3 based automatic chicken feeder with RTC-scheduled feeding times, web
 | **Double Click** | Manual feed (1 portion) |
 | **Long Press** | Enter deep sleep immediately |
 | **Press while sleeping** | Wake up + start AP mode (after 1s delay) |
+| **Hold during boot** | Maintenance mode (optional, keeps WiFi on) |
 
 ## 🔧 Hardware Setup
 
@@ -128,6 +130,31 @@ Time syncs automatically from your browser every 10 seconds while the web page i
 
 ### Config Import/Export
 Download or upload your configuration as JSON for backup or transfer to another device.
+
+### OTA Firmware Updates
+
+Update firmware wirelessly without USB connection:
+
+1. **Start WiFi AP:**
+   - Press button once (or device wakes from sleep)
+   - Connect to WiFi: `ChickenFeeder` (no password)
+
+2. **Open web interface:** Navigate to `http://192.168.4.1`
+
+3. **Upload firmware:**
+   - Scroll to "Maintenance" section at bottom
+   - Click "Select Firmware (.bin)"
+   - Choose your `.bin` file (from `.pio/build/esp32c3/firmware.bin`)
+   - Click "Upload Firmware"
+   - Wait for progress bar to complete (~10-30 seconds)
+
+4. **Device reboots automatically** with new firmware
+
+**Important:**
+- Only upload `.bin` files built for ESP32-C3
+- Do not power off during upload
+- Configuration data is preserved (stored in NVS)
+- Optionally backup your configuration before updating (Export JSON)
 
 ## 🔋 Power Management
 

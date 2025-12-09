@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
 #include <ArduinoJson.h>
+#include <Update.h>
 #include <functional>
 #include "ConfigService.hpp"
 #include "ClockService.hpp"
@@ -26,6 +27,8 @@ public:
     bool isAPActive();
     uint32_t getLastClientActivity() const { return lastClientActivity; }
     void setSleepCallback(std::function<void()> cb) { sleepCallback = cb; }
+    void setMaintenanceMode(bool enabled) { maintenanceMode = enabled; }
+    bool isMaintenanceMode() const { return maintenanceMode; }
 
 private:
     AsyncWebServer server;
@@ -44,6 +47,7 @@ private:
     std::function<void()> sleepCallback;
     bool sleepRequested = false;
     uint32_t sleepRequestMillis = 0;
+    bool maintenanceMode = false;
 
     // Setup routes
     void setupRoutes();
@@ -56,6 +60,8 @@ private:
     void handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len);
     void handleResetConfig(AsyncWebServerRequest *request);
     void handleSleep(AsyncWebServerRequest *request);
+    void handleOtaStatus(AsyncWebServerRequest *request);
+    void handleOtaUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final);
 
     // Static file handler
     void handleStaticFile(AsyncWebServerRequest *request, const char* path);

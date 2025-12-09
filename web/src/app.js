@@ -22,6 +22,7 @@ export class ChickenFeederApp {
         this.loadInitialData();
         this.startStatusUpdates();
         this.startTimeSync();
+        this.checkMaintenanceMode();
     }
 
     bindElements() {
@@ -29,7 +30,7 @@ export class ChickenFeederApp {
         this.elements.statusIndicator = document.getElementById('statusIndicator');
         this.elements.servoPosition = document.getElementById('servoPosition');
         this.elements.lastFeedTime = document.getElementById('lastFeedTime');
-        
+
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
         this.elements.saveScheduleBtn = document.getElementById('saveScheduleBtn');
@@ -38,10 +39,19 @@ export class ChickenFeederApp {
         this.elements.importConfigInput = document.getElementById('importConfigInput');
         this.elements.portionUnitInput = document.getElementById('portionUnitInput');
         this.elements.uiVersion = document.getElementById('uiVersion');
-        
+
+        // OTA elements
+        this.elements.otaFirmwareInput = document.getElementById('otaFirmwareInput');
+        this.elements.otaUploadBtn = document.getElementById('otaUploadBtn');
+        this.elements.otaStatus = document.getElementById('otaStatus');
+        this.elements.otaStatusText = document.getElementById('otaStatusText');
+        this.elements.otaProgressContainer = document.getElementById('otaProgressContainer');
+        this.elements.otaProgressFill = document.getElementById('otaProgressFill');
+        this.elements.otaProgressText = document.getElementById('otaProgressText');
+
         // Timer elements
         this.elements.timerRows = document.querySelectorAll('.timer-row');
-        
+
         // Toast
         this.elements.toast = document.getElementById('toast');
         this.elements.toastMessage = document.getElementById('toastMessage');
@@ -78,6 +88,16 @@ export class ChickenFeederApp {
         if (this.elements.portionUnitInput) {
             this.elements.portionUnitInput.addEventListener('change', () => this.updatePortionUnit());
             this.elements.portionUnitInput.addEventListener('input', () => this.updatePortionUnit());
+        }
+
+        // OTA firmware selection
+        if (this.elements.otaFirmwareInput) {
+            this.elements.otaFirmwareInput.addEventListener('change', (e) => this.onOtaFileSelected(e));
+        }
+
+        // OTA upload button
+        if (this.elements.otaUploadBtn) {
+            this.elements.otaUploadBtn.addEventListener('click', () => this.uploadOtaFirmware());
         }
 
         // UI/System version display (static fallback)
@@ -774,5 +794,138 @@ export class ChickenFeederApp {
             return true;
         }
         return false;
+    }
+
+    // OTA Firmware Update Methods
+    onOtaFileSelected(event) {
+        const file = event.target.files?.[0];
+        if (!file) {
+            this.elements.otaUploadBtn.disabled = true;
+            return;
+        }
+
+        // Check if file is a .bin file
+        if (!file.name.endsWith('.bin')) {
+            this.showToast('Please select a .bin firmware file', 'error');
+            event.target.value = '';
+            this.elements.otaUploadBtn.disabled = true;
+            return;
+        }
+
+        // Enable upload button
+        this.elements.otaUploadBtn.disabled = false;
+        this.setOtaStatus('offline', `Ready: ${file.name}`);
+    }
+
+    async uploadOtaFirmware() {
+        const file = this.elements.otaFirmwareInput.files?.[0];
+        if (!file) {
+            this.showToast('No file selected', 'error');
+            return;
+        }
+
+        try {
+            // Disable controls during upload
+            this.elements.otaUploadBtn.disabled = true;
+            this.elements.otaFirmwareInput.disabled = true;
+            this.setOtaStatus('uploading', 'Uploading firmware...');
+            this.elements.otaProgressContainer.style.display = 'block';
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('firmware', file);
+
+            // Upload with progress tracking
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    this.updateOtaProgress(percentComplete);
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            this.setOtaStatus('online', 'Upload successful! Device rebooting...');
+                            this.showToast('Firmware uploaded successfully! Device will reboot.', 'success');
+                            this.updateOtaProgress(100);
+
+                            // Reset after 5 seconds
+                            setTimeout(() => {
+                                this.resetOtaUI();
+                            }, 5000);
+                        } else {
+                            throw new Error(response.error || 'Upload failed');
+                        }
+                    } catch (error) {
+                        this.handleOtaError(error.message || 'Invalid response from device');
+                    }
+                } else {
+                    this.handleOtaError(`Upload failed (HTTP ${xhr.status})`);
+                }
+            });
+
+            xhr.addEventListener('error', () => {
+                this.handleOtaError('Network error during upload');
+            });
+
+            xhr.addEventListener('abort', () => {
+                this.handleOtaError('Upload cancelled');
+            });
+
+            xhr.open('POST', `${this.apiBaseUrl}/ota/update`);
+            xhr.send(formData);
+
+        } catch (error) {
+            this.handleOtaError(error.message);
+        }
+    }
+
+    setOtaStatus(status, text) {
+        const statusDot = this.elements.otaStatus.querySelector('.status-dot');
+        statusDot.className = `status-dot ${status}`;
+        this.elements.otaStatusText.textContent = text;
+    }
+
+    updateOtaProgress(percent) {
+        this.elements.otaProgressFill.style.width = `${percent}%`;
+        this.elements.otaProgressText.textContent = `${percent}%`;
+    }
+
+    handleOtaError(message) {
+        this.setOtaStatus('offline', `Error: ${message}`);
+        this.showToast(message, 'error');
+        this.resetOtaUI();
+    }
+
+    resetOtaUI() {
+        this.elements.otaUploadBtn.disabled = false;
+        this.elements.otaFirmwareInput.disabled = false;
+        this.elements.otaFirmwareInput.value = '';
+        this.elements.otaUploadBtn.disabled = true;
+        this.elements.otaProgressContainer.style.display = 'none';
+        this.updateOtaProgress(0);
+        this.setOtaStatus('offline', 'Ready for update');
+    }
+
+    async checkMaintenanceMode() {
+        try {
+            const response = await this.apiRequest('/ota/status');
+            if (response && response.success) {
+                this.elements.otaFirmwareInput.disabled = false;
+                this.setOtaStatus('online', 'Ready for firmware update');
+            } else {
+                this.elements.otaFirmwareInput.disabled = true;
+                this.setOtaStatus('offline', 'OTA not available');
+            }
+        } catch (error) {
+            // If API not available, still enable OTA (backward compatibility)
+            this.elements.otaFirmwareInput.disabled = false;
+            this.setOtaStatus('online', 'Ready for firmware update');
+        }
     }
 }

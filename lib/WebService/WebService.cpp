@@ -146,6 +146,22 @@ void WebService::setupRoutes() {
         handleResetConfig(request);
     });
 
+    // OTA endpoints
+    server.on("/api/ota/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        updateClientActivity();
+        handleOtaStatus(request);
+    });
+
+    server.on("/api/ota/update", HTTP_POST,
+              [this](AsyncWebServerRequest *request) {
+                  // Request complete callback
+                  updateClientActivity();
+              },
+              [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+                  // Upload handler
+                  handleOtaUpdate(request, filename, index, data, len, final);
+              });
+
     // Captive portal detection endpoints
     // Android
     server.on("/generate_204", HTTP_GET, [this](AsyncWebServerRequest *request) {
@@ -423,4 +439,67 @@ void WebService::sendError(AsyncWebServerRequest *request, const char* message, 
 
 void WebService::updateClientActivity() {
     lastClientActivity = millis();
+}
+
+void WebService::handleOtaStatus(AsyncWebServerRequest *request) {
+    JsonDocument doc;
+    doc["success"] = true;
+    doc["maintenanceMode"] = maintenanceMode;
+
+    sendJsonResponse(request, doc);
+}
+
+void WebService::handleOtaUpdate(AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
+    // Start update on first chunk
+    if (index == 0) {
+        Serial.printf("[OTA] Update Start: %s\n", filename.c_str());
+
+        // Begin OTA update
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+            Update.printError(Serial);
+            if (final) {
+                JsonDocument doc;
+                doc["success"] = false;
+                doc["error"] = "OTA update failed to begin";
+                sendJsonResponse(request, doc, 500);
+            }
+            return;
+        }
+    }
+
+    // Write chunk
+    if (len) {
+        if (Update.write(data, len) != len) {
+            if (final) {
+                JsonDocument doc;
+                doc["success"] = false;
+                doc["error"] = "OTA write failed";
+                sendJsonResponse(request, doc, 500);
+            }
+            return;
+        }
+    }
+
+    // Finalize update on last chunk
+    if (final) {
+        if (Update.end(true)) {
+            Serial.printf("[OTA] Update Success: %u bytes\n", index + len);
+
+            JsonDocument doc;
+            doc["success"] = true;
+            doc["message"] = "Firmware updated successfully. Rebooting...";
+            sendJsonResponse(request, doc);
+
+            // Reboot after response is sent
+            delay(100);
+            ESP.restart();
+        } else {
+            Update.printError(Serial);
+
+            JsonDocument doc;
+            doc["success"] = false;
+            doc["error"] = "OTA update failed to complete";
+            sendJsonResponse(request, doc, 500);
+        }
+    }
 }

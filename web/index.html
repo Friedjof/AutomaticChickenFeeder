@@ -271,17 +271,44 @@
             <section class="panel backup-panel">
                 <div class="panel-header">
                     <div>
-                        <p class="eyebrow">Backup</p>
-                        <h3>Export / Import</h3>
-                        <p class="muted">Save or restore your timer configuration as JSON.</p>
+                        <p class="eyebrow">Maintenance</p>
+                        <h3>Backup & Updates</h3>
+                        <p class="muted">Configuration backup and firmware updates.</p>
                     </div>
                 </div>
-                <div class="backup-actions">
-                    <button class="ghost-btn" id="exportConfigBtn">Export JSON</button>
-                    <label class="ghost-btn upload-label">
-                        Import JSON
-                        <input type="file" id="importConfigInput" accept="application/json">
-                    </label>
+
+                <div class="maintenance-section">
+                    <h4 class="section-subtitle">Configuration</h4>
+                    <p class="muted small-text">Save or restore your timer configuration as JSON.</p>
+                    <div class="backup-actions">
+                        <button class="ghost-btn" id="exportConfigBtn">Export JSON</button>
+                        <label class="ghost-btn upload-label">
+                            Import JSON
+                            <input type="file" id="importConfigInput" accept="application/json">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="maintenance-section">
+                    <h4 class="section-subtitle">Firmware Update (OTA)</h4>
+                    <p class="muted small-text">Upload new firmware directly over WiFi. Device will reboot automatically after update.</p>
+                    <div class="ota-status" id="otaStatus">
+                        <span class="status-dot online"></span>
+                        <span id="otaStatusText">Ready for firmware update</span>
+                    </div>
+                    <div class="backup-actions">
+                        <label class="ghost-btn upload-label" id="otaUploadLabel">
+                            Select Firmware (.bin)
+                            <input type="file" id="otaFirmwareInput" accept=".bin">
+                        </label>
+                        <button class="ghost-btn" id="otaUploadBtn" disabled>Upload Firmware</button>
+                    </div>
+                    <div class="ota-progress-container" id="otaProgressContainer" style="display: none;">
+                        <div class="ota-progress-bar">
+                            <div class="ota-progress-fill" id="otaProgressFill"></div>
+                        </div>
+                        <p class="ota-progress-text" id="otaProgressText">0%</p>
+                    </div>
                 </div>
             </section>
         </main>

@@ -67,6 +67,11 @@ void setup() {
     Serial.println("[INFO] Wake reason: Power-on reset or unknown");
   }
 
+  // Check for maintenance mode (button held during boot)
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  delay(50);  // Debounce
+  bool maintenanceModeRequested = (digitalRead(BUTTON_PIN) == LOW);
+
   markActivity();
 
   // Initialize config service
@@ -96,6 +101,33 @@ void setup() {
     Serial.println("[ERROR] Failed to start WebService!");
   }
 
+  // MAINTENANCE MODE CHECK
+  if (maintenanceModeRequested) {
+    Serial.println("\n[MAINTENANCE] ========================================");
+    Serial.println("[MAINTENANCE] Entering MAINTENANCE MODE");
+    Serial.println("[MAINTENANCE] OTA updates enabled");
+    Serial.println("[MAINTENANCE] WiFi AP will stay active");
+    Serial.println("[MAINTENANCE] No automatic sleep");
+    Serial.println("[MAINTENANCE] ========================================\n");
+
+    // Enable maintenance mode in WebService
+    webService.setMaintenanceMode(true);
+
+    // Start AP mode for OTA access
+    webService.startAP("ChickenFeeder", "");
+
+    // Infinite loop for maintenance mode - no sleep
+    Serial.println("[MAINTENANCE] Ready for OTA updates");
+    Serial.println("[MAINTENANCE] Connect to WiFi: ChickenFeeder");
+    Serial.println("[MAINTENANCE] Open browser: http://192.168.4.1");
+    Serial.println("[MAINTENANCE] Navigate to Maintenance section for firmware upload\n");
+
+    while (true) {
+      webService.update();
+      delay(10);
+    }
+  }
+
   // Handle wake-specific actions
   if (wokeFromRtcAlarm) {
     // Process due events immediately (DS3231 alarm line stays low until cleared)
@@ -123,6 +155,7 @@ void setup() {
   Serial.println("[INFO] Press button once to start AP mode");
   Serial.println("[INFO] Press button twice to feed manually");
   Serial.println("[INFO] Long press button to enter deep sleep");
+  Serial.println("[INFO] OTA updates available via web interface when AP is active");
 }
 
 void loop() {
