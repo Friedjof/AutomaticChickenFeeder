@@ -9,13 +9,14 @@ const servoService = require('./services/servo');
 const statusRoutes = require('./routes/status');
 const configRoutes = require('./routes/config');
 const feedRoutes = require('./routes/feed');
+const powerRoutes = require('./routes/power');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:8000', 'http://127.0.0.1:8000'],
+    origin: true, // echo request origin (works for localhost, LAN, AP)
     credentials: true
 }));
 app.use(express.json());
@@ -43,6 +44,7 @@ app.get('/health', (req, res) => {
 app.use('/api/status', statusRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/feed', feedRoutes);
+app.use('/api/power', powerRoutes);
 
 // Root endpoint - device info (like ESP32 would show)
 app.get('/', (req, res) => {
@@ -54,6 +56,7 @@ app.get('/', (req, res) => {
             status: '/api/status',
             config: '/api/config',
             feed: '/api/feed',
+            power: '/api/power',
             health: '/health'
         },
         uptime_seconds: Math.floor(process.uptime()),
@@ -81,6 +84,7 @@ app.use((req, res) => {
             '/api/status',
             '/api/config',
             '/api/feed',
+            '/api/power',
             '/health'
         ],
         timestamp: new Date().toISOString()
@@ -105,7 +109,9 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('  POST /api/feed          - Manual feed');
     console.log('  POST /api/feed/test     - Test servo');
     console.log('  POST /api/feed/stop     - Emergency stop');
+    console.log('  POST /api/power/sleep   - Shutdown AP and enter deep sleep');
     console.log('');
+    console.log('CORS: dynamic origin allowed (works on AP/LAN/localhost)');
     console.log('[ConfigService] Initialized with default configuration');
     console.log('[ServoService] Hardware simulation ready');
     console.log('=================================');

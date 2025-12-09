@@ -36,6 +36,18 @@ void WebService::update() {
         // If device(s) are connected, keep AP running indefinitely
         // User must manually stop by disconnecting or the device will auto-disconnect eventually
     }
+
+    // Handle deferred sleep request after responses have been sent
+    if (sleepRequested && sleepCallback) {
+        if (millis() - sleepRequestMillis > 200) { // small grace period to flush response
+            sleepRequested = false;
+            // Stop AP before sleeping
+            if (apActive) {
+                stopAP();
+            }
+            sleepCallback();
+        }
+    }
 }
 
 void WebService::startAP(const char* ssid, const char* password) {
@@ -122,6 +134,11 @@ void WebService::setupRoutes() {
               NULL, [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
         updateClientActivity();
         handlePostTime(request, data, len);
+    });
+
+    server.on("/api/power/sleep", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        updateClientActivity();
+        handleSleep(request);
     });
 
     server.on("/api/config/reset", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -315,6 +332,26 @@ void WebService::handlePostFeed(AsyncWebServerRequest *request) {
     doc["message"] = "Feed cycle started";
 
     sendJsonResponse(request, doc);
+}
+
+void WebService::handleSleep(AsyncWebServerRequest *request) {
+    if (feedingService.isFeeding()) {
+        sendError(request, "Cannot sleep while feeding", 400);
+        return;
+    }
+    if (!sleepCallback) {
+        sendError(request, "Sleep callback not set", 500);
+        return;
+    }
+
+    JsonDocument doc;
+    doc["success"] = true;
+    doc["message"] = "Sleep requested";
+    sendJsonResponse(request, doc);
+
+    // Defer actual sleep to allow response to flush
+    sleepRequested = true;
+    sleepRequestMillis = millis();
 }
 
 void WebService::handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len) {

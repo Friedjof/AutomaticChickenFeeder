@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <DNSServer.h>
 #include <ArduinoJson.h>
+#include <functional>
 #include "ConfigService.hpp"
 #include "ClockService.hpp"
 #include "FeedingService.hpp"
@@ -23,6 +24,8 @@ public:
     void startAP(const char* ssid = "ChickenFeeder", const char* password = "");
     void stopAP();
     bool isAPActive();
+    uint32_t getLastClientActivity() const { return lastClientActivity; }
+    void setSleepCallback(std::function<void()> cb) { sleepCallback = cb; }
 
 private:
     AsyncWebServer server;
@@ -38,6 +41,9 @@ private:
     static const uint32_t AP_TIMEOUT_NO_CLIENT_MS = 60000;  // 60s if no device connected
     static const uint32_t AP_TIMEOUT_WITH_CLIENT_MS = 300000; // 5min after last activity if device connected
     static const uint8_t DNS_PORT = 53;
+    std::function<void()> sleepCallback;
+    bool sleepRequested = false;
+    uint32_t sleepRequestMillis = 0;
 
     // Setup routes
     void setupRoutes();
@@ -49,6 +55,7 @@ private:
     void handlePostFeed(AsyncWebServerRequest *request);
     void handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len);
     void handleResetConfig(AsyncWebServerRequest *request);
+    void handleSleep(AsyncWebServerRequest *request);
 
     // Static file handler
     void handleStaticFile(AsyncWebServerRequest *request, const char* path);

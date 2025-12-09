@@ -42,7 +42,7 @@ monitor:
 
 # make run          -> flash danach monitor (ohne Port)
 # make run 1        -> flash/monitor auf /dev/ttyACM1
-run: flash monitor
+run: build flash monitor
 
 clean:
 	$(PLATFORMIO) run --target clean --environment $(BOARD)

@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <esp_sleep.h>
 
 #include "FeedingService.hpp"
 #include "ButtonService.hpp"
@@ -7,13 +8,20 @@
 #include "WebService.hpp"
 #include "SchedulingService.hpp"
 
+#define RTC_INT_PIN 0  // DS3231 INT/SQW (active low) wired here
 #define SERVO2_PIN 2
 #define SERVO1_PIN 3
 #define TRANSISTOR_PIN 5
 #define BUTTON_PIN 4
 
+// Power management
+static const uint32_t INACTIVITY_SLEEP_MS = 120000;  // 2 minutes
+
 void simpleClickHandler(Button2 &btn);
 void doubleClickHandler(Button2 &btn);
+void enterDeepSleep(const char* reason);
+void markActivity();
+void handleSleepLogic();
 
 // Services
 ButtonService buttonService;
@@ -23,6 +31,11 @@ ConfigService configService;
 SchedulingService schedulingService(configService, clockService, feedingService);
 WebService webService(configService, clockService, feedingService, schedulingService);
 
+// State flags
+bool wokeFromRtcAlarm = false;
+bool wokeFromButton = false;
+unsigned long lastActivityMillis = 0;
+
 void setup() {
   Serial.begin(115200);
   delay(1000);
@@ -30,6 +43,28 @@ void setup() {
   Serial.println("\n\n[INFO] ========================================");
   Serial.println("[INFO] Automatic Chicken Feeder v2.0");
   Serial.println("[INFO] ========================================\n");
+
+  // Configure sleep callback for web API
+  webService.setSleepCallback([]() { enterDeepSleep("Remote request"); });
+
+  // Wake cause detection
+  esp_sleep_wakeup_cause_t wakeupReason = esp_sleep_get_wakeup_cause();
+  uint64_t gpioStatus = esp_sleep_get_gpio_wakeup_status();
+
+  if (wakeupReason == ESP_SLEEP_WAKEUP_GPIO) {
+    if (gpioStatus & (1ULL << RTC_INT_PIN)) {
+      wokeFromRtcAlarm = true;
+      Serial.println("[INFO] Wake reason: RTC alarm (GPIO)");
+    }
+    if (gpioStatus & (1ULL << BUTTON_PIN)) {
+      wokeFromButton = true;
+      Serial.println("[INFO] Wake reason: Button (GPIO)");
+    }
+  } else {
+    Serial.println("[INFO] Wake reason: Power-on reset or unknown");
+  }
+
+  markActivity();
 
   // Initialize config service
   if (!configService.begin()) {
@@ -57,6 +92,18 @@ void setup() {
     Serial.println("[ERROR] Failed to start WebService!");
   }
 
+  // Handle wake-specific actions
+  if (wokeFromRtcAlarm) {
+    // Process due events immediately (DS3231 alarm line stays low until cleared)
+    schedulingService.checkAlarm();
+  }
+
+  if (wokeFromButton) {
+    // Bring up AP directly after button wake
+    webService.startAP("ChickenFeeder", "");
+    markActivity();
+  }
+
   Serial.println("\n[INFO] Setup complete.");
   Serial.println("[INFO] Press button once to feed manually");
   Serial.println("[INFO] Press button twice to start AP mode");
@@ -67,14 +114,67 @@ void loop() {
   feedingService.update();
   webService.update();
   schedulingService.update();
+  handleSleepLogic();
 }
 
 void simpleClickHandler(Button2 &btn) {
   Serial.println("[BUTTON] Single click - Manual feed");
+  markActivity();
   feedingService.feed(1);
 }
 
 void doubleClickHandler(Button2 &btn) {
   Serial.println("[BUTTON] Double click - Starting AP mode");
+  markActivity();
   webService.startAP("ChickenFeeder", "");
+}
+
+void markActivity() {
+  lastActivityMillis = millis();
+}
+
+void handleSleepLogic() {
+  unsigned long now = millis();
+
+  // Skip sleeping while feeding
+  if (feedingService.isFeeding()) {
+    markActivity();
+    return;
+  }
+
+  // Keep awake while AP is active
+  if (webService.isAPActive()) {
+    return;
+  }
+
+  // After RTC alarm wake, go back to sleep once work is done
+  if (wokeFromRtcAlarm) {
+    enterDeepSleep("RTC alarm handled");
+    return;
+  }
+
+  // Inactivity-based sleep
+  uint32_t lastClient = webService.getLastClientActivity();
+  uint32_t lastActivity = max(lastActivityMillis, lastClient);
+
+  if ((now - lastActivity) >= INACTIVITY_SLEEP_MS) {
+    enterDeepSleep("Inactivity timeout");
+  }
+}
+
+void enterDeepSleep(const char* reason) {
+  Serial.printf("[SLEEP] Entering deep sleep: %s\n", reason);
+
+  // Ensure AP is stopped if it was running
+  webService.stopAP();
+
+  // Configure wake sources (active-low alarm/button)
+  pinMode(RTC_INT_PIN, INPUT_PULLUP);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  const uint64_t wakeMask = (1ULL << RTC_INT_PIN) | (1ULL << BUTTON_PIN);
+  esp_deep_sleep_enable_gpio_wakeup(wakeMask, ESP_GPIO_WAKEUP_GPIO_LOW);
+
+  Serial.flush();
+  esp_deep_sleep_start();
 }

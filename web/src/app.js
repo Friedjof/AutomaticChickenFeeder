@@ -32,6 +32,7 @@ export class ChickenFeederApp {
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
         this.elements.saveScheduleBtn = document.getElementById('saveScheduleBtn');
+        this.elements.deepSleepBtn = document.getElementById('deepSleepBtn');
         
         // Timer elements
         this.elements.timerRows = document.querySelectorAll('.timer-row');
@@ -52,6 +53,11 @@ export class ChickenFeederApp {
 
         // Schedule save button
         this.elements.saveScheduleBtn.addEventListener('click', () => this.saveScheduleOnly());
+
+        // Deep sleep button
+        if (this.elements.deepSleepBtn) {
+            this.bindDeepSleepGesture(this.elements.deepSleepBtn);
+        }
 
         // Timer events
         this.elements.timerRows.forEach((row, index) => {
@@ -149,6 +155,48 @@ export class ChickenFeederApp {
         return await this.apiRequest('/feed', {
             method: 'POST'
         });
+    }
+
+    async triggerDeepSleep() {
+        try {
+            this.elements.deepSleepBtn.disabled = true;
+            this.elements.deepSleepBtn.textContent = 'Shutting down...';
+            let response;
+            if (this.useMock) {
+                if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+                response = await this.mockApi.powerSleep();
+            } else {
+                response = await this.apiRequest('/power/sleep', { method: 'POST' });
+            }
+            if (response.success) {
+                this.showToast('Device entering sleep', 'info');
+            } else {
+                this.showToast(response.error || 'Failed to sleep device', 'error');
+            }
+        } catch (error) {
+            console.error('Error triggering sleep:', error);
+            if (!this.useMock && await this.enableMock('sleep API unavailable')) {
+                this.showToast('Using mock sleep (no device)', 'info');
+                try {
+                    const mockResp = await this.mockApi.powerSleep();
+                    if (mockResp.success) {
+                        this.showToast('Device entering sleep (mock)', 'info');
+                    } else {
+                        this.showToast(mockResp.error || 'Failed to sleep device', 'error');
+                    }
+                } catch (mockErr) {
+                    console.error('Mock sleep failed:', mockErr);
+                    this.showToast('Mock sleep failed', 'error');
+                }
+            } else {
+                this.showToast('Network error', 'error');
+            }
+        } finally {
+            setTimeout(() => {
+                this.elements.deepSleepBtn.disabled = false;
+                this.elements.deepSleepBtn.textContent = 'Shut down & sleep';
+            }, 1500);
+        }
     }
 
     async syncTime() {
@@ -506,6 +554,44 @@ export class ChickenFeederApp {
     shouldUseMockFromQuery() {
         const params = new URLSearchParams(window.location.search);
         return params.has('mock') || params.get('api') === 'mock';
+    }
+
+    bindDeepSleepGesture(button) {
+        let holdTimer = null;
+        const holdDelay = 600; // ms
+
+        const trigger = () => this.triggerDeepSleep();
+
+        button.addEventListener('click', (e) => {
+            // If a long press already triggered, ignore the click
+            if (button.dataset.triggered === 'true') {
+                button.dataset.triggered = '';
+                e.preventDefault();
+                return;
+            }
+            trigger();
+        });
+
+        const startHold = () => {
+            holdTimer = setTimeout(() => {
+                button.dataset.triggered = 'true';
+                trigger();
+            }, holdDelay);
+        };
+
+        const clearHold = () => {
+            if (holdTimer) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+        };
+
+        button.addEventListener('mousedown', startHold);
+        button.addEventListener('touchstart', startHold);
+        button.addEventListener('mouseup', clearHold);
+        button.addEventListener('mouseleave', clearHold);
+        button.addEventListener('touchend', clearHold);
+        button.addEventListener('touchcancel', clearHold);
     }
 
     ensureSchedules(count) {

@@ -34,7 +34,8 @@ class MockAPI {
                 { id: 2, enabled: true, time: "12:00", weekday_mask: 62, portion_units: 1 },
                 { id: 3, enabled: true, time: "18:00", weekday_mask: 62, portion_units: 1 },
                 { id: 4, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 },
-                { id: 5, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 }
+                { id: 5, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 },
+                { id: 6, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 }
             ],
             rtc: {
                 sync_threshold_ms: 3000
@@ -57,6 +58,14 @@ class MockAPI {
         return {
             success: true,
             data: { ...this.status }
+        };
+    }
+
+    async powerSleep() {
+        await this.delay(150);
+        return {
+            success: true,
+            message: 'Device entering deep sleep (mock)'
         };
     }
 
