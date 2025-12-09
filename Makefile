@@ -95,12 +95,45 @@ list:
 
 .PHONY: release
 release:
-	@if [ -z "$(VERSION)" ]; then echo "VERSION env var required (e.g. make release VERSION=v2.0.0)"; exit 1; fi
+	@if [ -z "$(VERSION)" ]; then echo "❌ VERSION env var required (e.g. make release VERSION=v2.0.0)"; exit 1; fi
+	@echo "🐔 Starting automated release $(VERSION)..."
+	@echo ""
+	@echo "📝 Step 1/5: Updating version files..."
 	@echo "// $(VERSION)" > VERSION
 	@cd web && npm version --no-git-tag-version --allow-same-version $${VERSION#v}
+	@echo "✅ Version files updated"
+	@echo ""
+	@echo "🌐 Step 2/5: Building web interface with new version..."
 	@$(MAKE) web-headers
+	@echo "✅ Web interface built and embedded"
+	@echo ""
+	@echo "📦 Step 3/5: Committing release..."
 	@git add VERSION web/package.json web/package-lock.json
 	@git add -f lib/WebService/generated
-	@git commit -m "Release $(VERSION)"
+	@git commit -m "Release $(VERSION)" || (echo "⚠️  No changes to commit"; true)
+	@echo "✅ Release committed"
+	@echo ""
+	@echo "🏷️  Step 4/5: Creating and pushing tag..."
+	@if git rev-parse $(VERSION) >/dev/null 2>&1; then \
+		echo "⚠️  Tag $(VERSION) already exists, deleting old tag..."; \
+		git tag -d $(VERSION); \
+		git push origin :refs/tags/$(VERSION) 2>/dev/null || true; \
+	fi
 	@git tag -a $(VERSION) -m "Release $(VERSION)"
-	@echo "Release prepared. Push with: git push origin main && git push origin $(VERSION)"
+	@echo "✅ Tag $(VERSION) created"
+	@echo ""
+	@echo "🚀 Step 5/5: Pushing to GitHub..."
+	@BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	echo "📤 Pushing branch: $$BRANCH"; \
+	git push origin $$BRANCH; \
+	echo "📤 Pushing tag: $(VERSION)"; \
+	git push origin $(VERSION); \
+	REPO=$$(git config --get remote.origin.url | sed 's/.*github.com[:\/]\(.*\)\.git/\1/'); \
+	echo ""; \
+	echo "✅ ✅ ✅ Release $(VERSION) completed! ✅ ✅ ✅"; \
+	echo ""; \
+	echo "🔗 GitHub Actions: https://github.com/$$REPO/actions"; \
+	echo "🔗 Releases: https://github.com/$$REPO/releases"; \
+	echo ""; \
+	echo "⏳ The release build will take ~5-10 minutes"; \
+	echo "📦 Artifacts: firmware-$(VERSION).bin, firmware-$(VERSION).elf"

@@ -231,6 +231,21 @@ pio run             # Compile firmware
 make build    # Still use make! Ensures web files are current
 ```
 
+### Creating a Release
+
+**Single command to create and publish a release:**
+```bash
+make release VERSION=v2.1.0
+```
+
+This will automatically:
+- Update version in all files
+- Rebuild web interface with new version
+- Commit, tag, and push to GitHub
+- Trigger automated release build
+
+See [docs/RELEASE.md](docs/RELEASE.md) for details.
+
 ### Service Architecture
 
 ```
