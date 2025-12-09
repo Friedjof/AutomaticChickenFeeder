@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chicken Feeder</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:linear-gradient(135deg,#667eea 0,#764ba2 100%);color:#333;min-height:100vh;line-height:1.4;font-size:16px}.container{max-width:480px;margin:0 auto;padding:12px;min-height:100vh;display:flex;flex-direction:column}.header{background:rgba(255,255,255,.95);padding:12px 16px;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);backdrop-filter:blur(10px)}.header-content{display:flex;justify-content:space-between;align-items:center}.header h1{font-size:1.4rem;color:#2c3e50;font-weight:700}.status-indicator{display:flex;align-items:center;gap:6px;font-weight:600;font-size:.85rem;color:#27ae60}.status-dot{width:10px;height:10px;border-radius:50%;background:#27ae60;animation:pulse 2s infinite}.status-dot.offline{background:#e74c3c;animation:none}@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}.dashboard{flex:1;display:flex;flex-direction:column;gap:12px}section{background:rgba(255,255,255,.95);padding:16px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);backdrop-filter:blur(10px)}.feed-section{text-align:center}.feed-button{background:linear-gradient(135deg,#ff6b6b,#ee5a24);border:none;padding:18px 32px;border-radius:50px;color:#fff;font-size:1.1rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;margin:0 auto 16px;transition:all .3s ease;box-shadow:0 4px 20px rgba(255,107,107,.3);min-height:56px;width:100%;max-width:200px;justify-content:center}.feed-button:hover{transform:translateY(-1px);box-shadow:0 6px 25px rgba(255,107,107,.4)}.feed-button:active{transform:translateY(0)}.feed-button.feeding{background:linear-gradient(135deg,#feca57,#ff9ff3);animation:feeding 1s infinite}@keyframes feeding{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}.feed-icon{font-size:1.2rem}.feed-status-compact{text-align:center;color:#666;font-size:.9rem;margin-top:8px;line-height:1.4}.feed-status-compact span{font-weight:500}.schedule-section h3{font-size:1.1rem;color:#2c3e50;margin-bottom:16px;font-weight:600}.feed-timers{display:flex;flex-direction:column;gap:12px}.timer-row{display:flex;align-items:center;gap:8px;padding:12px;background:#f8f9fa;border-radius:8px;flex-wrap:wrap}.timer-label{font-size:.9rem;font-weight:600;color:#2c3e50;min-width:55px}.toggle-switch-small{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}.toggle-switch-small input{opacity:0;width:0;height:0}.toggle-slider-small{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;transition:.3s;border-radius:20px}.toggle-slider-small:before{position:absolute;content:"";height:16px;width:16px;left:2px;bottom:2px;background-color:#fff;transition:.3s;border-radius:50%}input:checked+.toggle-slider-small{background-color:#667eea}input:checked+.toggle-slider-small:before{transform:translateX(16px)}.timer-time{padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:.9rem;width:80px;flex-shrink:0}.timer-time:focus{outline:0;border-color:#667eea}.timer-time:disabled{background:#f8f9fa;color:#999}.weekdays-inline{display:flex;gap:4px;flex-wrap:wrap}.weekday-mini{width:24px;height:24px;padding:0;background:#e9ecef;border:1px solid #ddd;border-radius:4px;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s ease;color:#666;display:flex;align-items:center;justify-content:center;flex-shrink:0}.weekday-mini.active{background:#667eea;border-color:#667eea;color:#fff}.weekday-mini:hover{background:#ddd}.weekday-mini.active:hover{background:#5a6fd8}.weekday-mini:disabled{opacity:.5;cursor:not-allowed}.weekday-mini:disabled:hover{background:#e9ecef}.timer-row.disabled{opacity:.6}.timer-row.disabled .timer-time{background:#f8f9fa;color:#999}.timer-row.disabled .weekday-mini{opacity:.5;cursor:not-allowed}.schedule-save{margin-top:16px;text-align:center}.btn-save-schedule{padding:12px 24px;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .3s ease;min-height:44px;background:linear-gradient(135deg,#27ae60,#2ecc71);color:#fff;min-width:140px}.btn-save-schedule:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(39,174,96,.3)}.settings-section{margin-top:auto}.portion-setting{margin-bottom:16px}.portion-setting label{display:block;margin-bottom:12px;font-weight:600;color:#2c3e50;font-size:.95rem;text-align:center}.portion-slider{width:100%;height:8px;border-radius:5px;background:#e9ecef;outline:0;appearance:none;cursor:pointer}.portion-slider::-webkit-slider-thumb{appearance:none;width:24px;height:24px;border-radius:50%;background:#667eea;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2)}.portion-slider::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#667eea;cursor:pointer;border:none;box-shadow:0 2px 6px rgba(0,0,0,.2)}.action-buttons{display:flex;gap:12px}.btn-reset,.btn-save{flex:1;padding:12px 16px;border:none;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .3s ease;min-height:44px}.btn-save{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}.btn-save:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,.3)}.btn-reset{background:#f8f9fa;color:#666;border:2px solid #e9ecef}.btn-reset:hover{background:#e9ecef}.footer{text-align:center;padding:12px;color:rgba(255,255,255,.7);font-size:.8rem;margin-top:12px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:#2c3e50;color:#fff;padding:12px 20px;border-radius:25px;transition:transform .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:1000;max-width:90%;text-align:center;font-size:.9rem}.toast.show{transform:translateX(-50%) translateY(0)}.toast.success{background:#27ae60}.toast.error{background:#e74c3c}@media (min-width:768px){.container{max-width:600px;padding:20px}.header{padding:16px 20px}.header h1{font-size:1.6rem}section{padding:20px}.dashboard{gap:16px}.feed-button{max-width:250px;font-size:1.2rem}.weekday-row{justify-content:center;gap:12px}.weekday-btn{flex:none;min-width:60px}}@media (min-width:1024px){.container{max-width:700px}}</style>
+</head>
+<body>
+    <div class="container">
+        <!-- Compact Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🐔 Chicken Feeder</h1>
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot online"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Feed Control Section -->
+            <section class="feed-section">
+                <button class="feed-button" id="manualFeedBtn">
+                    <span class="feed-icon">🌾</span>
+                    <span>Feed Now</span>
+                </button>
+                
+                <div class="feed-status-compact">
+                    <span id="lastFeedTime">Never</span> • 
+                    <span id="servoPosition">Closed</span> • 
+                    <span><span id="totalFedToday">0g</span> today</span>
+                </div>
+            </section>
+
+            <!-- Feed Schedule Section -->
+            <section class="schedule-section">
+                <h3>Feed Schedule</h3>
+                
+                <div class="feed-timers">
+                    <div class="timer-row" data-index="0">
+                        <span class="timer-label">Feed 1:</span>
+                        <label class="toggle-switch-small">
+                            <input type="checkbox" class="timer-enabled">
+                            <span class="toggle-slider-small"></span>
+                        </label>
+                        <input type="time" class="timer-time" value="06:30">
+                        <div class="weekdays-inline">
+                            <button class="weekday-mini" data-day="1">M</button>
+                            <button class="weekday-mini" data-day="2">T</button>
+                            <button class="weekday-mini" data-day="3">W</button>
+                            <button class="weekday-mini" data-day="4">T</button>
+                            <button class="weekday-mini" data-day="5">F</button>
+                            <button class="weekday-mini" data-day="6">S</button>
+                            <button class="weekday-mini" data-day="0">S</button>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-row" data-index="1">
+                        <span class="timer-label">Feed 2:</span>
+                        <label class="toggle-switch-small">
+                            <input type="checkbox" class="timer-enabled">
+                            <span class="toggle-slider-small"></span>
+                        </label>
+                        <input type="time" class="timer-time" value="12:00">
+                        <div class="weekdays-inline">
+                            <button class="weekday-mini" data-day="1">M</button>
+                            <button class="weekday-mini" data-day="2">T</button>
+                            <button class="weekday-mini" data-day="3">W</button>
+                            <button class="weekday-mini" data-day="4">T</button>
+                            <button class="weekday-mini" data-day="5">F</button>
+                            <button class="weekday-mini" data-day="6">S</button>
+                            <button class="weekday-mini" data-day="0">S</button>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-row" data-index="2">
+                        <span class="timer-label">Feed 3:</span>
+                        <label class="toggle-switch-small">
+                            <input type="checkbox" class="timer-enabled">
+                            <span class="toggle-slider-small"></span>
+                        </label>
+                        <input type="time" class="timer-time" value="18:00">
+                        <div class="weekdays-inline">
+                            <button class="weekday-mini" data-day="1">M</button>
+                            <button class="weekday-mini" data-day="2">T</button>
+                            <button class="weekday-mini" data-day="3">W</button>
+                            <button class="weekday-mini" data-day="4">T</button>
+                            <button class="weekday-mini" data-day="5">F</button>
+                            <button class="weekday-mini" data-day="6">S</button>
+                            <button class="weekday-mini" data-day="0">S</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Save Schedule Button -->
+                <div class="schedule-save">
+                    <button class="btn-save-schedule" id="saveScheduleBtn">Save Schedule</button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section class="settings-section">
+                <div class="portion-setting">
+                    <label for="portionSlider">Portion Size: <span id="portionSize">12g</span></label>
+                    <input type="range" id="portionSlider" min="5" max="50" value="12" class="portion-slider">
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-save" id="saveConfigBtn">Save</button>
+                    <button class="btn-reset" id="resetConfigBtn">Reset</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ESP32-C3 Chicken Feeder v1.0</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="js/app.js"></script>
+<script>class t{constructor(){this.t="/api",this.elements={},this.config=null,this.status=null,this.updateInterval=null,this.init()}init(){this.i(),this.o(),this.h(),this.u()}i(){this.elements.l=document.getElementById("statusIndicator"),this.elements.m=document.getElementById("lastFeedTime"),this.elements.p=document.getElementById("servoPosition"),this.elements.v=document.getElementById("portionSize"),this.elements.S=document.getElementById("totalFedToday"),this.elements.T=document.getElementById("manualFeedBtn"),this.elements.k=document.getElementById("portionSlider"),this.elements.F=document.getElementById("saveConfigBtn"),this.elements.C=document.getElementById("resetConfigBtn"),this.elements.I=document.getElementById("saveScheduleBtn"),this.elements.O=document.querySelectorAll(".timer-row"),this.elements.$=document.getElementById("toast"),this.elements.P=document.getElementById("toastMessage")}o(){this.elements.T.addEventListener("click",()=>this.N()),this.elements.F.addEventListener("click",()=>this.M()),this.elements.C.addEventListener("click",()=>this.B()),this.elements.I.addEventListener("click",()=>this.D()),this.elements.k.addEventListener("input",()=>this.R()),this.elements.O.forEach((t,i)=>{const s=t.querySelector(".timer-enabled"),e=t.querySelector(".timer-time"),n=t.querySelectorAll(".weekday-mini");s.addEventListener("change",()=>this.U(i)),e.addEventListener("change",()=>this.q(i)),n.forEach(t=>{t.addEventListener("click",()=>this._(i,t))})})}async j(t,i={}){try{const s=await fetch(`${this.t}${t}`,{headers:{A:"application/json",...i.headers},...i});if(!s.ok)throw new Error(`HTTP ${s.status}: ${s.statusText}`);return await s.json()}catch(t){throw console.error("API request failed:",t),t}}async H(){return await this.j("/status")}async J(){return await this.j("/config")}async L(t){return await this.j("/config",{method:"POST",body:JSON.stringify(t)})}async W(){return await this.j("/config/reset",{method:"POST"})}async G(){return await this.j("/feed",{method:"POST"})}async h(){try{const t=await this.J();t.K&&(this.config=t.data,this.V());const i=await this.H();i.K&&(this.status=i.data,this.X())}catch(t){this.Y("Failed to connect to device","error"),console.error("Error loading initial data:",t),this.Z()}}u(){this.updateInterval=setInterval(()=>{this.tt()},2e3)}async tt(){try{const t=await this.H();t.K&&(this.status=t.data,this.X())}catch(t){console.error("Error updating status:",t),this.Z()}}X(){if(!this.status)return;const t=this.elements.l.querySelector(".status-dot"),i=this.elements.l.querySelector("span:last-child");if(this.status.it?(t.classList.remove("offline"),t.classList.add("online"),i.textContent="Online"):(t.classList.remove("online"),t.classList.add("offline"),i.textContent="Offline"),this.elements.p.textContent=this.status.p,this.status.m){const t=new Date(this.status.m),i=new Date,s=Math.floor((i-t)/6e4);if(s<60)this.elements.m.textContent=`${s}m ago`;else{const t=Math.floor(s/60);this.elements.m.textContent=`${t}h ago`}}else this.elements.m.textContent="Never";this.elements.S.textContent=`${this.status.S}g`,this.status.st?(this.elements.T.classList.add("feeding"),this.elements.T.disabled=!0,this.elements.T.querySelector("span:last-child").textContent="Feeding..."):(this.elements.T.classList.remove("feeding"),this.elements.T.disabled=!1,this.elements.T.querySelector("span:last-child").textContent="Feed Now")}Z(){const t=this.elements.l.querySelector(".status-dot"),i=this.elements.l.querySelector("span:last-child");t.classList.remove("online"),t.classList.add("offline"),i.textContent="Offline"}V(){this.config&&(this.elements.k.value=this.config.et,this.R(),this.elements.O.forEach((t,i)=>{i<3&&this.config.nt[i]&&this.ot(i,this.config.nt[i])}))}ot(t,i){const s=this.elements.O[t];if(!s)return;const e=s.querySelector(".timer-enabled"),n=s.querySelector(".timer-time"),o=s.querySelectorAll(".weekday-mini");e.checked=i.enabled,n.value=i.time,o.forEach(t=>{const s=parseInt(t.dataset.ht);i.rt&1<<s?t.classList.add("active"):t.classList.remove("active")}),this.ct(s,i.enabled)}ct(t,i){const s=t.querySelector(".timer-time"),e=t.querySelectorAll(".weekday-mini");i?(t.classList.remove("disabled"),s.disabled=!1,e.forEach(t=>t.disabled=!1)):(t.classList.add("disabled"),s.disabled=!0,e.forEach(t=>t.disabled=!0))}R(){const t=this.elements.k.value;this.elements.v.textContent=`${t}g`}U(t){if(!this.config||!this.config.nt[t])return;const i=this.elements.O[t],s=i.querySelector(".timer-enabled").checked;this.config.nt[t].enabled=s,this.ct(i,s)}q(t){if(!this.config||!this.config.nt[t])return;const i=this.elements.O[t].querySelector(".timer-time");this.config.nt[t].time=i.value}_(t,i){if(!this.config||!this.config.nt[t])return;if(i.disabled)return;const s=this.config.nt[t],e=1<<parseInt(i.dataset.ht);s.rt&e?(s.rt=s.rt&~e,i.classList.remove("active")):(s.rt=s.rt|e,i.classList.add("active"))}async N(){try{this.elements.T.disabled=!0;const t=await this.G();t.K?this.Y("Feed cycle started!","success"):this.Y(t.error||"Failed to start feed cycle","error")}catch(t){this.Y("Network error occurred","error"),console.error("Error triggering feed:",t)}finally{setTimeout(()=>{this.elements.T.disabled=!1},1e3)}}async M(){try{const t={et:parseInt(this.elements.k.value),nt:this.config.nt},i=await this.L(t);i.K?(this.Y("Configuration saved!","success"),this.config={...this.config,...t}):this.Y(i.error||"Failed to save configuration","error")}catch(t){this.Y("Network error occurred","error"),console.error("Error saving configuration:",t)}}async D(){try{const t={nt:this.config.nt},i=await this.L(t);i.K?(this.Y("Schedule saved!","success"),this.config={...this.config,...t}):this.Y(i.error||"Failed to save schedule","error")}catch(t){this.Y("Network error occurred","error"),console.error("Error saving schedule:",t)}}async B(){if(confirm("Reset all settings to default?"))try{const t=await this.W();t.K?(this.Y("Settings reset to defaults","success"),await this.h()):this.Y(t.error||"Failed to reset configuration","error")}catch(t){this.Y("Network error occurred","error"),console.error("Error resetting configuration:",t)}}Y(t,i="info"){this.elements.P.textContent=t,this.elements.$.className=`toast ${i}`,this.elements.$.classList.add("show"),setTimeout(()=>{this.elements.$.classList.remove("show")},3e3)}destroy(){this.updateInterval&&clearInterval(this.updateInterval)}}document.addEventListener("DOMContentLoaded",()=>{window.app=new t,window.addEventListener("beforeunload",()=>{window.app&&window.app.destroy()})});</script>
+</body>
+</html>

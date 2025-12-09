@@ -1,3 +1,5 @@
 .pio
 .pio-home/
+.vscode/
 data/
+build/

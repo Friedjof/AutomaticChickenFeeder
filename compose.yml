@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Reverse Proxy (Main Entry Point)
+  proxy:
+    image: nginx:alpine
+    container_name: chicken-feeder-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+      frontend:
+        condition: service_started
+    networks:
+      - chicken-feeder-net
+
+  # ESP32-C3 API Backend Simulation
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: chicken-feeder-api
+    expose:
+      - "3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    networks:
+      - chicken-feeder-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => { process.exit(1) })"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # Frontend Web Interface
+  frontend:
+    image: nginx:alpine
+    container_name: chicken-feeder-frontend
+    expose:
+      - "80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    networks:
+      - chicken-feeder-net
+
+networks:
+  chicken-feeder-net:
+    driver: bridge
+    name: chicken-feeder-network
+
+# Development helper commands (use with docker compose run --rm <service> <command>)
+# 
+# Start everything:           docker compose up
+# Start in background:        docker compose up -d
+# View logs:                  docker compose logs -f
+# Stop everything:            docker compose down
+# Rebuild and start:          docker compose up --build
+# 
+# Test API directly:          curl http://localhost:3000/health
+# Test frontend:              open http://localhost:8000

@@ -1,49 +1,70 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- Firmware lives under `src/`; each service is split into `src/app/<name>_module.cpp` and `include/app/<name>_module.hpp`.
-- Shared data models reside in `include/models/`; configuration constants go in `include/config/` (e.g., pin maps).
-- `data-template/` holds versioned LittleFS defaults (web bundle, `config.json`). Copy it to an ignored `data/` directory before flashing.
-- Documentation sits in `docs/`; unit and integration tests belong in `test/`, following PlatformIO’s standard layout.
+This repository contains an **ESP32-C3 automatic chicken feeder** project using PlatformIO. The goal is to provide a functional feeding system with button control and servo actuation.
 
-## Build, Test & Development Commands
-- `make setup` – copy `data-template/` → `data/`, verify PlatformIO CLI, prefetch packages.
-- `pio run` – compile the firmware (defaults to the host `native` environment).
-- `pio run -e esp32c6` – compile for the ESP32-C6 Arduino environment once platforms/libs are available.
-- `pio run -t upload -e esp32c6` – flash the compiled firmware to the device.
-- `pio run -t uploadfs -e esp32c6` – upload LittleFS assets from `data/` (copied from `data-template/`).
-- `pio test` / `pio test -e esp32c6` – execute Unity tests on host or hardware.
-- `npm run build` inside the Web UI workspace (when added) – produce static assets before `uploadfs`.
+## Build & Flash
 
-## Coding Style & Naming Conventions
-- Use C++17, `#pragma once` in headers, and 2/4-space indentation consistent with existing files.
-- Modules end with `_module.cpp/.hpp` and live in `app::` namespaces (e.g., `app::power::PowerModule`).
-- Avoid `using namespace` in headers; prefer explicit namespaces and `constexpr` for config values.
-- `ServiceContext` mediates cross-module access—do not instantiate global singletons.
+Always use the enhanced `Makefile` targets for convenient development:
 
-## Testing Guidelines
-- Tests rely on PlatformIO’s Unity framework; place cases under `test/<feature>/test_main.cpp`.
-- Name tests after the behaviour under scrutiny (e.g., `test_schedule_next_due.cpp`).
-- Ensure scheduler/clock logic has edge-case coverage (week wrap, disabled slots); run `pio test` before submitting changes.
+### Basic Commands
+- `make` / `make build` – compile firmware for ESP32-C3
+- `make clean` – clean build artifacts
 
-## Commit & Pull Request Guidelines
-- Follow concise commit messages in the style “feat: ...”, “fix: ...”, mirroring existing history.
-- Include doc updates (`docs/`) when behaviour changes; keep commits focused.
-- Pull requests should describe changes, note affected modules, link issues where applicable, and mention manual/automated test results.
-- Provide screenshots or logs for UI or hardware-facing changes when useful.
+### Device Port Management
+The Makefile supports automatic port detection and manual port selection:
 
-## Architecture Notes
-- System Controller coordinates services via `IService` interface and `ServiceContext`.
-- Only Storage touches LittleFS/NVS; Clock wraps RTC hardware; Power manages deep sleep/WiFi lifecycle.
-- Two buttons are expected: *Feed* (dispense one scoop) and *Settings* (enable WiFi/AP for configuration).
+- `make flash` – flash with auto-detected port
+- `make flash 1` – flash to /dev/ttyACM1 
+- `make monitor` – serial monitor with auto-detected port
+- `make monitor 2` – monitor /dev/ttyACM2
+- `make run` – flash + monitor (auto-detect)
+- `make run 1` – flash + monitor on /dev/ttyACM1
+- `make list` – list available ESP32 devices with port numbers
 
-## Environment Options
-- VS Code Dev Container (`.devcontainer/`) provides an all-in-one PlatformIO toolchain; requires Docker Desktop/WSL2 on Windows.
-- Docker CLI alternative:
-  ```bash
-  docker run --rm -it \
-    -v "$PWD":/workspace -w /workspace \
-    platformio/platformio-core pio run -e esp32c6
-  ```
-  Add `--device=/dev/ttyUSB0` (Linux/macOS) when flashing.
-- Local PlatformIO Core/IDE remains supported; Makefile targets wrap common commands.
+### Port Selection Examples
+```bash
+# Auto-detect port (recommended for single device)
+make flash
+make monitor
+
+# Specific port (useful with multiple ESP32 devices)
+make flash 2      # Flash to /dev/ttyACM2
+make monitor 2    # Monitor /dev/ttyACM2
+make run 1        # Flash and monitor /dev/ttyACM1
+
+# List connected ESP32 devices
+make list
+```
+
+## Hardware Setup
+- **Board**: Seeed Xiao ESP32-C3
+- **Servos**: Connected to GPIO 2 and GPIO 3
+- **Button**: Pin defined in ButtonService (check ButtonService.hpp)
+- **Power**: Ensure adequate power supply for servo operation
+
+## Code Structure
+- `src/main.cpp`: Main application with button handling
+- `lib/ButtonService/`: Button input management using Button2 library
+- `lib/FeedingService/`: Dual servo control for feeding mechanism
+- `lib/WebService/`: Placeholder for future web interface
+
+## Platform Configuration
+- `platformio.ini` uses standard `espressif32` platform for ESP32-C3
+- Board target: `seeed_xiao_esp32c3`
+- Upload speed: 460800 baud for fast flashing
+- Dependencies: ESP32Servo v3.0.9+ and Button2 v2.5.0+
+
+## Development Guidelines
+- Use the Makefile targets instead of direct `pio` commands
+- Test servo operation with appropriate power supply
+- Ensure `.pio-home/penv` exists (create via `python3 -m venv .pio-home/penv` if needed)
+- Keep code modular with separate service classes
+
+## Current Functionality
+The system provides:
+1. Button-triggered feeding cycles
+2. Synchronized dual servo operation
+3. Simple open → delay → close feeding sequence
+4. Extensible architecture for future features (web interface, scheduling)
+
+Follow these conventions to maintain code quality and enable easy hardware replication.

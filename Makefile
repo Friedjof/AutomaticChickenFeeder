@@ -1,45 +1,84 @@
-PIO ?= pio
-ENV ?= esp32c6
-DATA_TEMPLATE := data-template
-DATA_DIR := data
-PIO_HOME := $(CURDIR)/.pio-home
-PIO_CMD := PLATFORMIO_HOME_DIR=$(PIO_HOME) $(PIO)
+# Makefile für PlatformIO (ESP32-C3, Ubuntu /dev/ttyACM<N>)
 
-.PHONY: all build upload uploadfs test monitor clean data-init setup
+PLATFORMIO ?= pio
+BOARD ?= esp32c3
+
+# Optionales "Argument" nach flash/monitor/run (z. B. "make flash 1")
+ACTION_TARGETS := flash monitor run
+ifneq ($(filter $(ACTION_TARGETS),$(firstword $(MAKECMDGOALS))),)
+  ARG := $(word 2,$(MAKECMDGOALS))
+  ifneq ($(ARG),)
+    NR := $(ARG)
+    # Dummy-Ziel erzeugen, damit die Zahl (z. B. "1") kein echtes Target ist
+    $(eval $(ARG):;@:)
+  endif
+endif
+
+# Optionale Flags je nach NR
+ifdef NR
+  UPLOAD_FLAG := --upload-port /dev/ttyACM$(NR)
+  MONITOR_FLAG := --port /dev/ttyACM$(NR)
+else
+  UPLOAD_FLAG :=
+  MONITOR_FLAG :=
+endif
+
+.PHONY: all build flash monitor run clean list deploy-web deploy-fs deploy-flash
 
 all: build
 
 build:
-	$(PIO_CMD) run -e $(ENV)
+	$(PLATFORMIO) run --environment $(BOARD)
 
-upload:
-	$(PIO_CMD) run -e $(ENV) -t upload
+# make flash        -> ohne --upload-port (auto-detect)
+# make flash 1      -> Upload auf /dev/ttyACM1
+flash:
+	$(PLATFORMIO) run --target upload --environment $(BOARD) $(UPLOAD_FLAG)
 
-uploadfs:
-	$(PIO_CMD) run -e $(ENV) -t uploadfs
-
+# make monitor      -> ohne --port (auto-detect)
+# make monitor 2    -> Monitor auf /dev/ttyACM2
 monitor:
-	$(PIO_CMD) device monitor -e $(ENV)
+	$(PLATFORMIO) device monitor --environment $(BOARD) $(MONITOR_FLAG)
+
+# make run          -> flash danach monitor (ohne Port)
+# make run 1        -> flash/monitor auf /dev/ttyACM1
+run: flash monitor
 
 clean:
-	$(PIO_CMD) run -e $(ENV) -t clean
+	$(PLATFORMIO) run --target clean --environment $(BOARD)
 
-# Copy versioned template into working LittleFS directory
+# Web Interface Deployment Targets
+# =================================
 
-data-init:
-	@if [ ! -d $(DATA_TEMPLATE) ]; then \
-		echo "$(DATA_TEMPLATE) not found" >&2; exit 1; \
-	fi
-	@if [ -d $(DATA_DIR) ]; then \
-		echo "$(DATA_DIR) already exists"; \
-	else \
-		cp -R $(DATA_TEMPLATE) $(DATA_DIR); \
-		echo "Created $(DATA_DIR) from template"; \
-	fi
+# Build Docker image for web optimization (only when needed)
+build-web-image:
+	@echo "🐔 Building ESP32 web optimization container..."
+	docker build -t esp32-web-builder ./build/
 
-# Run Unity tests (host or device depending on env configuration)
-test:
-	$(PIO_CMD) test -e $(ENV)
+# Deploy web interface from /web/ to /data-template/ (professional optimization)
+deploy-web: build-web-image
+	@echo "🚀 Starting professional web optimization pipeline..."
+	docker run --rm -v $(PWD):/workspace esp32-web-builder
 
-setup: scripts/setup.sh
-	bash scripts/setup.sh
+# Legacy deployment (simple bash minification)
+deploy-web-simple:
+	@echo "🐔 Deploying web interface for ESP32 (simple)..."
+	./scripts/deploy-web.sh
+
+# Upload filesystem (data-template/) to ESP32
+deploy-fs:
+	@echo "📁 Uploading filesystem to ESP32..."
+	$(PLATFORMIO) run --target uploadfs --environment $(BOARD) $(UPLOAD_FLAG)
+
+# Deploy web interface and flash ESP32 with firmware + filesystem
+deploy-flash: deploy-web build flash deploy-fs
+	@echo "🚀 Complete deployment finished!"
+	@echo "✅ Firmware flashed"
+	@echo "✅ Web interface deployed" 
+	@echo "✅ Filesystem uploaded"
+
+# make list         -> nur ESP-Geräte auf /dev/ttyACM<N> mit Nummern (ohne Duplikate)
+list:
+	@echo "NR  PORT          DESCRIPTION"
+	@echo "--- ------------- --------------------------------------------------"
+	@$(PLATFORMIO) device list --json-output | jq -r 'map(select(((.hwid // "") | test("VID:PID=303A:", "i")) or ((.description // "") | test("Espressif|USB JTAG/serial", "i")))) | map(select(.port | test("^/dev/ttyACM[0-9]+"))) | unique_by(.port) | .[] | (.port | capture("ACM(?<n>[0-9]+)").n) + "   " + .port + "  " + (.description // "")'

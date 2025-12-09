@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  webserver:
+    image: nginx:alpine
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/usr/share/nginx/html
+    restart: unless-stopped
+    container_name: chicken-feeder-web

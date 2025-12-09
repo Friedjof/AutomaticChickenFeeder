@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chicken Feeder Control</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Compact Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🐔 Chicken Feeder</h1>
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot online"></span>
+                    <span>Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Feed Control Section -->
+            <section class="feed-section">
+                <button class="feed-button" id="manualFeedBtn">
+                    <span class="feed-icon">🌾</span>
+                    <span>Feed Now</span>
+                </button>
+                
+                <div class="feed-status-compact">
+                    <span id="lastFeedTime">Never</span> • 
+                    <span id="servoPosition">Closed</span> • 
+                    <span><span id="totalFedToday">0g</span> today</span>
+                </div>
+            </section>
+
+            <!-- Feed Schedule Section -->
+            <section class="schedule-section">
+                <h3>Feed Schedule</h3>
+                
+                <div class="feed-timers">
+                    <div class="timer-row" data-index="0">
+                        <span class="timer-label">Feed 1:</span>
+                        <label class="toggle-switch-small">
+                            <input type="checkbox" class="timer-enabled">
+                            <span class="toggle-slider-small"></span>
+                        </label>
+                        <input type="time" class="timer-time" value="06:30">
+                        <div class="weekdays-inline">
+                            <button class="weekday-mini" data-day="1">M</button>
+                            <button class="weekday-mini" data-day="2">T</button>
+                            <button class="weekday-mini" data-day="3">W</button>
+                            <button class="weekday-mini" data-day="4">T</button>
+                            <button class="weekday-mini" data-day="5">F</button>
+                            <button class="weekday-mini" data-day="6">S</button>
+                            <button class="weekday-mini" data-day="0">S</button>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-row" data-index="1">
+                        <span class="timer-label">Feed 2:</span>
+                        <label class="toggle-switch-small">
+                            <input type="checkbox" class="timer-enabled">
+                            <span class="toggle-slider-small"></span>
+                        </label>
+                        <input type="time" class="timer-time" value="12:00">
+                        <div class="weekdays-inline">
+                            <button class="weekday-mini" data-day="1">M</button>
+                            <button class="weekday-mini" data-day="2">T</button>
+                            <button class="weekday-mini" data-day="3">W</button>
+                            <button class="weekday-mini" data-day="4">T</button>
+                            <button class="weekday-mini" data-day="5">F</button>
+                            <button class="weekday-mini" data-day="6">S</button>
+                            <button class="weekday-mini" data-day="0">S</button>
+                        </div>
+                    </div>
+                    
+                    <div class="timer-row" data-index="2">
+                        <span class="timer-label">Feed 3:</span>
+                        <label class="toggle-switch-small">
+                            <input type="checkbox" class="timer-enabled">
+                            <span class="toggle-slider-small"></span>
+                        </label>
+                        <input type="time" class="timer-time" value="18:00">
+                        <div class="weekdays-inline">
+                            <button class="weekday-mini" data-day="1">M</button>
+                            <button class="weekday-mini" data-day="2">T</button>
+                            <button class="weekday-mini" data-day="3">W</button>
+                            <button class="weekday-mini" data-day="4">T</button>
+                            <button class="weekday-mini" data-day="5">F</button>
+                            <button class="weekday-mini" data-day="6">S</button>
+                            <button class="weekday-mini" data-day="0">S</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Save Schedule Button -->
+                <div class="schedule-save">
+                    <button class="btn-save-schedule" id="saveScheduleBtn">Save Schedule</button>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section class="settings-section">
+                <div class="portion-setting">
+                    <label for="portionSlider">Portion Size: <span id="portionSize">12g</span></label>
+                    <input type="range" id="portionSlider" min="5" max="50" value="12" class="portion-slider">
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-save" id="saveConfigBtn">Save</button>
+                    <button class="btn-reset" id="resetConfigBtn">Reset</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ESP32-C3 Chicken Feeder v1.0</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
