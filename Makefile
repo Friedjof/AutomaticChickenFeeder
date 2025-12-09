@@ -99,7 +99,8 @@ release:
 	@echo "$(VERSION)" > VERSION
 	@cd web && npm version --no-git-tag-version $${VERSION#v}
 	@$(MAKE) web-headers
-	@git add VERSION web/package.json web/package-lock.json lib/WebService/generated
+	@git add VERSION web/package.json web/package-lock.json
+	@git add -f lib/WebService/generated
 	@git commit -m "Release $(VERSION)"
 	@git tag -a $(VERSION) -m "Release $(VERSION)"
 	@echo "Release prepared. Push with: git push origin main && git push origin $(VERSION)"
