@@ -9,9 +9,12 @@
 #include "ClockService.hpp"
 #include "FeedingService.hpp"
 
+// Forward declaration to avoid circular dependency
+class SchedulingService;
+
 class WebService {
 public:
-    WebService(ConfigService &config, ClockService &clock, FeedingService &feeding);
+    WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling);
 
     bool begin(uint16_t port = 80);
     void update();
@@ -27,6 +30,7 @@ private:
     ConfigService &configService;
     ClockService &clockService;
     FeedingService &feedingService;
+    SchedulingService &schedulingService;
 
     bool apActive;
     uint32_t apStartTime;

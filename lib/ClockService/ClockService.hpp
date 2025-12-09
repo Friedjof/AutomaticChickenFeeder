@@ -19,6 +19,11 @@ public:
     // Check if RTC needs sync (drift > threshold)
     bool needsSync(uint32_t thresholdMs = 3000);
 
+    // Alarm management
+    bool setAlarm(const DateTime &dt);
+    bool clearAlarm();
+    bool checkAlarmFlag();
+
 private:
     RTC_DS3231 rtc;
     bool available;

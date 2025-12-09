@@ -5,6 +5,7 @@
 #include "ClockService.hpp"
 #include "ConfigService.hpp"
 #include "WebService.hpp"
+#include "SchedulingService.hpp"
 
 #define SERVO2_PIN 2
 #define SERVO1_PIN 3
@@ -19,7 +20,8 @@ ButtonService buttonService;
 FeedingService feedingService;
 ClockService clockService;
 ConfigService configService;
-WebService webService(configService, clockService, feedingService);
+SchedulingService schedulingService(configService, clockService, feedingService);
+WebService webService(configService, clockService, feedingService, schedulingService);
 
 void setup() {
   Serial.begin(115200);
@@ -47,6 +49,9 @@ void setup() {
   // Initialize feeding service
   feedingService.setup();
 
+  // Initialize scheduling service
+  schedulingService.begin();
+
   // Start web server
   if (!webService.begin()) {
     Serial.println("[ERROR] Failed to start WebService!");
@@ -61,6 +66,7 @@ void loop() {
   buttonService.loop();
   feedingService.update();
   webService.update();
+  schedulingService.update();
 }
 
 void simpleClickHandler(Button2 &btn) {

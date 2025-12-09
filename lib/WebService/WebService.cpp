@@ -1,9 +1,10 @@
 #include "WebService.hpp"
+#include "SchedulingService.hpp"
 #include "generated/web_files.h"
 #include <WiFi.h>
 
-WebService::WebService(ConfigService &config, ClockService &clock, FeedingService &feeding)
-    : server(80), configService(config), clockService(clock), feedingService(feeding),
+WebService::WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling)
+    : server(80), configService(config), clockService(clock), feedingService(feeding), schedulingService(scheduling),
       apActive(false), apStartTime(0), lastClientActivity(0) {}
 
 bool WebService::begin(uint16_t port) {
@@ -293,6 +294,9 @@ void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data,
     JsonDocument response;
     response["success"] = true;
     response["message"] = "Configuration saved successfully";
+
+    // Notify scheduling service of config change
+    schedulingService.onConfigChanged();
 
     sendJsonResponse(request, response);
 }

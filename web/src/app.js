@@ -8,10 +8,11 @@ export class ChickenFeederApp {
         this.config = null;
         this.status = null;
         this.updateInterval = null;
+        this.timeSyncInterval = null;
         this.mockApi = window.mockAPI;
         this.useMock = !!this.mockApi && this.shouldUseMockFromQuery();
         this.mockLoadPromise = null;
-        
+
         this.init();
     }
 
@@ -20,6 +21,7 @@ export class ChickenFeederApp {
         this.bindEvents();
         this.loadInitialData();
         this.startStatusUpdates();
+        this.startTimeSync();
     }
 
     bindElements() {
@@ -40,6 +42,11 @@ export class ChickenFeederApp {
     }
 
     bindEvents() {
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            this.destroy();
+        });
+
         // Manual feed button
         this.elements.manualFeedBtn.addEventListener('click', () => this.triggerManualFeed());
 
@@ -144,6 +151,34 @@ export class ChickenFeederApp {
         });
     }
 
+    async syncTime() {
+        try {
+            // Get current browser time as UTC Unix timestamp
+            const unixTime = Math.floor(Date.now() / 1000);
+
+            if (this.useMock) {
+                if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+                return await this.mockApi.syncTime(unixTime);
+            }
+
+            const response = await this.apiRequest('/time', {
+                method: 'POST',
+                body: JSON.stringify({ unixTime })
+            });
+
+            if (!response.success) {
+                console.error('[TIME] Failed to sync time:', response.error);
+                return false;
+            }
+
+            console.log('[TIME] Time synchronized successfully');
+            return true;
+        } catch (error) {
+            console.error('[TIME] Time sync error:', error);
+            return false;
+        }
+    }
+
     async loadInitialData() {
         try {
             if (this.useMock && !await this.ensureMockReady()) {
@@ -180,6 +215,26 @@ export class ChickenFeederApp {
         this.updateInterval = setInterval(() => {
             this.updateStatus();
         }, 2000);
+    }
+
+    startTimeSync() {
+        // Sync immediately on start
+        this.syncTime();
+
+        // Then sync every 10 seconds
+        this.timeSyncInterval = setInterval(() => {
+            this.syncTime();
+        }, 10000); // 10 seconds
+
+        console.log('[TIME] Started periodic time sync (every 10s)');
+    }
+
+    stopTimeSync() {
+        if (this.timeSyncInterval) {
+            clearInterval(this.timeSyncInterval);
+            this.timeSyncInterval = null;
+            console.log('[TIME] Stopped periodic time sync');
+        }
     }
 
     async updateStatus() {
@@ -442,6 +497,7 @@ export class ChickenFeederApp {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
+        this.stopTimeSync();
     }
 
     getPortionUnitGrams() {

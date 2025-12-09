@@ -130,7 +130,7 @@ class MockAPI {
 
     async resetConfig() {
         await this.delay();
-        
+
         // Reset to defaults
         this.config = {
             version: 1,
@@ -146,12 +146,24 @@ class MockAPI {
                 sync_threshold_ms: 3000
             }
         };
-        
+
         this.saveConfig();
-        
+
         return {
             success: true,
             message: 'Configuration reset to defaults'
+        };
+    }
+
+    async syncTime(unixTime) {
+        await this.delay(50);
+
+        console.log(`[MOCK] Time sync called with timestamp: ${unixTime}`);
+        console.log(`[MOCK] That's: ${new Date(unixTime * 1000).toISOString()}`);
+
+        return {
+            success: true,
+            message: 'Time synchronized successfully (mock)'
         };
     }
 
@@ -184,7 +196,8 @@ window.mockAPI = new MockAPI();
 // Console helper for testing
 console.log('Mock API loaded. Available methods:');
 console.log('- mockAPI.getStatus()');
-console.log('- mockAPI.getConfig()'); 
+console.log('- mockAPI.getConfig()');
 console.log('- mockAPI.saveConfig(config)');
 console.log('- mockAPI.triggerFeed()');
 console.log('- mockAPI.resetConfig()');
+console.log('- mockAPI.syncTime(unixTime)');
