@@ -70,18 +70,22 @@ class MockAPI {
 
     async saveConfig(newConfig) {
         await this.delay();
-        
-        // Validate config (basic validation)
-        if (!newConfig.portion_unit_grams || newConfig.portion_unit_grams < 1 || newConfig.portion_unit_grams > 100) {
-            return {
-                success: false,
-                error: 'Invalid portion size. Must be between 1-100 grams.'
-            };
+
+        // Validate schedules if provided
+        if (newConfig.schedules) {
+            for (const schedule of newConfig.schedules) {
+                if (schedule.portion_units < 1 || schedule.portion_units > 5) {
+                    return {
+                        success: false,
+                        error: 'Invalid portion size. Must be between 1-5 units (12-60g).'
+                    };
+                }
+            }
         }
 
         this.config = { ...this.config, ...newConfig };
         this.saveConfig();
-        
+
         return {
             success: true,
             message: 'Configuration saved successfully'

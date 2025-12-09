@@ -46,7 +46,7 @@ services:
     expose:
       - "80"
     volumes:
-      - ./web:/usr/share/nginx/html:ro
+      - ./web/dist:/usr/share/nginx/html:ro
     restart: unless-stopped
     networks:
       - chicken-feeder-net

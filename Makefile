@@ -23,11 +23,11 @@ else
   MONITOR_FLAG :=
 endif
 
-.PHONY: all build flash monitor run clean list deploy-web deploy-fs deploy-flash
+.PHONY: all build flash monitor run clean list deploy-web deploy-fs deploy-flash web-headers
 
 all: build
 
-build:
+build: web-headers
 	$(PLATFORMIO) run --environment $(BOARD)
 
 # make flash        -> ohne --upload-port (auto-detect)
@@ -49,6 +49,16 @@ clean:
 
 # Web Interface Deployment Targets
 # =================================
+
+# Convert web files to gzipped C headers (embedded in firmware)
+web-headers:
+	@echo "🐔 Building web UI (Vite) ..."
+	@cd web && npm install
+	@cd web && npm run build
+	@echo "🐔 Converting web files to gzipped C headers..."
+	@python3 scripts/web-to-header.py web/dist -o lib/WebService/generated
+	@echo "✅ Headers generated in lib/WebService/generated/"
+	@echo "   Include with: #include \"web_files.h\""
 
 # Build Docker image for web optimization (only when needed)
 build-web-image:

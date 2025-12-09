@@ -4,128 +4,271 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chicken Feeder Control</title>
-    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Optional mock API: add ?mock=1 to the URL to enable local fake endpoints
+        if (new URLSearchParams(window.location.search).has('mock')) {
+            document.write('<script src="./mock/api.js"><\\/script>');
+        }
+    </script>
 </head>
 <body>
-    <div class="container">
-        <!-- Compact Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1>🐔 Chicken Feeder</h1>
-                <div class="status-indicator" id="statusIndicator">
-                    <span class="status-dot online"></span>
-                    <span>Online</span>
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <div class="logo">🐔</div>
+                <div>
+                    <p class="eyebrow">Automatic Feeder</p>
+                    <h1>Chicken Station</h1>
                 </div>
+            </div>
+            <div class="status-pill" id="statusIndicator">
+                <span class="status-dot online"></span>
+                <span>Online</span>
             </div>
         </header>
 
-        <!-- Main Dashboard -->
-        <main class="dashboard">
-            <!-- Feed Control Section -->
-            <section class="feed-section">
-                <button class="feed-button" id="manualFeedBtn">
-                    <span class="feed-icon">🌾</span>
-                    <span>Feed Now</span>
-                </button>
-                
-                <div class="feed-status-compact">
-                    <span id="lastFeedTime">Never</span> • 
-                    <span id="servoPosition">Closed</span> • 
-                    <span><span id="totalFedToday">0g</span> today</span>
+        <main class="layout">
+            <section class="panel hero">
+                <div class="hero-text">
+                    <p class="eyebrow">Manual control</p>
+                    <h2>Feed your flock</h2>
+                    <p class="muted">Trigger a feed cycle instantly without waiting for the schedule.</p>
+                    <button class="feed-button" id="manualFeedBtn">
+                        <span class="feed-icon">🌾</span>
+                        <span>Feed Now</span>
+                    </button>
+                </div>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <p class="label">Servo</p>
+                        <p class="value" id="servoPosition">Closed</p>
+                    </div>
                 </div>
             </section>
 
-            <!-- Feed Schedule Section -->
-            <section class="schedule-section">
-                <h3>Feed Schedule</h3>
-                
+            <section class="panel schedule-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Schedules</p>
+                        <h3>Weekly routine</h3>
+                        <p class="muted">Enable up to four feedings and tune time, days and portion.</p>
+                    </div>
+                </div>
+                <button class="ghost-btn save-full" id="saveScheduleBtn">Save changes</button>
+
                 <div class="feed-timers">
                     <div class="timer-row" data-index="0">
-                        <span class="timer-label">Feed 1:</span>
-                        <label class="toggle-switch-small">
-                            <input type="checkbox" class="timer-enabled">
-                            <span class="toggle-slider-small"></span>
-                        </label>
-                        <input type="time" class="timer-time" value="06:30">
-                        <div class="weekdays-inline">
-                            <button class="weekday-mini" data-day="1">M</button>
-                            <button class="weekday-mini" data-day="2">T</button>
-                            <button class="weekday-mini" data-day="3">W</button>
-                            <button class="weekday-mini" data-day="4">T</button>
-                            <button class="weekday-mini" data-day="5">F</button>
-                            <button class="weekday-mini" data-day="6">S</button>
-                            <button class="weekday-mini" data-day="0">S</button>
+                        <div class="timer-main">
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" class="timer-enabled">
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                            <span class="portion-inline">12g</span>
+                            <input type="time" class="timer-time" value="06:30">
+                            <div class="weekdays-checks">
+                                <label class="weekday-check"><input type="checkbox" data-day="1"><span>Mon</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="2"><span>Tue</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="3"><span>Wed</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="4"><span>Thu</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="5"><span>Fri</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="6"><span>Sat</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="0"><span>Sun</span></label>
+                            </div>
+                            <button class="expand-btn" aria-label="Show portion settings">▼</button>
+                        </div>
+                        <div class="timer-details">
+                            <div class="detail-row">
+                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div class="timer-row" data-index="1">
-                        <span class="timer-label">Feed 2:</span>
-                        <label class="toggle-switch-small">
-                            <input type="checkbox" class="timer-enabled">
-                            <span class="toggle-slider-small"></span>
-                        </label>
-                        <input type="time" class="timer-time" value="12:00">
-                        <div class="weekdays-inline">
-                            <button class="weekday-mini" data-day="1">M</button>
-                            <button class="weekday-mini" data-day="2">T</button>
-                            <button class="weekday-mini" data-day="3">W</button>
-                            <button class="weekday-mini" data-day="4">T</button>
-                            <button class="weekday-mini" data-day="5">F</button>
-                            <button class="weekday-mini" data-day="6">S</button>
-                            <button class="weekday-mini" data-day="0">S</button>
+                        <div class="timer-main">
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" class="timer-enabled">
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                            <span class="portion-inline">12g</span>
+                            <input type="time" class="timer-time" value="12:00">
+                            <div class="weekdays-checks">
+                                <label class="weekday-check"><input type="checkbox" data-day="1"><span>Mon</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="2"><span>Tue</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="3"><span>Wed</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="4"><span>Thu</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="5"><span>Fri</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="6"><span>Sat</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="0"><span>Sun</span></label>
+                            </div>
+                            <button class="expand-btn" aria-label="Show portion settings">▼</button>
+                        </div>
+                        <div class="timer-details">
+                            <div class="detail-row">
+                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div class="timer-row" data-index="2">
-                        <span class="timer-label">Feed 3:</span>
-                        <label class="toggle-switch-small">
-                            <input type="checkbox" class="timer-enabled">
-                            <span class="toggle-slider-small"></span>
-                        </label>
-                        <input type="time" class="timer-time" value="18:00">
-                        <div class="weekdays-inline">
-                            <button class="weekday-mini" data-day="1">M</button>
-                            <button class="weekday-mini" data-day="2">T</button>
-                            <button class="weekday-mini" data-day="3">W</button>
-                            <button class="weekday-mini" data-day="4">T</button>
-                            <button class="weekday-mini" data-day="5">F</button>
-                            <button class="weekday-mini" data-day="6">S</button>
-                            <button class="weekday-mini" data-day="0">S</button>
+                        <div class="timer-main">
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" class="timer-enabled">
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                            <span class="portion-inline">12g</span>
+                            <input type="time" class="timer-time" value="18:00">
+                            <div class="weekdays-checks">
+                                <label class="weekday-check"><input type="checkbox" data-day="1"><span>Mon</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="2"><span>Tue</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="3"><span>Wed</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="4"><span>Thu</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="5"><span>Fri</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="6"><span>Sat</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="0"><span>Sun</span></label>
+                            </div>
+                            <button class="expand-btn" aria-label="Show portion settings">▼</button>
+                        </div>
+                        <div class="timer-details">
+                            <div class="detail-row">
+                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Save Schedule Button -->
-                <div class="schedule-save">
-                    <button class="btn-save-schedule" id="saveScheduleBtn">Save Schedule</button>
+
+                    <div class="timer-row" data-index="3">
+                        <div class="timer-main">
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" class="timer-enabled">
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                            <span class="portion-inline">12g</span>
+                            <input type="time" class="timer-time" value="22:00">
+                            <div class="weekdays-checks">
+                                <label class="weekday-check"><input type="checkbox" data-day="1"><span>Mon</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="2"><span>Tue</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="3"><span>Wed</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="4"><span>Thu</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="5"><span>Fri</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="6"><span>Sat</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="0"><span>Sun</span></label>
+                            </div>
+                            <button class="expand-btn" aria-label="Show portion settings">▼</button>
+                        </div>
+                        <div class="timer-details">
+                            <div class="detail-row">
+                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timer-row" data-index="4">
+                        <div class="timer-main">
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" class="timer-enabled">
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                            <span class="portion-inline">12g</span>
+                            <input type="time" class="timer-time" value="00:00">
+                            <div class="weekdays-checks">
+                                <label class="weekday-check"><input type="checkbox" data-day="1"><span>Mon</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="2"><span>Tue</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="3"><span>Wed</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="4"><span>Thu</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="5"><span>Fri</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="6"><span>Sat</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="0"><span>Sun</span></label>
+                            </div>
+                            <button class="expand-btn" aria-label="Show portion settings">▼</button>
+                        </div>
+                        <div class="timer-details">
+                            <div class="detail-row">
+                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="timer-row" data-index="5">
+                        <div class="timer-main">
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" class="timer-enabled">
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                            <span class="portion-inline">12g</span>
+                            <input type="time" class="timer-time" value="00:00">
+                            <div class="weekdays-checks">
+                                <label class="weekday-check"><input type="checkbox" data-day="1"><span>Mon</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="2"><span>Tue</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="3"><span>Wed</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="4"><span>Thu</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="5"><span>Fri</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="6"><span>Sat</span></label>
+                                <label class="weekday-check"><input type="checkbox" data-day="0"><span>Sun</span></label>
+                            </div>
+                            <button class="expand-btn" aria-label="Show portion settings">▼</button>
+                        </div>
+                        <div class="timer-details">
+                            <div class="detail-row">
+                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            <!-- Settings Section -->
-            <section class="settings-section">
-                <div class="portion-setting">
-                    <label for="portionSlider">Portion Size: <span id="portionSize">12g</span></label>
-                    <input type="range" id="portionSlider" min="5" max="50" value="12" class="portion-slider">
+            <section class="panel guide-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Feeding guide</p>
+                        <h3>Portions & timing</h3>
+                        <p class="muted">Quick reference for freerange hens (2–2.5 kg).</p>
+                    </div>
                 </div>
-
-                <div class="action-buttons">
-                    <button class="btn-save" id="saveConfigBtn">Save</button>
-                    <button class="btn-reset" id="resetConfigBtn">Reset</button>
+                <div class="guide-grid">
+                    <div class="guide-card">
+                        <h4>Daily intake</h4>
+                        <ul class="guide-list">
+                            <li>Target 80–120 g complete feed/hen (up to ~130 g for high layers).</li>
+                            <li>Winter: +10–20% for warmth.</li>
+                            <li>Freerange foraging covers 20–50% of the diet.</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>Feed choice</h4>
+                        <ul class="guide-list">
+                            <li>Layer/land hen feed: ~16% protein, 3.5–4% calcium.</li>
+                            <li>Grain base ~60%, plant protein ~20%; add grit + oyster shell free choice.</li>
+                            <li>Keep fruit/veg treats under 10% to avoid dilution.</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>Timing (auto)</h4>
+                        <ul class="guide-list">
+                            <li>2–3 drops/day: 60–70% at sunrise, small top-ups midday & pre-dusk.</li>
+                            <li>Sync timers to local sunrise/sunset; add +20% in winter.</li>
+                            <li>Short block feedings; avoid always-full troughs.</li>
+                        </ul>
+                    </div>
+                    <div class="guide-card">
+                        <h4>Portion ideas</h4>
+                        <ul class="guide-list">
+                            <li>Start: 40–60 g morning, 20–30 g noon/evening.</li>
+                            <li>Let users tune by flock size/weight; watch intake vs. 120 g target.</li>
+                            <li>Consider alerts for low intake (&lt;80 g) or stale feed (humidity/weight).</li>
+                        </ul>
+                    </div>
                 </div>
             </section>
         </main>
 
-        <!-- Footer -->
         <footer class="footer">
-            <p>ESP32-C3 Chicken Feeder v1.0</p>
+            <p>ESP32-C3 Chicken Feeder UI</p>
         </footer>
     </div>
 
-    <!-- Toast Notification -->
     <div class="toast" id="toast">
         <span id="toastMessage"></span>
     </div>
 
-    <script src="js/app.js"></script>
+    <script type="module" src="./src/main.js"></script>
 </body>
 </html>

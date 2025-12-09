@@ -39,15 +39,18 @@ class FeedingService {
 public:
   FeedingService();
   void setup();
-  void feed();
+  void feed(uint8_t count = 1);  // Feed with count portions (1-5)
   void update();  // Must be called in loop()
 
   uint8_t getPosition();
+  bool isFeeding();  // Check if currently in a feed sequence
 
 private:
   uint8_t position = 0;
   uint8_t targetPosition = 0;
   bool isFeedSequence = false;  // Track if we're in a feed sequence
+  uint8_t feedCount = 0;         // Remaining feedings in sequence
+  uint8_t feedsCompleted = 0;    // Completed feedings in sequence
 
   Servo servo1 = Servo();
   Servo servo2 = Servo();

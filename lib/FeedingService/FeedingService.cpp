@@ -14,15 +14,26 @@ void FeedingService::setup() {
   Serial.println("[INFO] FeedingService ready (servos at closed position).");
 }
 
-void FeedingService::feed() {
+void FeedingService::feed(uint8_t count) {
   if (state != IDLE) {
     Serial.println("[WARN] Feed already in progress, ignoring request.");
     return;
   }
 
-  Serial.println("[INFO] Starting feed sequence: open -> wait -> close");
+  // Validate count
+  if (count < 1) count = 1;
+  if (count > 5) count = 5;
+
+  feedCount = count;
+  feedsCompleted = 0;
+
+  Serial.printf("[INFO] Starting feed sequence: %d portions\n", feedCount);
   isFeedSequence = true;
   startMovement(SERVO_MAX_ANGLE, true);
+}
+
+bool FeedingService::isFeeding() {
+  return (state != IDLE) || isFeedSequence;
 }
 
 void FeedingService::startMovement(uint8_t target, bool feedSeq) {
@@ -116,8 +127,24 @@ void FeedingService::update() {
         state = FEED_WAITING;
         stateStartTime = currentTime;
         Serial.println("[DEBUG] Power OFF, waiting before close");
+      } else if (isFeedSequence && targetPosition == SERVO_MIN_ANGLE) {
+        // We just finished closing, check if we need more feedings
+        feedsCompleted++;
+        Serial.printf("[DEBUG] Completed feeding %d/%d\n", feedsCompleted, feedCount);
+
+        if (feedsCompleted < feedCount) {
+          // Start next feeding cycle
+          Serial.println("[DEBUG] Starting next portion");
+          state = FEED_WAITING;
+          stateStartTime = currentTime;
+        } else {
+          // All feedings complete
+          state = IDLE;
+          isFeedSequence = false;
+          Serial.println("[DEBUG] All portions complete");
+        }
       } else {
-        // Normal movement complete or feed sequence close complete
+        // Normal movement complete
         state = IDLE;
         isFeedSequence = false;
         Serial.println("[DEBUG] Power OFF, sequence complete");
@@ -126,9 +153,16 @@ void FeedingService::update() {
 
     case FEED_WAITING:
       if (elapsed >= FEED_WAIT_TIME) {
-        // Wait time over, now close
-        Serial.println("[DEBUG] Wait complete, closing");
-        targetPosition = SERVO_MIN_ANGLE;
+        // Wait time over
+        if (targetPosition == SERVO_MAX_ANGLE) {
+          // We were open, now close
+          Serial.println("[DEBUG] Wait complete, closing");
+          targetPosition = SERVO_MIN_ANGLE;
+        } else {
+          // We were closed, now open for next portion
+          Serial.println("[DEBUG] Wait complete, opening for next portion");
+          targetPosition = SERVO_MAX_ANGLE;
+        }
         state = POWER_ON;
         stateStartTime = currentTime;
       }

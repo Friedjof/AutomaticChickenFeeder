@@ -1,0 +1,15 @@
+{
+  "name": "chicken-feeder-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:esp": "vite build && python3 ../scripts/web-to-header.py dist -o ../lib/WebService/generated"
+  },
+  "devDependencies": {
+    "vite": "^5.4.8"
+  }
+}

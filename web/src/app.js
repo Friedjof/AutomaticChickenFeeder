@@ -1,13 +1,16 @@
 // Chicken Feeder Web Interface
 // Main application logic
 
-class ChickenFeederApp {
+export class ChickenFeederApp {
     constructor() {
         this.apiBaseUrl = '/api'; // Relative API endpoint via reverse proxy
         this.elements = {};
         this.config = null;
         this.status = null;
         this.updateInterval = null;
+        this.mockApi = window.mockAPI;
+        this.useMock = !!this.mockApi && this.shouldUseMockFromQuery();
+        this.mockLoadPromise = null;
         
         this.init();
     }
@@ -22,16 +25,10 @@ class ChickenFeederApp {
     bindElements() {
         // Status elements
         this.elements.statusIndicator = document.getElementById('statusIndicator');
-        this.elements.lastFeedTime = document.getElementById('lastFeedTime');
         this.elements.servoPosition = document.getElementById('servoPosition');
-        this.elements.portionSize = document.getElementById('portionSize');
-        this.elements.totalFedToday = document.getElementById('totalFedToday');
         
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
-        this.elements.portionSlider = document.getElementById('portionSlider');
-        this.elements.saveConfigBtn = document.getElementById('saveConfigBtn');
-        this.elements.resetConfigBtn = document.getElementById('resetConfigBtn');
         this.elements.saveScheduleBtn = document.getElementById('saveScheduleBtn');
         
         // Timer elements
@@ -45,27 +42,36 @@ class ChickenFeederApp {
     bindEvents() {
         // Manual feed button
         this.elements.manualFeedBtn.addEventListener('click', () => this.triggerManualFeed());
-        
-        // Configuration buttons
-        this.elements.saveConfigBtn.addEventListener('click', () => this.saveConfiguration());
-        this.elements.resetConfigBtn.addEventListener('click', () => this.resetConfiguration());
+
+        // Schedule save button
         this.elements.saveScheduleBtn.addEventListener('click', () => this.saveScheduleOnly());
-        
-        // Portion size slider
-        this.elements.portionSlider.addEventListener('input', () => this.updatePortionPreview());
-        
+
         // Timer events
         this.elements.timerRows.forEach((row, index) => {
+            const expandBtn = row.querySelector('.expand-btn');
             const enabledCheckbox = row.querySelector('.timer-enabled');
             const timeInput = row.querySelector('.timer-time');
-            const weekdayBtns = row.querySelectorAll('.weekday-mini');
-            
+            const weekdayChecks = row.querySelectorAll('.weekday-check input[type="checkbox"]');
+            const portionSlider = row.querySelector('.portion-slider');
+
+            // Expand/collapse on expand button click
+            if (expandBtn) {
+                expandBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleExpand(index);
+                });
+            }
+
             enabledCheckbox.addEventListener('change', () => this.updateTimerState(index));
             timeInput.addEventListener('change', () => this.updateTimerTime(index));
-            
-            weekdayBtns.forEach(btn => {
-                btn.addEventListener('click', () => this.toggleWeekday(index, btn));
+
+            weekdayChecks.forEach(checkbox => {
+                checkbox.addEventListener('change', () => this.toggleWeekday(index, checkbox));
             });
+
+            if (portionSlider) {
+                portionSlider.addEventListener('input', () => this.updatePortionSlider(index));
+            }
         });
     }
 
@@ -92,14 +98,26 @@ class ChickenFeederApp {
     }
 
     async getStatus() {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.getStatus();
+        }
         return await this.apiRequest('/status');
     }
 
     async getConfig() {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.getConfig();
+        }
         return await this.apiRequest('/config');
     }
 
     async saveConfig(config) {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.saveConfig(config);
+        }
         return await this.apiRequest('/config', {
             method: 'POST',
             body: JSON.stringify(config)
@@ -107,12 +125,20 @@ class ChickenFeederApp {
     }
 
     async resetConfig() {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.resetConfig();
+        }
         return await this.apiRequest('/config/reset', {
             method: 'POST'
         });
     }
 
     async triggerFeed() {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.triggerFeed();
+        }
         return await this.apiRequest('/feed', {
             method: 'POST'
         });
@@ -120,6 +146,10 @@ class ChickenFeederApp {
 
     async loadInitialData() {
         try {
+            if (this.useMock && !await this.ensureMockReady()) {
+                throw new Error('Mock API script missing');
+            }
+
             // Load configuration
             const configResponse = await this.getConfig();
             if (configResponse.success) {
@@ -135,8 +165,12 @@ class ChickenFeederApp {
             }
             
         } catch (error) {
-            this.showToast('Failed to connect to device', 'error');
             console.error('Error loading initial data:', error);
+            if (!this.useMock && await this.enableMock('API unavailable')) {
+                this.showToast('Using mock API (no device)', 'info');
+                return this.loadInitialData();
+            }
+            this.showToast('Failed to connect to device', 'error');
             this.updateOfflineStatus();
         }
     }
@@ -181,25 +215,6 @@ class ChickenFeederApp {
         // Update servo position
         this.elements.servoPosition.textContent = this.status.servoPosition;
         
-        // Update last feed time
-        if (this.status.lastFeedTime) {
-            const feedTime = new Date(this.status.lastFeedTime);
-            const now = new Date();
-            const diffMinutes = Math.floor((now - feedTime) / (1000 * 60));
-            
-            if (diffMinutes < 60) {
-                this.elements.lastFeedTime.textContent = `${diffMinutes}m ago`;
-            } else {
-                const diffHours = Math.floor(diffMinutes / 60);
-                this.elements.lastFeedTime.textContent = `${diffHours}h ago`;
-            }
-        } else {
-            this.elements.lastFeedTime.textContent = 'Never';
-        }
-        
-        // Update total fed today
-        this.elements.totalFedToday.textContent = `${this.status.totalFedToday}g`;
-        
         // Update feed button state
         if (this.status.isFeeding) {
             this.elements.manualFeedBtn.classList.add('feeding');
@@ -223,14 +238,11 @@ class ChickenFeederApp {
 
     updateConfigurationUI() {
         if (!this.config) return;
-        
-        // Update portion size slider
-        this.elements.portionSlider.value = this.config.portion_unit_grams;
-        this.updatePortionPreview();
-        
-        // Update timer rows (only first 3)
+
+        this.ensureSchedules(this.elements.timerRows.length);
+
         this.elements.timerRows.forEach((row, index) => {
-            if (index < 3 && this.config.schedules[index]) {
+            if (this.config.schedules[index]) {
                 this.updateTimerRow(index, this.config.schedules[index]);
             }
         });
@@ -239,53 +251,97 @@ class ChickenFeederApp {
     updateTimerRow(index, schedule) {
         const row = this.elements.timerRows[index];
         if (!row) return;
-        
+
         const enabledCheckbox = row.querySelector('.timer-enabled');
         const timeInput = row.querySelector('.timer-time');
-        const weekdayBtns = row.querySelectorAll('.weekday-mini');
-        
+        const weekdayChecks = row.querySelectorAll('.weekday-check input[type="checkbox"]');
+        const inlinePortion = row.querySelector('.portion-inline');
+
         // Update enabled state
         enabledCheckbox.checked = schedule.enabled;
-        
+
         // Update time
         timeInput.value = schedule.time;
-        
-        // Update weekdays
-        weekdayBtns.forEach(btn => {
-            const day = parseInt(btn.dataset.day);
-            if (schedule.weekday_mask & (1 << day)) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
+
+        // Update weekdays - set checkbox checked state
+        weekdayChecks.forEach(checkbox => {
+            const day = parseInt(checkbox.dataset.day);
+            checkbox.checked = !!(schedule.weekday_mask & (1 << day));
         });
-        
+
+        // Update portion slider
+        this.updatePortionDisplay(row, schedule.portion_units);
+        if (inlinePortion) {
+            inlinePortion.textContent = `${schedule.portion_units * this.getPortionUnitGrams()}g`;
+        }
+
         // Update row state
         this.updateRowState(row, schedule.enabled);
     }
 
     updateRowState(row, enabled) {
         const timeInput = row.querySelector('.timer-time');
-        const weekdayBtns = row.querySelectorAll('.weekday-mini');
-        
+        const weekdayChecks = row.querySelectorAll('.weekday-check input[type="checkbox"]');
+        const portionSlider = row.querySelector('.portion-slider');
+
         if (enabled) {
             row.classList.remove('disabled');
+            row.classList.add('active');
             timeInput.disabled = false;
-            weekdayBtns.forEach(btn => btn.disabled = false);
+            weekdayChecks.forEach(checkbox => checkbox.disabled = false);
+            if (portionSlider) portionSlider.disabled = false;
         } else {
             row.classList.add('disabled');
+            row.classList.remove('active');
             timeInput.disabled = true;
-            weekdayBtns.forEach(btn => btn.disabled = true);
+            weekdayChecks.forEach(checkbox => checkbox.disabled = true);
+            if (portionSlider) portionSlider.disabled = true;
         }
     }
 
-    updatePortionPreview() {
-        const portionSize = this.elements.portionSlider.value;
-        this.elements.portionSize.textContent = `${portionSize}g`;
+    toggleExpand(index) {
+        const row = this.elements.timerRows[index];
+        row.classList.toggle('expanded');
+    }
+
+    updatePortionSlider(index) {
+        if (!this.config) return;
+        this.ensureSchedules(this.elements.timerRows.length);
+        if (!this.config.schedules[index]) return;
+
+        const row = this.elements.timerRows[index];
+        const slider = row.querySelector('.portion-slider');
+        const display = row.querySelector('.portion-display');
+        const inlinePortion = row.querySelector('.portion-inline');
+
+        const units = parseInt(slider.value);
+        const grams = units * this.getPortionUnitGrams();
+
+        // Update display
+        if (display) display.textContent = `${grams}g`;
+        if (inlinePortion) inlinePortion.textContent = `${grams}g`;
+
+        // Update config
+        this.config.schedules[index].portion_units = units;
+
+        console.log(`Schedule ${index + 1}: Set portion to ${grams}g (${units} units)`);
+    }
+
+    updatePortionDisplay(row, portionUnits) {
+        const slider = row.querySelector('.portion-slider');
+        const display = row.querySelector('.portion-display');
+        const inlinePortion = row.querySelector('.portion-inline');
+
+        slider.value = portionUnits;
+        const grams = portionUnits * this.getPortionUnitGrams();
+        if (display) display.textContent = `${grams}g`;
+        if (inlinePortion) inlinePortion.textContent = `${grams}g`;
     }
 
     updateTimerState(index) {
-        if (!this.config || !this.config.schedules[index]) return;
+        if (!this.config) return;
+        this.ensureSchedules(this.elements.timerRows.length);
+        if (!this.config.schedules[index]) return;
         
         const row = this.elements.timerRows[index];
         const enabledCheckbox = row.querySelector('.timer-enabled');
@@ -296,7 +352,9 @@ class ChickenFeederApp {
     }
 
     updateTimerTime(index) {
-        if (!this.config || !this.config.schedules[index]) return;
+        if (!this.config) return;
+        this.ensureSchedules(this.elements.timerRows.length);
+        if (!this.config.schedules[index]) return;
         
         const row = this.elements.timerRows[index];
         const timeInput = row.querySelector('.timer-time');
@@ -304,22 +362,22 @@ class ChickenFeederApp {
         this.config.schedules[index].time = timeInput.value;
     }
 
-    toggleWeekday(index, button) {
-        if (!this.config || !this.config.schedules[index]) return;
-        if (button.disabled) return;
-        
+    toggleWeekday(index, checkbox) {
+        if (!this.config) return;
+        this.ensureSchedules(this.elements.timerRows.length);
+        if (!this.config.schedules[index]) return;
+        if (checkbox.disabled) return;
+
         const schedule = this.config.schedules[index];
-        const day = parseInt(button.dataset.day);
+        const day = parseInt(checkbox.dataset.day);
         const dayBit = 1 << day;
-        
-        if (schedule.weekday_mask & dayBit) {
-            // Remove day
-            schedule.weekday_mask = schedule.weekday_mask & ~dayBit;
-            button.classList.remove('active');
-        } else {
+
+        if (checkbox.checked) {
             // Add day
             schedule.weekday_mask = schedule.weekday_mask | dayBit;
-            button.classList.add('active');
+        } else {
+            // Remove day
+            schedule.weekday_mask = schedule.weekday_mask & ~dayBit;
         }
     }
 
@@ -346,27 +404,6 @@ class ChickenFeederApp {
         }
     }
 
-    async saveConfiguration() {
-        try {
-            const newConfig = {
-                portion_unit_grams: parseInt(this.elements.portionSlider.value),
-                schedules: this.config.schedules
-            };
-            
-            const response = await this.saveConfig(newConfig);
-            
-            if (response.success) {
-                this.showToast('Configuration saved!', 'success');
-                this.config = { ...this.config, ...newConfig };
-            } else {
-                this.showToast(response.error || 'Failed to save configuration', 'error');
-            }
-            
-        } catch (error) {
-            this.showToast('Network error occurred', 'error');
-            console.error('Error saving configuration:', error);
-        }
-    }
 
     async saveScheduleOnly() {
         try {
@@ -389,27 +426,6 @@ class ChickenFeederApp {
         }
     }
 
-    async resetConfiguration() {
-        if (!confirm('Reset all settings to default?')) {
-            return;
-        }
-        
-        try {
-            const response = await this.resetConfig();
-            
-            if (response.success) {
-                this.showToast('Settings reset to defaults', 'success');
-                // Reload configuration
-                await this.loadInitialData();
-            } else {
-                this.showToast(response.error || 'Failed to reset configuration', 'error');
-            }
-            
-        } catch (error) {
-            this.showToast('Network error occurred', 'error');
-            console.error('Error resetting configuration:', error);
-        }
-    }
 
     showToast(message, type = 'info') {
         this.elements.toastMessage.textContent = message;
@@ -427,16 +443,64 @@ class ChickenFeederApp {
             clearInterval(this.updateInterval);
         }
     }
-}
 
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.app = new ChickenFeederApp();
-    
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-        if (window.app) {
-            window.app.destroy();
+    getPortionUnitGrams() {
+        return this.config?.portion_unit_grams || 12;
+    }
+    shouldUseMockFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        return params.has('mock') || params.get('api') === 'mock';
+    }
+
+    ensureSchedules(count) {
+        if (!this.config) return;
+        if (!Array.isArray(this.config.schedules)) {
+            this.config.schedules = [];
         }
-    });
-});
+        while (this.config.schedules.length < count) {
+            const id = this.config.schedules.length + 1;
+            this.config.schedules.push({
+                id,
+                enabled: false,
+                time: "00:00",
+                weekday_mask: 0,
+                portion_units: 1
+            });
+        }
+    }
+
+    async ensureMockReady() {
+        if (this.mockApi) return true;
+        await this.loadMockScript();
+        this.mockApi = window.mockAPI || this.mockApi;
+        return !!this.mockApi;
+    }
+
+    async loadMockScript() {
+        if (this.mockLoadPromise) {
+            return this.mockLoadPromise;
+        }
+
+        this.mockLoadPromise = new Promise(resolve => {
+            const script = document.createElement('script');
+            script.id = 'mock-api-loader';
+            script.src = './mock/api.js';
+            script.onload = resolve;
+            script.onerror = resolve;
+            document.head.appendChild(script);
+        });
+
+        await this.mockLoadPromise;
+    }
+
+    async enableMock(reason = '') {
+        if (this.useMock) return true;
+        const loaded = await this.ensureMockReady();
+        if (loaded) {
+            this.useMock = true;
+            if (reason) console.warn('Using mock API:', reason);
+            return true;
+        }
+        return false;
+    }
+}

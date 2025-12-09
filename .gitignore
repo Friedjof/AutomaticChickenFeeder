@@ -3,3 +3,6 @@
 .vscode/
 data/
 build/
+web/node_modules/
+web/dist/
+lib/WebService/generated/
