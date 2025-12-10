@@ -109,6 +109,81 @@ body {
 .stat-card:nth-child(3) { background: linear-gradient(135deg, #fef3c7, #fff7ed); }
 .stat-card .label { margin: 0 0 4px; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
 .stat-card .value { margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+.stat-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pill-btn {
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(15, 23, 42, 0.04);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.pill-btn:hover { border-color: rgba(15, 23, 42, 0.2); background: rgba(15, 23, 42, 0.06); }
+.feed-history-card { position: relative; overflow: visible; }
+.feed-log-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.28);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 18px 12px 24px;
+    z-index: 60;
+}
+.feed-log-overlay.open { display: flex; }
+.feed-log-sheet {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+    width: min(520px, 100%);
+    padding: 14px 14px 12px;
+    animation: pop 0.18s ease;
+    max-height: min(90vh, 720px);
+    display: flex;
+    flex-direction: column;
+}
+.feed-log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.ghost-close {
+    border-color: rgba(15, 23, 42, 0.14);
+    background: rgba(15, 23, 42, 0.06);
+}
+.ghost-close:hover { border-color: rgba(15, 23, 42, 0.22); }
+.feed-log-meta { color: var(--muted); font-size: 0.85rem; margin: 0 0 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.feed-log-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0 4px 0 0;
+    display: grid;
+    gap: 6px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+.feed-log-list::-webkit-scrollbar { width: 6px; }
+.feed-log-list::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.16); border-radius: 999px; }
+.feed-log-item {
+    background: #fff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 10px;
+    padding: 8px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.feed-log-primary { font-weight: 800; letter-spacing: -0.01em; }
+.feed-log-meta-line { color: var(--muted); font-size: 0.92rem; }
+.feed-log-empty { color: var(--muted); font-size: 0.95rem; padding: 6px 8px; }
+
+@keyframes pop { 0% { transform: translateY(8px) scale(0.98); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
 
 .feed-button {
     margin-top: 10px;
@@ -156,6 +231,7 @@ body {
 }
 
 .guide-panel { display: flex; flex-direction: column; gap: 12px; }
+.guide-content { transition: all 0.2s ease; }
 .guide-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -179,6 +255,63 @@ body {
     color: var(--muted);
     font-size: 0.95rem;
 }
+@media (max-width: 900px) {
+    .guide-hint-toggle {
+        display: inline-flex !important;
+    }
+    .guide-panel.collapsed .guide-content {
+        display: none;
+    }
+}
+.guide-hint-toggle {
+    display: none;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-soft);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.9rem;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+.guide-hint-toggle:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+@media (min-width: 901px) {
+    .guide-hint-toggle {
+        display: none !important;
+    }
+}
+.guide-hint-bars {
+    width: 18px;
+    display: inline-block;
+    position: relative;
+    height: 14px;
+    flex-shrink: 0;
+}
+.guide-hint-bars::before,
+.guide-hint-bars::after,
+.guide-hint-bars span {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: var(--text);
+    border-radius: 999px;
+    transition: all 0.2s ease;
+}
+.guide-hint-bars::before { top: 0; }
+.guide-hint-bars::after { bottom: 0; }
+.guide-hint-bars span { top: 50%; transform: translateY(-50%); }
+.guide-hint-text { font-size: 0.9rem; }
 
 .backup-panel { display: flex; flex-direction: column; gap: 12px; }
 .backup-actions {

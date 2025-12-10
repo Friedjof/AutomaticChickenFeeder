@@ -43,8 +43,11 @@
                         <p class="label">Servo</p>
                         <p class="value" id="servoPosition">Closed</p>
                     </div>
-                    <div class="stat-card">
-                        <p class="label">Last feed</p>
+                    <div class="stat-card feed-history-card">
+                        <div class="stat-card-header">
+                            <p class="label">Last feed</p>
+                            <button class="pill-btn" id="feedLogToggle" aria-expanded="false" aria-controls="feedLogOverlay">History</button>
+                        </div>
                         <p class="value" id="lastFeedTime">Never</p>
                     </div>
                 </div>
@@ -224,46 +227,52 @@
                 <button class="ghost-btn save-full" id="saveScheduleBtn">Save changes</button>
             </section>
 
-            <section class="panel guide-panel">
+            <section class="panel guide-panel" id="guidePanel">
                 <div class="panel-header">
                     <div>
                         <p class="eyebrow">Feeding guide</p>
                         <h3>Portions & timing</h3>
                         <p class="muted">Quick reference for freerange hens (2–2.5 kg).</p>
+                        <button class="guide-hint-toggle" id="guideHintToggle" aria-expanded="true" aria-controls="guideContent">
+                            <span class="guide-hint-bars"><span></span></span>
+                            <span class="guide-hint-text">Hide guide</span>
+                        </button>
                     </div>
                 </div>
-                <div class="guide-grid">
-                    <div class="guide-card">
-                        <h4>Daily intake</h4>
-                        <ul class="guide-list">
-                            <li>Target 80–120 g complete feed/hen (up to ~130 g for high layers).</li>
-                            <li>Winter: +10–20% for warmth.</li>
-                            <li>Freerange foraging covers 20–50% of the diet.</li>
-                        </ul>
-                    </div>
-                    <div class="guide-card">
-                        <h4>Feed choice</h4>
-                        <ul class="guide-list">
-                            <li>Layer/land hen feed: ~16% protein, 3.5–4% calcium.</li>
-                            <li>Grain base ~60%, plant protein ~20%; add grit + oyster shell free choice.</li>
-                            <li>Keep fruit/veg treats under 10% to avoid dilution.</li>
-                        </ul>
-                    </div>
-                    <div class="guide-card">
-                        <h4>Timing (auto)</h4>
-                        <ul class="guide-list">
-                            <li>2–3 drops/day: 60–70% at sunrise, small top-ups midday & pre-dusk.</li>
-                            <li>Sync timers to local sunrise/sunset; add +20% in winter.</li>
-                            <li>Short block feedings; avoid always-full troughs.</li>
-                        </ul>
-                    </div>
-                    <div class="guide-card">
-                        <h4>Portion ideas</h4>
-                        <ul class="guide-list">
-                            <li>Start: 40–60 g morning, 20–30 g noon/evening.</li>
-                            <li>Let users tune by flock size/weight; watch intake vs. 120 g target.</li>
-                            <li>Consider alerts for low intake (&lt;80 g) or stale feed (humidity/weight).</li>
-                        </ul>
+                <div class="guide-content" id="guideContent">
+                    <div class="guide-grid">
+                        <div class="guide-card">
+                            <h4>Daily intake</h4>
+                            <ul class="guide-list">
+                                <li>Target 80–120 g complete feed/hen (up to ~130 g for high layers).</li>
+                                <li>Winter: +10–20% for warmth.</li>
+                                <li>Freerange foraging covers 20–50% of the diet.</li>
+                            </ul>
+                        </div>
+                        <div class="guide-card">
+                            <h4>Feed choice</h4>
+                            <ul class="guide-list">
+                                <li>Layer/land hen feed: ~16% protein, 3.5–4% calcium.</li>
+                                <li>Grain base ~60%, plant protein ~20%; add grit + oyster shell free choice.</li>
+                                <li>Keep fruit/veg treats under 10% to avoid dilution.</li>
+                            </ul>
+                        </div>
+                        <div class="guide-card">
+                            <h4>Timing (auto)</h4>
+                            <ul class="guide-list">
+                                <li>2–3 drops/day: 60–70% at sunrise, small top-ups midday & pre-dusk.</li>
+                                <li>Sync timers to local sunrise/sunset; add +20% in winter.</li>
+                                <li>Short block feedings; avoid always-full troughs.</li>
+                            </ul>
+                        </div>
+                        <div class="guide-card">
+                            <h4>Portion ideas</h4>
+                            <ul class="guide-list">
+                                <li>Start: 40–60 g morning, 20–30 g noon/evening.</li>
+                                <li>Let users tune by flock size/weight; watch intake vs. 120 g target.</li>
+                                <li>Consider alerts for low intake (&lt;80 g) or stale feed (humidity/weight).</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -328,6 +337,22 @@
 
     <div class="toast" id="toast">
         <span id="toastMessage"></span>
+    </div>
+
+    <div class="feed-log-overlay" id="feedLogOverlay" aria-hidden="true">
+        <div class="feed-log-sheet">
+            <div class="feed-log-header">
+                <div>
+                    <p class="eyebrow">History</p>
+                    <h4>Last feedings</h4>
+                </div>
+                <button class="pill-btn ghost-close" id="feedLogClose" aria-label="Close feed history">Close</button>
+            </div>
+            <p class="muted small-text">Last 10 feed events with timestamp and portion.</p>
+            <ul class="feed-log-list" id="feedLogList">
+                <li class="feed-log-empty">Loading…</li>
+            </ul>
+        </div>
     </div>
 
     <script type="module" src="./src/main.js"></script>

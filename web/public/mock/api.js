@@ -12,11 +12,12 @@ class MockAPI {
             totalFedToday: 0,
             isFeeding: false
         };
+
+        this.feedHistory = this.buildInitialFeedHistory();
+        this.status.lastFeedTime = this.feedHistory[0]?.timestamp || null;
+        this.status.totalFedToday = this.calculateTotalFedToday();
         
         // Simulate some previous feeds for demo
-        const now = new Date();
-        this.status.lastFeedTime = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 2 hours ago
-        this.status.totalFedToday = 36; // 3 previous feeds of 12g each
     }
 
     loadConfig() {
@@ -55,6 +56,8 @@ class MockAPI {
     // API Endpoints
     async getStatus() {
         await this.delay();
+        this.status.lastFeedTime = this.feedHistory[0]?.timestamp || null;
+        this.status.totalFedToday = this.calculateTotalFedToday();
         return {
             success: true,
             data: { ...this.status }
@@ -101,6 +104,21 @@ class MockAPI {
         };
     }
 
+    async getFeedHistory(limit = 10) {
+        await this.delay();
+        const feeds = this.feedHistory.slice(0, limit).map(feed => ({
+            ...feed,
+            timeAgo: this.formatTimeAgo(feed.timestamp)
+        }));
+        return {
+            success: true,
+            data: {
+                feeds,
+                totalFeeds: this.feedHistory.length
+            }
+        };
+    }
+
     async triggerFeed() {
         await this.delay(100);
         
@@ -127,8 +145,7 @@ class MockAPI {
         setTimeout(() => {
             this.status.servoPosition = 'Closed';
             this.status.isFeeding = false;
-            this.status.lastFeedTime = new Date();
-            this.status.totalFedToday += this.config.portion_unit_grams;
+            this.recordFeed(this.config.portion_unit_grams);
         }, 2000);
 
         return {
@@ -197,6 +214,51 @@ class MockAPI {
         });
         return mask;
     }
+
+    buildInitialFeedHistory() {
+        const now = new Date();
+        const entries = [];
+        for (let i = 0; i < 10; i++) {
+            const ts = new Date(now.getTime() - (i + 1) * 90 * 60 * 1000);
+            entries.push({
+                timestamp: ts.toISOString(),
+                portion: this.config?.portion_unit_grams || 12
+            });
+        }
+        return entries;
+    }
+
+    calculateTotalFedToday() {
+        const today = new Date().toDateString();
+        return this.feedHistory.reduce((sum, entry) => {
+            const entryDay = new Date(entry.timestamp).toDateString();
+            return entryDay === today ? sum + (entry.portion || 0) : sum;
+        }, 0);
+    }
+
+    recordFeed(portion) {
+        const timestamp = new Date().toISOString();
+        this.feedHistory.unshift({ timestamp, portion });
+        if (this.feedHistory.length > 50) {
+            this.feedHistory = this.feedHistory.slice(0, 50);
+        }
+        this.status.lastFeedTime = timestamp;
+        this.status.totalFedToday = this.calculateTotalFedToday();
+    }
+
+    formatTimeAgo(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffDays > 0) return `${diffDays}d ago`;
+        if (diffHours > 0) return `${diffHours}h ago`;
+        if (diffMins > 0) return `${diffMins}m ago`;
+        return 'Just now';
+    }
 }
 
 // Global API instance
@@ -210,3 +272,4 @@ console.log('- mockAPI.saveConfig(config)');
 console.log('- mockAPI.triggerFeed()');
 console.log('- mockAPI.resetConfig()');
 console.log('- mockAPI.syncTime(unixTime)');
+console.log('- mockAPI.getFeedHistory(limit)');

@@ -12,6 +12,13 @@ export class ChickenFeederApp {
         this.mockApi = window.mockAPI;
         this.useMock = !!this.mockApi && this.shouldUseMockFromQuery();
         this.mockLoadPromise = null;
+        this.feedHistory = [];
+        this.feedHistoryInterval = null;
+        this.feedHistoryRefreshMs = 15000;
+        this.isFeedLogOpen = false;
+        this.handleFeedLogEscape = this.handleFeedLogEscape.bind(this);
+        this.guideCollapseMedia = window.matchMedia('(max-width: 900px)');
+        this.handleGuideMediaChange = this.handleGuideMediaChange.bind(this);
 
         this.init();
     }
@@ -19,6 +26,7 @@ export class ChickenFeederApp {
     init() {
         this.bindElements();
         this.bindEvents();
+        this.setupGuideCollapse();
         this.loadInitialData();
         this.startStatusUpdates();
         this.startTimeSync();
@@ -30,6 +38,14 @@ export class ChickenFeederApp {
         this.elements.statusIndicator = document.getElementById('statusIndicator');
         this.elements.servoPosition = document.getElementById('servoPosition');
         this.elements.lastFeedTime = document.getElementById('lastFeedTime');
+        this.elements.feedLogToggle = document.getElementById('feedLogToggle');
+        this.elements.feedLogOverlay = document.getElementById('feedLogOverlay');
+        this.elements.feedLogList = document.getElementById('feedLogList');
+        this.elements.feedLogClose = document.getElementById('feedLogClose');
+        this.elements.guidePanel = document.getElementById('guidePanel');
+        this.elements.guideContent = document.getElementById('guideContent');
+        this.elements.guideToggle = document.getElementById('guideToggle');
+        this.elements.guideHintToggle = document.getElementById('guideHintToggle');
 
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
@@ -62,6 +78,21 @@ export class ChickenFeederApp {
         window.addEventListener('beforeunload', () => {
             this.destroy();
         });
+
+        // Feed log popup
+        if (this.elements.feedLogToggle && this.elements.feedLogOverlay) {
+            this.elements.feedLogToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleFeedLog(true);
+            });
+            this.elements.feedLogClose?.addEventListener('click', () => this.toggleFeedLog(false));
+            this.elements.feedLogOverlay.addEventListener('click', (e) => {
+                if (e.target === this.elements.feedLogOverlay) {
+                    this.toggleFeedLog(false);
+                }
+            });
+            document.addEventListener('keydown', this.handleFeedLogEscape);
+        }
 
         // Manual feed button
         this.elements.manualFeedBtn.addEventListener('click', () => this.triggerManualFeed());
@@ -98,6 +129,20 @@ export class ChickenFeederApp {
         // OTA upload button
         if (this.elements.otaUploadBtn) {
             this.elements.otaUploadBtn.addEventListener('click', () => this.uploadOtaFirmware());
+        }
+
+        // Guide collapse (mobile)
+        if (this.elements.guideToggle && this.elements.guidePanel) {
+            this.elements.guideToggle.addEventListener('click', () => {
+                const collapsed = this.elements.guidePanel.classList.contains('collapsed');
+                this.setGuideCollapsed(!collapsed);
+            });
+        }
+        if (this.elements.guideHintToggle && this.elements.guidePanel) {
+            this.elements.guideHintToggle.addEventListener('click', () => {
+                const collapsed = this.elements.guidePanel.classList.contains('collapsed');
+                this.setGuideCollapsed(!collapsed);
+            });
         }
 
         // UI/System version display (static fallback)
@@ -177,6 +222,14 @@ export class ChickenFeederApp {
             return await this.mockApi.getConfig();
         }
         return await this.apiRequest('/config');
+    }
+
+    async getFeedHistory(limit = 10) {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.getFeedHistory(limit);
+        }
+        return await this.apiRequest(`/status/history?limit=${limit}`);
     }
 
     async saveConfig(config) {
@@ -299,6 +352,9 @@ export class ChickenFeederApp {
                 this.status = statusResponse.data;
                 this.updateStatusUI();
             }
+
+            await this.loadFeedHistory();
+            this.startFeedHistoryUpdates();
             
         } catch (error) {
             console.error('Error loading initial data:', error);
@@ -316,6 +372,32 @@ export class ChickenFeederApp {
         this.updateInterval = setInterval(() => {
             this.updateStatus();
         }, 2000);
+    }
+
+    async loadFeedHistory(limit = 10) {
+        try {
+            const response = await this.getFeedHistory(limit);
+            if (response.success && response.data?.feeds) {
+                this.feedHistory = response.data.feeds;
+                this.updateFeedHistoryUI();
+            }
+        } catch (error) {
+            console.error('Error loading feed history:', error);
+        }
+    }
+
+    startFeedHistoryUpdates() {
+        if (this.feedHistoryInterval) return;
+        this.feedHistoryInterval = setInterval(() => {
+            this.loadFeedHistory().catch(err => console.error('Feed history refresh failed:', err));
+        }, this.feedHistoryRefreshMs);
+    }
+
+    stopFeedHistoryUpdates() {
+        if (this.feedHistoryInterval) {
+            clearInterval(this.feedHistoryInterval);
+            this.feedHistoryInterval = null;
+        }
     }
 
     startTimeSync() {
@@ -556,6 +638,7 @@ export class ChickenFeederApp {
             
             if (response.success) {
                 this.showToast('Feed cycle started!', 'success');
+                setTimeout(() => this.loadFeedHistory(), 2200);
             } else {
                 this.showToast(response.error || 'Failed to start feed cycle', 'error');
             }
@@ -610,6 +693,11 @@ export class ChickenFeederApp {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
+        this.stopFeedHistoryUpdates();
+        document.removeEventListener('keydown', this.handleFeedLogEscape);
+        if (this.guideCollapseMedia?.removeEventListener) {
+            this.guideCollapseMedia.removeEventListener('change', this.handleGuideMediaChange);
+        }
         this.stopTimeSync();
     }
 
@@ -619,6 +707,91 @@ export class ChickenFeederApp {
     shouldUseMockFromQuery() {
         const params = new URLSearchParams(window.location.search);
         return params.has('mock') || params.get('api') === 'mock';
+    }
+
+    setupGuideCollapse() {
+        if (!this.elements.guidePanel || !this.elements.guideToggle || !this.elements.guideContent) return;
+        if (this.guideCollapseMedia?.addEventListener) {
+            this.guideCollapseMedia.addEventListener('change', this.handleGuideMediaChange);
+        }
+        this.handleGuideMediaChange(this.guideCollapseMedia);
+    }
+
+    handleGuideMediaChange(e) {
+        const shouldCollapse = !!(e && e.matches);
+        if (shouldCollapse) {
+            this.setGuideCollapsed(true);
+        } else {
+            this.setGuideCollapsed(false, true);
+        }
+    }
+
+    setGuideCollapsed(collapsed, force = false) {
+        if (!this.elements.guidePanel || !this.elements.guideContent) return;
+        const isMobile = !!this.guideCollapseMedia?.matches;
+        if (!isMobile && !force) {
+            collapsed = false;
+        }
+        this.elements.guidePanel.classList.toggle('collapsed', collapsed);
+        if (this.elements.guideHintToggle) {
+            this.elements.guideHintToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            this.elements.guideHintToggle.querySelector('.guide-hint-text').textContent = collapsed ? 'Show guide' : 'Hide guide';
+        }
+    }
+
+    toggleFeedLog(forceState) {
+        if (!this.elements.feedLogOverlay || !this.elements.feedLogToggle) return;
+        this.isFeedLogOpen = typeof forceState === 'boolean' ? forceState : !this.isFeedLogOpen;
+        this.elements.feedLogOverlay.classList.toggle('open', this.isFeedLogOpen);
+        this.elements.feedLogToggle.setAttribute('aria-expanded', this.isFeedLogOpen ? 'true' : 'false');
+        this.elements.feedLogOverlay.setAttribute('aria-hidden', this.isFeedLogOpen ? 'false' : 'true');
+    }
+
+    handleFeedLogEscape(event) {
+        if (event.key === 'Escape') {
+            this.toggleFeedLog(false);
+        }
+    }
+
+    updateFeedHistoryUI() {
+        if (!this.elements.feedLogList) return;
+        const list = this.elements.feedLogList;
+        list.innerHTML = '';
+
+        if (!this.feedHistory || this.feedHistory.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'feed-log-empty';
+            empty.textContent = 'No feed events yet';
+            list.appendChild(empty);
+            return;
+        }
+
+        this.feedHistory.forEach(feed => {
+            const item = document.createElement('li');
+            item.className = 'feed-log-item';
+
+            const primary = document.createElement('div');
+            primary.className = 'feed-log-primary';
+            primary.textContent = this.formatFeedTimestamp(feed.timestamp);
+
+            const meta = document.createElement('div');
+            meta.className = 'feed-log-meta-line';
+            const portion = feed.portion ? `${feed.portion}g` : '';
+            const ago = feed.timeAgo || this.formatRelativeTime(feed.timestamp);
+            meta.textContent = portion ? `${portion} • ${ago}` : ago;
+
+            item.appendChild(primary);
+            item.appendChild(meta);
+            list.appendChild(item);
+        });
+    }
+
+    formatFeedTimestamp(isoString) {
+        const date = new Date(isoString);
+        if (isNaN(date.getTime())) return isoString;
+        const datePart = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        const timePart = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+        return `${datePart} · ${timePart}`;
     }
 
     formatRelativeTime(isoString) {
