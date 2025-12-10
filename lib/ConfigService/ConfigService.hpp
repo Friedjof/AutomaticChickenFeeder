@@ -5,6 +5,9 @@
 #include <Preferences.h>
 #include <ArduinoJson.h>
 
+// Forward declaration - actual definition in FeedingService.hpp
+struct FeedHistoryEntry;
+
 #define MAX_SCHEDULES 6
 #define MAX_FEED_HISTORY 10
 
@@ -14,11 +17,6 @@ struct Schedule {
     char time[6];  // "HH:MM"
     uint8_t weekday_mask;  // Bit 0=Sunday, 1=Monday, ..., 6=Saturday
     uint8_t portion_units; // 1-5 units (12g each)
-};
-
-struct FeedHistoryEntry {
-    uint32_t timestamp;  // Unix timestamp
-    uint8_t portion_units;  // Number of portion units fed
 };
 
 class ConfigService {

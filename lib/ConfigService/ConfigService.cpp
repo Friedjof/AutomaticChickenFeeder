@@ -1,4 +1,5 @@
 #include "ConfigService.hpp"
+#include "FeedingService.hpp"  // For FeedHistoryEntry definition
 
 ConfigService::ConfigService() : portionUnitGrams(12) {}
 
