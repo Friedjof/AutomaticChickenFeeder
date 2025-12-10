@@ -6,6 +6,7 @@
 #include <ArduinoJson.h>
 
 #define MAX_SCHEDULES 6
+#define MAX_FEED_HISTORY 10
 
 struct Schedule {
     uint8_t id;
@@ -13,6 +14,11 @@ struct Schedule {
     char time[6];  // "HH:MM"
     uint8_t weekday_mask;  // Bit 0=Sunday, 1=Monday, ..., 6=Saturday
     uint8_t portion_units; // 1-5 units (12g each)
+};
+
+struct FeedHistoryEntry {
+    uint32_t timestamp;  // Unix timestamp
+    uint8_t portion_units;  // Number of portion units fed
 };
 
 class ConfigService {
@@ -30,6 +36,11 @@ public:
     // Config metadata
     uint8_t getPortionUnitGrams();
     void setPortionUnitGrams(uint8_t grams);
+
+    // Feed history management
+    bool saveFeedHistory(const FeedHistoryEntry* history, uint8_t count);
+    uint8_t loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount);
+    bool clearFeedHistory();
 
     // Reset to defaults
     bool resetToDefaults();

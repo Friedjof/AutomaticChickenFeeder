@@ -187,8 +187,54 @@ void FeedingService::recordFeedEvent() {
     lastFeedUnix = now.unixtime();
     Serial.printf("[INFO] Feed event recorded at %04u-%02u-%02u %02u:%02u:%02u\n",
                   now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+
+    // Add to feed history
+    addFeedToHistory(lastFeedUnix, feedCount);
   } else {
     lastFeedUnix = 0;
     Serial.println("[WARN] ClockService unavailable, last feed time not recorded");
   }
+}
+
+void FeedingService::addFeedToHistory(uint32_t timestamp, uint8_t portionUnits) {
+  // Add entry to ring buffer
+  feedHistory[feedHistoryIndex].timestamp = timestamp;
+  feedHistory[feedHistoryIndex].portion_units = portionUnits;
+
+  // Move to next index (circular)
+  feedHistoryIndex = (feedHistoryIndex + 1) % MAX_FEED_HISTORY;
+
+  // Update count (max 10)
+  if (feedHistoryCount < MAX_FEED_HISTORY) {
+    feedHistoryCount++;
+  }
+
+  Serial.printf("[DEBUG] Feed added to history: %lu, %d units (count: %d)\n",
+                timestamp, portionUnits, feedHistoryCount);
+}
+
+uint8_t FeedingService::getFeedHistoryCount() const {
+  return feedHistoryCount;
+}
+
+void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t count) {
+  if (count > MAX_FEED_HISTORY) {
+    count = MAX_FEED_HISTORY;
+  }
+
+  for (uint8_t i = 0; i < count; i++) {
+    feedHistory[i] = history[i];
+  }
+
+  feedHistoryCount = count;
+  feedHistoryIndex = count % MAX_FEED_HISTORY;
+
+  Serial.printf("[INFO] Loaded %d feed history entries\n", count);
+}
+
+void FeedingService::clearFeedHistory() {
+  feedHistoryCount = 0;
+  feedHistoryIndex = 0;
+  memset(feedHistory, 0, sizeof(feedHistory));
+  Serial.println("[INFO] Feed history cleared");
 }

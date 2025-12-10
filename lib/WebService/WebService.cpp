@@ -114,6 +114,11 @@ void WebService::setupRoutes() {
         handleGetStatus(request);
     });
 
+    server.on("/api/status/history", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        updateClientActivity();
+        handleGetFeedHistory(request);
+    });
+
     server.on("/api/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
         updateClientActivity();
         handleGetConfig(request);
@@ -264,6 +269,58 @@ void WebService::handleGetStatus(AsyncWebServerRequest *request) {
 
     // Total fed today (placeholder - would need to track this)
     data["totalFedToday"] = 0;
+
+    sendJsonResponse(request, doc);
+}
+
+void WebService::handleGetFeedHistory(AsyncWebServerRequest *request) {
+    JsonDocument doc;
+
+    doc["success"] = true;
+
+    // Get limit parameter from query string (default 10)
+    int limit = 10;
+    if (request->hasParam("limit")) {
+        limit = request->getParam("limit")->value().toInt();
+        if (limit < 1) limit = 1;
+        if (limit > 100) limit = 100;
+    }
+
+    JsonObject data = doc["data"].to<JsonObject>();
+    JsonArray feeds = data["feeds"].to<JsonArray>();
+
+    // Get feed history from FeedingService
+    uint8_t count = feedingService.getFeedHistoryCount();
+    const FeedHistoryEntry* history = feedingService.getFeedHistory();
+
+    // Get portion unit grams for calculating total grams
+    uint8_t portionGrams = configService.getPortionUnitGrams();
+
+    // Limit the number of entries returned
+    if (count > limit) {
+        count = limit;
+    }
+
+    // Add entries to JSON array (newest first)
+    // History is stored in ring buffer, so we need to calculate the correct order
+    for (int i = count - 1; i >= 0; i--) {
+        const FeedHistoryEntry& entry = history[i];
+
+        if (entry.timestamp == 0) continue; // Skip empty entries
+
+        JsonObject feed = feeds.add<JsonObject>();
+
+        // Format timestamp as ISO 8601
+        DateTime dt(entry.timestamp);
+        char buf[25];
+        snprintf(buf, sizeof(buf), "%04u-%02u-%02uT%02u:%02u:%02uZ",
+                 dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+        feed["timestamp"] = buf;
+
+        // Calculate portion in grams
+        uint16_t portionTotal = entry.portion_units * portionGrams;
+        feed["portion"] = portionTotal;
+    }
 
     sendJsonResponse(request, doc);
 }

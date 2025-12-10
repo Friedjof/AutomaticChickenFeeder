@@ -126,6 +126,51 @@ void ConfigService::setPortionUnitGrams(uint8_t grams) {
     Serial.printf("[CONFIG] Portion unit updated to %d grams\n", grams);
 }
 
+bool ConfigService::saveFeedHistory(const FeedHistoryEntry* history, uint8_t count) {
+    if (count > MAX_FEED_HISTORY) {
+        count = MAX_FEED_HISTORY;
+    }
+
+    // Save history as binary blob for efficiency
+    size_t dataSize = count * sizeof(FeedHistoryEntry);
+    preferences.putBytes("feedHist", history, dataSize);
+    preferences.putUChar("feedHistCnt", count);
+
+    Serial.printf("[CONFIG] Saved %d feed history entries (%d bytes)\n", count, dataSize);
+    return true;
+}
+
+uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount) {
+    uint8_t count = preferences.getUChar("feedHistCnt", 0);
+
+    if (count == 0) {
+        Serial.println("[CONFIG] No feed history found");
+        return 0;
+    }
+
+    if (count > maxCount) {
+        count = maxCount;
+    }
+
+    size_t expectedSize = count * sizeof(FeedHistoryEntry);
+    size_t actualSize = preferences.getBytes("feedHist", history, expectedSize);
+
+    if (actualSize != expectedSize) {
+        Serial.printf("[CONFIG] Feed history size mismatch: expected %d, got %d\n", expectedSize, actualSize);
+        return 0;
+    }
+
+    Serial.printf("[CONFIG] Loaded %d feed history entries\n", count);
+    return count;
+}
+
+bool ConfigService::clearFeedHistory() {
+    preferences.remove("feedHist");
+    preferences.remove("feedHistCnt");
+    Serial.println("[CONFIG] Feed history cleared");
+    return true;
+}
+
 bool ConfigService::resetToDefaults() {
     Serial.println("[CONFIG] Resetting to defaults...");
 
@@ -141,6 +186,7 @@ bool ConfigService::resetToDefaults() {
 
     saveAllSchedules(defaults);
     setPortionUnitGrams(12);
+    clearFeedHistory();
 
     Serial.println("[CONFIG] Reset complete");
     return true;

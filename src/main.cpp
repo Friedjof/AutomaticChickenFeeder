@@ -84,6 +84,13 @@ void setup() {
     Serial.println("[WARN] DS3231 RTC not available - time sync required");
   }
 
+  // Load feed history from persistent storage
+  FeedHistoryEntry history[MAX_FEED_HISTORY];
+  uint8_t historyCount = configService.loadFeedHistory(history, MAX_FEED_HISTORY);
+  if (historyCount > 0) {
+    feedingService.loadFeedHistory(history, historyCount);
+  }
+
   // Initialize button service
   buttonService.begin();
   buttonService.setSimpleClickHandler(simpleClickHandler);
@@ -234,6 +241,12 @@ void handleSleepLogic() {
 
 void enterDeepSleep(const char* reason) {
   Serial.printf("[SLEEP] Entering deep sleep: %s\n", reason);
+
+  // Save feed history to persistent storage before sleeping
+  uint8_t historyCount = feedingService.getFeedHistoryCount();
+  if (historyCount > 0) {
+    configService.saveFeedHistory(feedingService.getFeedHistory(), historyCount);
+  }
 
   // Ensure AP is stopped if it was running
   webService.stopAP();

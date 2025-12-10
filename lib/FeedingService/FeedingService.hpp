@@ -6,6 +6,13 @@
 #include "ButtonService.hpp"
 #include "ClockService.hpp"
 
+#define MAX_FEED_HISTORY 10
+
+struct FeedHistoryEntry {
+  uint32_t timestamp;  // Unix timestamp
+  uint8_t portion_units;  // Number of portion units fed
+};
+
 #ifndef SERVO1_PIN
 #define SERVO1_PIN 21
 #endif
@@ -49,6 +56,13 @@ public:
   void recordFeedEvent(); // Manually record feed completion (e.g., if needed)
   void setClockService(ClockService* clock) { clockService = clock; }
 
+  // Feed history management
+  void addFeedToHistory(uint32_t timestamp, uint8_t portionUnits);
+  uint8_t getFeedHistoryCount() const;
+  const FeedHistoryEntry* getFeedHistory() const { return feedHistory; }
+  void loadFeedHistory(const FeedHistoryEntry* history, uint8_t count);
+  void clearFeedHistory();
+
 private:
   uint8_t position = 0;
   uint8_t targetPosition = 0;
@@ -63,6 +77,11 @@ private:
   unsigned long stateStartTime = 0;
   uint32_t lastFeedUnix = 0;
   ClockService* clockService = nullptr;
+
+  // Feed history (ring buffer)
+  FeedHistoryEntry feedHistory[MAX_FEED_HISTORY];
+  uint8_t feedHistoryCount = 0;  // Number of valid entries (0-10)
+  uint8_t feedHistoryIndex = 0;  // Next write index (circular)
 
   void startMovement(uint8_t target, bool feedSeq = false);
   void open();
