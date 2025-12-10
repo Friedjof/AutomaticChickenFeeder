@@ -1,124 +1,259 @@
-# System Controller
+# Main Controller (main.cpp)
 
-## Overview
-The system controller is the central coordinator of the firmware. It instantiates every service, wires shared dependencies through a `ServiceContext`, and owns the main event loop. Its job is to translate wake reasons and external requests into a deterministic sequence of service calls while keeping each module isolated from low-level details it does not own.
+## Purpose
+The main.cpp file coordinates all services, manages the application lifecycle, handles wake/sleep logic, and implements the main loop.
 
-## Service Interface Contract
-All runtime modules implement a shared interface so the controller can treat them uniformly.
+## Architecture
+Simple procedural design with direct service instantiation:
+- No abstract interfaces or event bus
+- Services communicate via direct method calls
+- State managed through function calls and flags
+
+## Services
+
+### Instantiation
 ```cpp
-struct ServiceContext {
-    StorageService& storage;
-    ScheduleService& schedule;
-    ClockService& clock;
-    FeedingService& feeding;
-    PowerService& power;
-    WebUiService& webUi;
-    NotificationService* notification; // optional
-    InputService* input;               // optional
-    // plus shared utilities: logger, event bus, metrics, etc.
-};
-
-class IService {
-public:
-    virtual bool init(ServiceContext& ctx) = 0;    // one-off initialisation
-    virtual void loop(ServiceContext& ctx) = 0;    // cooperative work unit, called each iteration
-    virtual void onWake(ServiceContext& ctx) {};   // invoked after deep-sleep wake
-    virtual void onSleep(ServiceContext& ctx) {};  // invoked before entering sleep
-    virtual ~IService() = default;
-};
+ButtonService buttonService;
+FeedingService feedingService;
+ClockService clockService;
+ConfigService configService;
+SchedulingService schedulingService(configService, clockService, feedingService);
+WebService webService(configService, clockService, feedingService, schedulingService);
 ```
-Concrete services store their internal state and talk to peers only via references exposed in `ServiceContext`. This avoids global singletons and keeps dependencies explicit.
+
+### Initialization Order (setup())
+1. **ConfigService**: Initialize NVS, load settings
+2. **ClockService**: Initialize RTC, check time validity
+3. **Feed History**: Load from NVS into FeedingService
+4. **ButtonService**: Setup GPIO, attach handlers
+5. **FeedingService**: Configure servo pins, set clock reference
+6. **SchedulingService**: Generate events, program first alarm
+7. **WebService**: Prepare server (doesn't start until AP active)
+
+## Hardware Configuration
+
+### Pin Definitions
+```cpp
+#define RTC_INT_PIN 3      // DS3231 alarm interrupt
+#define BUTTON_PIN 4       // User button
+#define SERVO1_PIN 21      // Dispenser servo 1
+#define SERVO2_PIN 2       // Dispenser servo 2
+#define TRANSISTOR_PIN 5   // Servo power control
+```
+
+### Wake Sources
+- **RTC Alarm**: GPIO 3 (scheduled feeds)
+- **Button**: GPIO 4 (manual control, AP activation)
+
+## State Flags
+
+```cpp
+bool wokeFromRtcAlarm = false;   // Woke from scheduled alarm
+bool wokeFromButton = false;      // Woke from button press
+unsigned long lastActivityMillis; // Last user/system activity
+unsigned long ignoreButtonUntil;  // Button debounce after wake
+```
 
 ## Boot Sequence
-1. **Reset reason detection**: Determine if the boot is cold reset, RTC wake, or external GPIO wake. This influences initial actions (e.g. captive portal activation).
-2. **Construct services**: Instantiate Storage, Schedule, Clock, Feeding, Power, WebUi, optional Notification/Input, and collect them in an ordered list.
-3. **Build context**: Create `ServiceContext ctx{ storage, schedule, clock, feeding, power, webUi, … }`.
-4. **Initialise services**: Iterate over the list, calling `service->init(ctx)`. Recommended order:
-   1. StorageService (mount LittleFS, open NVS, load defaults)
-   2. ScheduleService (load schedules from storage)
-   3. ClockService (I2C init, read current time)
-   4. FeedingService (configure PWM/GPIO)
-   5. PowerService (configure sleep sources, WiFi state)
-   6. WebUiService (prepare web server, but keep WiFi off unless needed)
-   7. Optional Notification/Input
-   - On failure, controller enters safe mode (e.g. blink LED, keep AP on).
-5. **Initial alarm decision**: Using ScheduleService + ClockService, compute the next feed time and call `clock.scheduleAlarm(nextTime)`. On cold boot also enable captive portal for user setup.
 
-## Main Loop Structure
+### Wake Cause Detection
 ```cpp
-void SystemController::run() {
-    while (true) {
-        for (auto* s : services_) {
-            s->loop(ctx_);            // cooperative multitasking
-        }
-        processEvents();              // drains event queue (RTC alarms, UI commands, button actions)
-        dispatchStateChanges();       // pushes updates to UI/notifications as needed
-        if (sleepManager_.canSleep()) {
-            prepareForSleep();
-        }
-        delay(kLoopDelayMs);         // e.g. 10-20 ms to avoid busy-wait
-    }
+esp_sleep_wakeup_cause_t wakeupReason = esp_sleep_get_wakeup_cause();
+uint64_t gpioStatus = esp_sleep_get_gpio_wakeup_status();
+```
+
+**Wake Reasons:**
+- `ESP_SLEEP_WAKEUP_GPIO`: RTC alarm or button
+- Other: Power-on reset or unknown
+
+### Maintenance Mode
+- Hold button during boot
+- Logged as `[MAINTENANCE]`
+- Features:
+  - Persistent AP (no timeout)
+  - OTA updates enabled
+  - No automatic sleep
+  - Infinite loop serving web UI
+
+### Normal Boot Flow
+1. Detect wake cause
+2. Initialize all services
+3. Load feed history
+4. Handle wake-specific actions:
+   - **RTC Alarm**: Process due schedules immediately
+   - **Button**: Start AP after 2s delay
+5. Enter main loop
+
+## Main Loop
+
+```cpp
+void loop() {
+    buttonService.loop();
+    feedingService.update();
+    webService.update();
+    schedulingService.update();
+    handleSleepLogic();
 }
 ```
-- `loop()` implementations must be non-blocking; lengthy operations are split across iterations or handled via state machines.
-- `processEvents()` handles cross-service messages: e.g. `AlarmFired`, `ManualFeedRequested`, `SessionStarted/Ended`.
-- `dispatchStateChanges()` synchronises derived state (for Web UI snapshots, notifications).
 
-## Sleep Workflow
-1. Call `service->onSleep(ctx)` for each module (optional but useful for cleanup):
-   - WebUiService stops HTTP server, requests WiFi shutdown via PowerService.
-   - FeedingService powers down servo driver FETs.
-   - NotificationService silences outputs.
-2. Build `SystemSnapshot` (last feed time, grams dispensed, pending job id) and persist via `storage.saveSnapshot(snapshot)`.
-3. Compute next job using `schedule.peekNextAfter()` or `nextDueJob()` if none in progress.
-4. Program RTC alarm: `clock.scheduleAlarm(nextTime)`; ensure it is in the future.
-5. Call `power.enterDeepSleep(wakeSources)`, enabling RTC alarm and button GPIOs as wake sources.
+### Service Updates
+- **ButtonService**: Poll button state, trigger callbacks
+- **FeedingService**: Advance state machine, complete feeds
+- **WebService**: Process DNS, check AP timeout
+- **SchedulingService**: Check RTC alarm flag
 
-## Wake Handling
-Upon resume, controller inspects reset reason:
-- **Cold boot** (`POWERON_RESET`, `SW_RESET`): treat as fresh start → enable AP, load defaults, set alarm.
-- **RTC alarm** (`ESP_SLEEP_WAKEUP_TIMER`):
-  1. `clock.acknowledgeAlarm()`.
-  2. `schedule.nextDueJob(now)` returns job; hand it to FeedingService.
-  3. After feeding, compute `schedule.peekNextAfter()` and reprogram alarm.
-- **Button wake** (`ESP_SLEEP_WAKEUP_EXT0/1`): InputService detects which button was pressed.
-  - Feed button → run single-scoop feed cycle and return to sleep.
-  - Settings button → enable WiFi/AP and keep the system awake for configuration until Web UI session ends.
-- **Unknown**: enter safe mode, keep AP active, await user intervention.
+### Sleep Logic
+```cpp
+void handleSleepLogic()
+```
 
-Next, the controller calls `service->onWake(ctx)` on every module to let them refresh cached handles (e.g. re-open I2C, reapply LED states). Afterwards, it returns to `run()` main loop.
+**Conditions preventing sleep:**
+- Feeding in progress
+- AP active
+- Recent activity (< 2 minutes)
 
-## Event Pipeline Examples
-### RTC Alarm → Feed → Sleep
-1. Alarm interrupt posts `AlarmFired` event.
-2. `processEvents()` handles it: ack RTC, fetch job, call `feeding.start(job)`.
-3. FeedingService drives servo via successive `loop()` calls until done, then signals `FeedCompleted` event.
-4. Controller updates snapshot counters, asks ScheduleService for next occurrence, reprograms alarm, evaluates if it can sleep.
+**Automatic sleep triggers:**
+- RTC alarm completed (return to sleep immediately)
+- Inactivity timeout (2 minutes)
 
-### Web UI Schedule Change
-1. WebUiService receives PUT `/api/v1/schedules` with updated array.
-2. Validates client payload, calls `storage.saveSchedules()`.
-3. ScheduleService reloads data (or is given the new array) and recalculates next job.
-4. Controller compares old vs. new upcoming job; if changed, reprograms `clock.scheduleAlarm()`.
-5. UI gets updated snapshot via `dispatchStateChanges()`.
+## Button Handlers
 
-### Button Manual Feed
-1. InputService detects a Feed button press; publishes `ManualFeedRequested`.
-2. Controller instructs FeedingService to dispense the configured single scoop.
-3. After completion, controller logs the event, updates snapshot counters, and immediately evaluates the sleep path.
+### Single Click
+```cpp
+void simpleClickHandler(Button2 &btn)
+```
 
-### Settings Button → WiFi Session
-1. InputService detects a Settings button press; publishes `EnableWifiRequested`.
-2. Controller asks PowerService to start the SoftAP and prevents sleep while WebUiService serves the captive portal.
-3. When the user clicks “Finish & Sleep”, WebUiService emits `SessionEnded`, allowing the controller to resume normal sleep preparation.
+- Starts AP mode
+- Resets activity timer
+- 2-second ignore window after wake
+
+### Double Click
+```cpp
+void doubleClickHandler(Button2 &btn)
+```
+
+- Triggers manual feed (1 portion)
+- Resets activity timer
+- 2-second ignore window after wake
+
+### Long Press
+```cpp
+void longClickHandler(Button2 &btn)
+```
+
+- Enters deep sleep immediately
+- No ignore window (always active)
+
+## Deep Sleep Management
+
+### Entering Sleep
+```cpp
+void enterDeepSleep(const char* reason)
+```
+
+1. Save feed history to NVS
+2. Stop AP if active
+3. Configure wake sources (RTC + Button)
+4. Enable GPIO wake on LOW signal
+5. Log reason and enter deep sleep
+
+**Wake Mask:**
+```cpp
+const uint64_t wakeMask = (1ULL << RTC_INT_PIN) | (1ULL << BUTTON_PIN);
+esp_deep_sleep_enable_gpio_wakeup(wakeMask, ESP_GPIO_WAKEUP_GPIO_LOW);
+```
+
+### Sleep Triggers
+- "RTC alarm handled" (after feed completed)
+- "Inactivity timeout" (2 minutes idle)
+- "Manual long press" (user requested)
+- "Remote request" (via WebService)
+
+## Activity Tracking
+
+### Mark Activity
+```cpp
+void markActivity()
+```
+
+- Updates `lastActivityMillis`
+- Called on:
+  - Button presses
+  - Feeding operations
+  - Web UI interactions (via WebService)
+
+### Inactivity Timeout
+- `INACTIVITY_SLEEP_MS`: 120000 (2 minutes)
+- Compared against max of `lastActivityMillis` and web client activity
+- Triggers automatic sleep
+
+## Feed History Persistence
+
+### Load (setup)
+```cpp
+FeedHistoryEntry history[MAX_FEED_HISTORY];
+uint8_t historyCount = configService.loadFeedHistory(history, MAX_FEED_HISTORY);
+feedingService.loadFeedHistory(history, historyCount);
+```
+
+### Save (before sleep)
+```cpp
+configService.saveFeedHistory(feedingService.getFeedHistory(),
+                               feedingService.getFeedHistoryCount());
+```
+
+## Power Management Strategy
+
+### Active Time Minimization
+- Sleep between scheduled feeds
+- AP only active when needed
+- Servo power only during dispense
+- WiFi disabled in sleep
+
+### Wake/Sleep Cycle
+1. **Wake** (RTC or button)
+2. **Execute** (feed or serve UI)
+3. **Sleep** (automatic after completion)
+
+Typical cycle: <30 seconds active, hours sleeping
 
 ## Error Handling
-- Service `init()` returning false triggers safe mode; controller keeps WiFi on, logs error, may blink LED.
-- Runtime errors should be raised as events; controller can instruct NotificationService or fallback to safe mode depending on severity.
-- Watchdog: PowerService or controller can arm a software watchdog inside the main loop (reset if loop delays exceed threshold).
-- Structured logging/event bus helpers are still TODO—modules should surface TODO comments where they require richer diagnostics.
 
-## Testing Strategy
-- Mock each service (or use fake implementations) to test controller lifecycle: order of calls, response to events, sleep transitions.
-- Simulate wake causes by injecting events (`AlarmFired`, `ButtonPressed`).
-- Use host-based tests to ensure snapshot persistence and alarm reprogramming logic handle edge cases (e.g. alarm already in past).
+### Service Init Failures
+- Logged to serial with `[ERROR]` prefix
+- System continues with reduced functionality
+- Example: RTC unavailable → no scheduled feeds, manual still works
+
+### Watchdog
+- No explicit watchdog (relies on ESP32 default)
+- Feeding timeout prevents servo lockup
+- AP timeout prevents battery drain
+
+## Logging
+
+All major events logged to serial (115200 baud):
+- `[INFO]`: Normal operations
+- `[WARN]`: Recoverable issues
+- `[ERROR]`: Critical failures
+- `[DEBUG]`: Detailed state info
+- Service-specific: `[BUTTON]`, `[SCHED]`, `[WEB]`, `[CLOCK]`, `[CONFIG]`
+
+## Testing
+
+### Boot Testing
+1. Power on → cold boot
+2. Hold button → maintenance mode
+3. RTC wake → alarm execution
+4. Button wake → AP activation
+
+### Sleep Testing
+1. Manual feed → auto sleep after 2 min
+2. Long press → immediate sleep
+3. RTC alarm → execute and return to sleep
+4. AP timeout → auto sleep after 60s
+
+### Integration Testing
+1. Schedule feed → verify RTC alarm → wake and feed
+2. Manual feed → verify history saved
+3. Config change → verify alarm reprogrammed
+4. Factory reset → verify defaults restored

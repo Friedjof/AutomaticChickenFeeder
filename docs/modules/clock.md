@@ -1,31 +1,203 @@
-# Clock Module
+# Clock Service
 
 ## Purpose
-The clock module encapsulates all real-time clock (RTC) interactions. It abstracts the ESP32-C6 + DS3231 hardware, providing current time, alarm scheduling, and drift management. It never decides *which* feeding event should occur; it simply executes time-related commands issued by higher-level logic.
+The ClockService wraps the DS3231 RTC module, providing accurate timekeeping, alarm management, and browser-based time synchronization.
+
+## Hardware
+- **DS3231 RTC**: High-precision I2C RTC with temperature compensation
+- **I2C Bus**: SDA/SCL pins (board-specific)
+- **Alarm Pin**: Interrupt output (GPIO 3)
+- **Battery Backup**: CR2032 maintains time during power loss
 
 ## Responsibilities
-- Initialise and maintain the RTC connection (I2C bus setup, availability checks).
-- Provide `now()` returning the authoritative current time (UTC or configured local offset).
-- Configure exactly one hardware alarm at a time via `scheduleAlarm(DateTime when)`.
-- Handle alarm acknowledgements (`acknowledgeAlarm()`), clearing RTC flags and reporting wake reason to the System Controller.
-- Expose drift/synchronisation helpers:
-  - Apply browser-provided timestamps (`applySync(timestamp, thresholdMs)`).
-  - Report drift statistics for telemetry/UI.
-- Offer low-level utilities such as `setTime(DateTime)`, `enableSqwOutput(bool)`, or `sleepUntilAlarm()` wrappers if needed by PowerService.
+- Initialize DS3231 via I2C
+- Provide current time via `now()`
+- Program hardware alarm for scheduled feeds
+- Handle alarm interrupts and clear flags
+- Sync time from browser timestamps
+- Report RTC availability status
 
-## Interactions
-- Receives the next alarm timestamp from `SystemController` (computed using Schedule module).
-- Notifies `SystemController` when an alarm interrupt fires so the feeding pipeline can continue.
-- Persists drift metrics/sync data through `StorageService` (e.g. `rtc_drift_offset`).
-- Coordinates with `PowerService` to ensure the MCU enters deep/light sleep with RTC wake-up enabled.
+## Public API
 
-## Key Behaviours
-- Guarantees there is at most one active RTC alarm; reprograms it immediately after each feed cycle based on new instructions from `SystemController`.
-- Converts `DateTime` inputs to RTC register values, handling day rollovers and 24h format.
-- Validates requested alarm times (e.g. not in the past) and adjusts for minimum lead time if required.
-- Provides hooks for testing (mockable interface that simulates alarm callbacks).
+```cpp
+bool begin();                           // Initialize RTC
+DateTime now();                         // Get current time
+bool setTime(const DateTime &dt);      // Set RTC time
+bool setAlarm(const DateTime &dt);     // Program alarm
+bool clearAlarm();                      // Disable and clear alarm
+bool checkAlarmFlag();                  // Check if alarm triggered
+bool isAvailable() const;               // RTC connection status
+```
 
-## Testing Suggestions
-- Implement hardware-abstraction interfaces so unit tests can run against a fake RTC (verifying conversions of time → alarm registers).
-- Check drift correction logic by feeding timestamps within/outside the threshold.
-- Ensure alarm reprogramming covers edge cases (wrap to next week, multiple consecutive alarms, manual time setting).
+## RTC Initialization
+
+```cpp
+bool ClockService::begin()
+```
+
+1. Initialize I2C bus
+2. Detect DS3231 presence
+3. Check if RTC lost power
+4. If lost power: mark as requires sync
+5. Disable alarm by default
+6. Return availability status
+
+## Time Management
+
+### Getting Current Time
+```cpp
+DateTime now()
+```
+
+- Returns current time from DS3231
+- DateTime format: year, month, day, hour, minute, second
+- Unix timestamp available via `dt.unixtime()`
+- Returns invalid DateTime if RTC unavailable
+
+### Setting Time
+```cpp
+bool setTime(const DateTime &dt)
+```
+
+- Writes new time to DS3231
+- Called by browser sync endpoint
+- Validates DateTime before write
+- Returns success/failure
+
+## Alarm Management
+
+### Programming Alarm
+```cpp
+bool setAlarm(const DateTime &dt)
+```
+
+1. Disables existing alarm
+2. Calculates alarm registers from DateTime
+3. Programs DS3231 Alarm 1
+4. Enables alarm interrupt
+5. Logs alarm time to serial
+6. Returns success/failure
+
+**DS3231 Alarm Capabilities:**
+- Alarm 1: Seconds, minutes, hours, day/date
+- Alarm 2: Minutes, hours, day/date (not used)
+- Single alarm active at a time
+
+### Clearing Alarm
+```cpp
+bool clearAlarm()
+```
+
+1. Clears alarm flag (`rtc.clearAlarm(1)`)
+2. Disables alarm (`rtc.disableAlarm(1)`)
+3. Logs to serial: "[CLOCK] Alarm cleared"
+4. Called when no schedules active
+
+### Checking Alarm Status
+```cpp
+bool checkAlarmFlag()
+```
+
+- Returns `rtc.alarmFired(1)`
+- Called in main loop via SchedulingService
+- True if alarm interrupt triggered
+
+## Browser Time Sync
+
+Triggered via WebService API: `POST /api/time`
+
+### Sync Flow
+1. Browser sends ISO timestamp
+2. WebService parses to Unix timestamp
+3. ClockService converts to DateTime
+4. `setTime()` updates DS3231
+5. Logs sync event to serial
+
+### Format
+- Input: ISO 8601 string ("2025-01-15T14:30:00Z")
+- Converted to DateTime
+- Written to DS3231 registers
+
+## Deep Sleep Integration
+
+### Before Sleep
+- RTC alarm remains programmed in DS3231 hardware
+- DS3231 maintains time on battery backup
+- Alarm pin stays configured as interrupt source
+
+### On Wake
+- ESP32 wakes from GPIO interrupt (RTC_INT_PIN)
+- SchedulingService calls `checkAlarmFlag()`
+- ClockService confirms alarm triggered
+- Alarm cleared via `clearAlarm()`
+
+## Integration Points
+
+### SchedulingService
+- Calls `now()` for event generation
+- Programs alarms via `setAlarm()`
+- Checks alarm status via `checkAlarmFlag()`
+- Clears alarms via `clearAlarm()`
+
+### FeedingService
+- Gets timestamps for feed history
+- Calls `now()` via `recordFeedEvent()`
+
+### WebService
+- Receives browser time sync requests
+- Formats DateTime to ISO 8601 strings
+- Returns RTC status in API responses
+
+### Main Application
+- Calls `begin()` during setup
+- Logs availability status
+
+## Error Handling
+
+### RTC Unavailable
+- `begin()` returns false
+- `available` flag set to false
+- All operations return failure
+- System continues without RTC (no scheduled feeds)
+- Logged as "[WARN] DS3231 RTC not available"
+
+### Lost Power
+- Detected during `begin()`
+- Logged as "[CLOCK] RTC lost power, time may be invalid"
+- Requires browser sync to restore accurate time
+
+### Invalid DateTime
+- Validation before RTC writes
+- Returns false on invalid input
+- Logs error to serial
+
+## Logging
+All operations log to serial with `[CLOCK]` prefix:
+- Initialization status
+- Lost power detection
+- Time sync events
+- Alarm programming
+- Alarm clearing
+- Error conditions
+
+## Testing
+
+### Manual Testing
+1. Power cycle device → check for lost power detection
+2. Set alarm 2 minutes in future via schedule
+3. Monitor serial for alarm programming
+4. Wait for alarm trigger
+5. Verify alarm flag set and cleared
+
+### Browser Sync Testing
+1. Open web UI
+2. Monitor serial for sync logs
+3. Verify time matches browser
+4. Check RTC persists after power cycle
+
+### Alarm Testing
+1. Program alarm via SchedulingService
+2. Enter deep sleep
+3. Wake on RTC alarm
+4. Verify alarm flag cleared
+5. Check next alarm programmed

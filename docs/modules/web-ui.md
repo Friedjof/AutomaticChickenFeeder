@@ -1,112 +1,293 @@
-# Web UI Module
+# Web Service & UI
 
 ## Purpose
-The Web UI provides a lightweight configuration surface that is available only while a user is connected to the feeder's hotspot. By avoiding background connections and live updates, the interface keeps WiFi radio usage to a minimum and preserves battery life.
+The WebService provides a captive portal interface for configuration and manual control. It hosts a responsive web UI and REST API that runs only when the WiFi Access Point is active.
 
-## Captive Portal Flow
-- ESP32-C6 runs a temporary SoftAP; DNS redirection leads clients automatically to `http://feeder.local/` (captive portal experience).
-- Landing screen summarises the current system status (next feed, last feed, battery level) and offers access to the scheduler editor.
-- After a user-initiated timeout (e.g. "Done" button or inactivity timer) the UI asks the System Controller to shut down WiFi.
+## Architecture
+- **AsyncWebServer**: ESPAsyncWebServer library
+- **DNSServer**: Captive portal DNS redirect
+- **Static Assets**: Embedded in firmware via `generated/web_files.h`
+- **AP Mode Only**: WiFi disabled during normal operation
 
-## Functional Requirements
-- Configure up to 5 recurring feed schedules. Each entry stores:
-  - Enable/disable toggle.
-  - Day-of-week mask represented as a byte bitmask (UI still renders seven toggles).
-  - Execution time (HH:MM).
-  - Portion in scoop units (1..kMaxPortionUnits); the UI displays derived grams using the configured scoop weight (default 12 g).
-- Manual feed trigger (1..kMaxPortionUnits scoops) with confirmation dialog.
-- Display static telemetry snapshot loaded on page open (last feed time, next scheduled feed, cumulative feed today, RTC sync status, battery state).
-- Settings button press activates WiFi; the UI should remind users to close the session so the controller can return to deep sleep.
-- Browser clock synchronisation: script pushes the browser's current time to the device every 10 seconds while the page is open to keep the RTC aligned.
-- No PIN/authentication on the page itself; access is controlled through the WiFi password.
+## Hardware
+- **ESP32-C3** WiFi radio
+- **AP IP**: 192.168.4.1
+- **DNS Port**: 53
 
-## Interaction Pattern
-- Page loads once, fetches state via REST and renders controls. No live updates or WebSocket connections.
-- User actions (change schedule, trigger feed, close session) send REST calls and wait for success/failure responses.
-- After a successful change the UI refreshes the local view by re-fetching relevant data.
+## Responsibilities
+- Host captive portal Access Point
+- Serve static web UI assets (HTML, CSS, JS)
+- Provide REST API for config and control
+- Handle OTA firmware updates
+- Manage AP lifecycle and timeouts
 
-## Pages & Components
-- **Dashboard**: snapshot cards (next feed, last feed, battery), "Trigger Feed" button, link to scheduler.
-- **Schedule Editor**: table with five rows. Each row: enable toggle, time picker, weekday selector, portion dropdown. "Apply" button sends the full schedule payload.
-- **Session Controls**: button to end session and shut down WiFi, optional indicator for connection status.
-- **Time Sync Indicator**: shows last RTC sync timestamp (updates every 10 seconds after sync call completes).
+## Access Point Management
 
-## Data Contracts
-- `GET /api/v1/state` → returns snapshot for dashboard (next feed, last feed, battery, RTC drift, schedule summary, `portion_unit_grams`, `max_portion_units`).
-- `GET /api/v1/schedules` → returns full five-entry schedule list.
-- `PUT /api/v1/schedules` → accepts array of five schedule entries (with `portion_units` integers and `weekday_mask` byte bitmasks).
-- `POST /api/v1/feed` → triggers manual feed (optional `portion_units` override).
-- `POST /api/v1/rtc/sync` → body contains browser timestamp; device adjusts RTC if drift exceeds threshold.
-- `POST /api/v1/session/end` → instructs System Controller to disable WiFi and exit captive portal mode.
-- All payloads are JSON. Scheduler entry example:
+### Starting AP
+```cpp
+void startAP(const char* ssid = "ChickenFeeder", const char* password = "");
 ```
+
+Triggered by:
+- Button single-click (GPIO 4)
+- Wake from button during sleep
+- Maintenance mode (button held during boot)
+
+### AP Timeout Logic
+- **No client connected**: 60 seconds timeout
+- **Client connected**: Stays active indefinitely
+- **Inactivity**: User must disconnect to trigger sleep
+
+### Stopping AP
+```cpp
+void stopAP();
+```
+
+Automatic shutdown:
+- Timeout expired
+- Sleep requested
+- Maintenance mode exited
+
+## REST API Endpoints
+
+### Status & Telemetry
+**GET** `/api/status`
+```json
 {
-  "id": 1,
-  "enabled": true,
-  "time": "06:30",
-  "portion_units": 2,
-  "weekday_mask": 62
+  "success": true,
+  "data": {
+    "isOnline": true,
+    "isFeeding": false,
+    "servoPosition": "Closed",
+    "lastFeedTime": "2025-01-15T14:30:00Z",
+    "totalFedToday": 0
+  }
 }
 ```
-> `weekday_mask` uses bit0=Sunday .. bit6=Saturday (62 = Monday–Friday).
+
+**GET** `/api/status/history?limit=10`
+```json
+{
+  "success": true,
+  "data": {
+    "feeds": [
+      {
+        "timestamp": "2025-01-15T14:30:00Z",
+        "portion": 36
+      }
+    ]
+  }
+}
+```
+
+### Configuration
+**GET** `/api/config`
+```json
+{
+  "success": true,
+  "data": {
+    "version": 1,
+    "portion_unit_grams": 12,
+    "schedules": [
+      {
+        "id": 1,
+        "enabled": true,
+        "time": "06:30",
+        "weekday_mask": 62,
+        "portion_units": 2
+      }
+    ]
+  }
+}
+```
+
+**POST** `/api/config` (Content-Type: application/json)
+```json
+{
+  "schedules": [
+    {
+      "id": 1,
+      "enabled": true,
+      "time": "06:30",
+      "weekday_mask": 62,
+      "portion_units": 2
+    }
+  ],
+  "portion_unit_grams": 12
+}
+```
+
+### Manual Feed
+**POST** `/api/feed`
+```json
+{
+  "success": true,
+  "message": "Feed cycle started"
+}
+```
+
+### Time Sync
+**POST** `/api/time` (Content-Type: application/json)
+```json
+{
+  "timestamp": "2025-01-15T14:30:00Z"
+}
+```
+
+Response:
+```json
+{
+  "success": true,
+  "message": "RTC synchronized"
+}
+```
+
+### Power Management
+**POST** `/api/power/sleep`
+```json
+{
+  "success": true,
+  "message": "Entering sleep mode"
+}
+```
+
+### Factory Reset
+**POST** `/api/config/reset`
+```json
+{
+  "success": true,
+  "message": "Configuration reset to defaults"
+}
+```
+
+### OTA Updates
+**GET** `/api/ota/status`
+```json
+{
+  "success": true,
+  "version": "2.0.3",
+  "available": true
+}
+```
+
+**POST** `/api/ota/update` (multipart/form-data)
+- Upload `.bin` firmware file
+- Performs flash update
+- Reboots on success
+
+## Web UI Features
+
+### Dashboard
+- System status cards
+- Last feed timestamp
+- Next scheduled feed
+- Manual feed button
+- Schedule management link
+
+### Schedule Editor
+- 6 configurable schedule slots
+- Time picker (HH:MM)
+- Weekday selector (7 toggles)
+- Portion units dropdown (1-5)
+- Enable/disable toggle per slot
+- Save button triggers `/api/config` POST
+
+### Feed History (NEW)
+- Last 10 feed events
+- Timestamp display
+- Portion size in grams
+- Collapsible on mobile
+
+### Settings
+- Portion unit grams configuration
+- Factory reset button
+- OTA firmware upload
+- "Take a Nap" (sleep) button
+
+## Captive Portal
+
+### DNS Redirection
+All DNS queries redirect to 192.168.4.1:
+- Android: `/generate_204`
+- iOS: `/hotspot-detect.html`
+- Windows: `/connecttest.txt`
+
+All redirect to `/` (index.html)
+
+### Static File Serving
+Assets embedded in firmware:
+- `index.html`: Main UI
+- `app.js`: Application logic
+- `style.css`: Responsive styles
+- `mock/api.js`: Offline development mock
+
+Files served with proper MIME types via AsyncWebServer.
+
+## Maintenance Mode
+
+### Activation
+Hold button (GPIO 4) during boot to enter maintenance mode.
+
+### Features
+- Persistent AP (no timeout)
+- Open WiFi (no password): SSID "ChickenFeeder"
+- OTA updates enabled
+- No automatic sleep
+- Serial logging: `[MAINTENANCE]` prefix
+
+### Exit
+Power cycle or firmware upload required.
 
 ## Integration Points
-- Uses `ScheduleService` for reading and applying schedule data.
-- Sends manual feed requests to `FeedingService` through the System Controller.
-- Pulls telemetry snapshot from `TelemetryService` / `SystemController`.
-- Invokes `ClockService` via REST endpoint to align RTC with browser clock.
-- Requests `PowerService` to shut down WiFi when the session ends.
 
-## Power & UX Considerations
-- WiFi stays off except during explicit sessions; UI should remind users to close the session when finished.
-- Avoid large assets; total UI payload should stay small (<150 kB) for quick captive portal load.
-- Provide clear confirmation messages for successful saves and manual feeds.
-- Because there is no push channel, display the timestamp of the last snapshot so users know when data was fetched.
+### ConfigService
+- Loads/saves schedules
+- Provides portion unit grams
+- Handles factory reset
 
-- Host static assets from LittleFS (`data/` directory copied from `data-template/`) via AsyncWebServer.
-- Vanilla JS or a micro-framework keeps build artefacts minimal. Add a simple polling loop only for the RTC sync POST every 10 seconds.
-- Derive gram labels client-side (`scoop_count * portion_unit_grams`) so schedule payloads stay in units.
-- Fetch `portion_unit_grams` from the state endpoint on load and reuse it for all gram calculations.
-- Use the schedule metadata (kMaxPortionUnits) provided by firmware constants to bound dropdown values; default UI can pre-render 1..kMaxPortionUnits.
-- Guard the RTC sync endpoint with a drift threshold to avoid unnecessary writes (e.g. adjust only if drift > ±3 seconds).
+### SchedulingService
+- Calls `onConfigChanged()` after config save
+- Triggers event regeneration and alarm update
 
-## User Stories
+### FeedingService
+- Triggers manual feeds
+- Checks `isFeeding()` status
+- Retrieves last feed timestamp
+- Provides feed history data
 
-### Story 1 – Quick Status & Manual Control Visit
-As a farmer, I want to connect to the feeder hotspot, review the feeder status, and optionally trigger a manual feed so that I can leave the coop confident everything is on track.
-When I open the captive portal, the dashboard shows the countdown to the next feeding, the last feed timestamp, and the battery level without any additional refresh steps.
-If I notice something off, I can press the manual feed button, confirm the action, and watch the status card update once the dispense completes. The dialog lets me pick how many scoops to run, while showing the corresponding weight for clarity.
-After the visit, I end the session with “Finish and Sleep,” ensuring the hotspot powers down to conserve energy.
+### ClockService
+- Syncs RTC from browser time
+- Formats timestamps for API responses
 
-**Steps**
-- Connect to the feeder hotspot from a phone or tablet while at the coop.
-- Let the captive portal redirect to the dashboard and review the status cards.
-- If needed, tap “Manual Feed,” choose the number of scoops, confirm, and monitor the confirmation message.
-- Observe the updated last-feed time to verify the action succeeded.
-- Tap “Finish and Sleep” to close the session and reduce power usage.
+### Main Application
+- Receives sleep callback via `setSleepCallback()`
+- Monitors AP activity via `isAPActive()`
+- Tracks client activity via `getLastClientActivity()`
 
-### Story 2 – Seasonal Schedule Adjustment & Time Alignment
-As a farmer, I want to tweak the weekly feeding schedule and implicitly keep the RTC aligned so that the flock still receives meals at the right times when routines change.
-Within the schedule editor I adjust weekdays, shift times, and choose the number of scoops (with the UI showing the resulting grams), confident that the browser supplies accurate time data to the device every ten seconds.
-After submitting the changes, I expect the UI to validate inputs, confirm success, and display the revised plan so I know the configuration is stored correctly.
-Because the running time sync keeps the RTC in step with my device clock, the new schedule remains reliable without manual time-setting.
+## Security
+- **No authentication**: Physical access required (connect to AP)
+- **Optional password**: Can set WiFi password in `startAP()`
+- **Local only**: No internet connectivity
+- **Temporary**: AP times out automatically
 
-**Steps**
-- Open the scheduler editor from the dashboard navigation menu.
-- Modify the relevant slot: toggle active days, adjust HH:MM, pick the scoop count (grams shown alongside).
-- Review all five entries to ensure they reflect the intended weekly pattern.
-- Submit the schedule; wait for the confirmation toast and refreshed snapshot.
-- Keep the page open briefly so the auto-sync can correct any RTC drift before closing.
+## Client Activity Tracking
+```cpp
+uint32_t getLastClientActivity() const;
+```
 
-### Story 3 – Controlled Session Shutdown & Power Saving
-As a farmer, I want to close the configuration session explicitly and see WiFi power down so that the feeder returns to its low-consumption state without lingering connections.
-The interface warns me about unsaved changes, submits any pending updates, and notifies the System Controller to disable WiFi once the session ends.
-If I walk away without pressing the button, an inactivity timer reminds me that the portal will sleep soon, preventing accidental battery drain.
-When I confirm the shutdown, the UI acknowledges success, letting me disconnect from the hotspot knowing the device is back in idle mode.
+Updated on every API request via `updateClientActivity()`.
+Used by main application to prevent sleep during active sessions.
 
-**Steps**
-- Finish any configuration or manual actions on the dashboard or schedule editor.
-- Tap “Finish and Sleep” to initiate session shutdown.
-- Confirm save prompts so the device persists pending changes.
-- Wait for the message that WiFi is turning off, then disconnect from the hotspot.
-- Reconnect via the captive portal in the future whenever configuration is required.
+## Error Handling
+- Invalid JSON: 400 Bad Request
+- Feed while feeding: 400 with error message
+- Portion validation: Rejects <1 or >5 units
+- Serial logging: `[WEB]` prefix for all operations
+
+## Testing
+1. Connect to "ChickenFeeder" WiFi
+2. Browser should auto-open captive portal
+3. Manual: Navigate to http://192.168.4.1
+4. Test all API endpoints via UI
+5. Monitor serial output for `[WEB]` logs
+6. Verify AP timeout after 60s with no client
