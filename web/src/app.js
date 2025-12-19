@@ -378,11 +378,21 @@ export class ChickenFeederApp {
         try {
             const response = await this.getFeedHistory(limit);
             if (response.success && response.data?.feeds) {
-                this.feedHistory = response.data.feeds;
+                // Sort feeds by timestamp (newest first)
+                this.feedHistory = response.data.feeds.sort((a, b) => {
+                    return new Date(b.timestamp) - new Date(a.timestamp);
+                });
+                this.updateFeedHistoryUI();
+            } else {
+                // Empty or error response - show empty state
+                this.feedHistory = [];
                 this.updateFeedHistoryUI();
             }
         } catch (error) {
             console.error('Error loading feed history:', error);
+            // On error, show empty state instead of staying on "Loading..."
+            this.feedHistory = [];
+            this.updateFeedHistoryUI();
         }
     }
 

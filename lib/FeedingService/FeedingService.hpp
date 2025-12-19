@@ -6,6 +6,9 @@
 #include "ButtonService.hpp"
 #include "ClockService.hpp"
 
+// Forward declarations
+class ConfigService;
+
 #define MAX_FEED_HISTORY 10
 
 struct FeedHistoryEntry {
@@ -55,6 +58,7 @@ public:
   uint32_t getLastFeedTimestamp() const { return lastFeedUnix; }
   void recordFeedEvent(); // Manually record feed completion (e.g., if needed)
   void setClockService(ClockService* clock) { clockService = clock; }
+  void setConfigService(ConfigService* config) { configService = config; }
 
   // Feed history management
   void addFeedToHistory(uint32_t timestamp, uint8_t portionUnits);
@@ -77,6 +81,7 @@ private:
   unsigned long stateStartTime = 0;
   uint32_t lastFeedUnix = 0;
   ClockService* clockService = nullptr;
+  ConfigService* configService = nullptr;
 
   // Feed history (ring buffer)
   FeedHistoryEntry feedHistory[MAX_FEED_HISTORY];

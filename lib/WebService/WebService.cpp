@@ -293,6 +293,8 @@ void WebService::handleGetFeedHistory(AsyncWebServerRequest *request) {
     uint8_t count = feedingService.getFeedHistoryCount();
     const FeedHistoryEntry* history = feedingService.getFeedHistory();
 
+    Serial.printf("[WEB] Feed history request: count=%d, limit=%d\n", count, limit);
+
     // Get portion unit grams for calculating total grams
     uint8_t portionGrams = configService.getPortionUnitGrams();
 
@@ -302,11 +304,17 @@ void WebService::handleGetFeedHistory(AsyncWebServerRequest *request) {
     }
 
     // Add entries to JSON array (newest first)
-    // History is stored in ring buffer, so we need to calculate the correct order
-    for (int i = count - 1; i >= 0; i--) {
+    // Ring buffer: entries are added at feedHistoryIndex, wrapping around
+    // We need to read them in reverse chronological order
+    for (uint8_t i = 0; i < count; i++) {
         const FeedHistoryEntry& entry = history[i];
 
-        if (entry.timestamp == 0) continue; // Skip empty entries
+        Serial.printf("[WEB] Entry %d: timestamp=%lu, portion_units=%d\n", i, entry.timestamp, entry.portion_units);
+
+        if (entry.timestamp == 0) {
+            Serial.printf("[WEB] Skipping empty entry at index %d\n", i);
+            continue; // Skip empty entries
+        }
 
         JsonObject feed = feeds.add<JsonObject>();
 
@@ -320,7 +328,11 @@ void WebService::handleGetFeedHistory(AsyncWebServerRequest *request) {
         // Calculate portion in grams
         uint16_t portionTotal = entry.portion_units * portionGrams;
         feed["portion"] = portionTotal;
+
+        Serial.printf("[WEB] Added feed to response: %s, %dg\n", buf, portionTotal);
     }
+
+    Serial.printf("[WEB] Sending %d feed entries\n", feeds.size());
 
     sendJsonResponse(request, doc);
 }

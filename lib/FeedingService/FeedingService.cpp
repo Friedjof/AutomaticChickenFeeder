@@ -1,4 +1,5 @@
 #include <FeedingService.hpp>
+#include <ConfigService.hpp>
 
 FeedingService::FeedingService() {
   pinMode(TRANSISTOR_PIN, OUTPUT);
@@ -197,9 +198,16 @@ void FeedingService::recordFeedEvent() {
 }
 
 void FeedingService::addFeedToHistory(uint32_t timestamp, uint8_t portionUnits) {
+  Serial.printf("[DEBUG] addFeedToHistory called: timestamp=%lu, portionUnits=%d, current index=%d\n",
+                timestamp, portionUnits, feedHistoryIndex);
+
   // Add entry to ring buffer
   feedHistory[feedHistoryIndex].timestamp = timestamp;
   feedHistory[feedHistoryIndex].portion_units = portionUnits;
+
+  Serial.printf("[DEBUG] Stored at index %d: timestamp=%lu, portion_units=%d\n",
+                feedHistoryIndex, feedHistory[feedHistoryIndex].timestamp,
+                feedHistory[feedHistoryIndex].portion_units);
 
   // Move to next index (circular)
   feedHistoryIndex = (feedHistoryIndex + 1) % MAX_FEED_HISTORY;
@@ -209,8 +217,14 @@ void FeedingService::addFeedToHistory(uint32_t timestamp, uint8_t portionUnits) 
     feedHistoryCount++;
   }
 
-  Serial.printf("[DEBUG] Feed added to history: %lu, %d units (count: %d)\n",
-                timestamp, portionUnits, feedHistoryCount);
+  Serial.printf("[DEBUG] Feed added to history: %lu, %d units (count: %d, next index: %d)\n",
+                timestamp, portionUnits, feedHistoryCount, feedHistoryIndex);
+
+  // Immediately save to persistent storage
+  if (configService) {
+    configService->saveFeedHistory(feedHistory, feedHistoryCount);
+    Serial.println("[INFO] Feed history saved to NVS");
+  }
 }
 
 uint8_t FeedingService::getFeedHistoryCount() const {
@@ -222,14 +236,18 @@ void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t co
     count = MAX_FEED_HISTORY;
   }
 
+  Serial.printf("[DEBUG] loadFeedHistory: loading %d entries\n", count);
+
   for (uint8_t i = 0; i < count; i++) {
     feedHistory[i] = history[i];
+    Serial.printf("[DEBUG] Loaded entry %d: timestamp=%lu, portion_units=%d\n",
+                  i, feedHistory[i].timestamp, feedHistory[i].portion_units);
   }
 
   feedHistoryCount = count;
   feedHistoryIndex = count % MAX_FEED_HISTORY;
 
-  Serial.printf("[INFO] Loaded %d feed history entries\n", count);
+  Serial.printf("[INFO] Loaded %d feed history entries, next index will be %d\n", count, feedHistoryIndex);
 }
 
 void FeedingService::clearFeedHistory() {
