@@ -19,6 +19,8 @@ export class ChickenFeederApp {
         this.handleFeedLogEscape = this.handleFeedLogEscape.bind(this);
         this.guideCollapseMedia = window.matchMedia('(max-width: 900px)');
         this.handleGuideMediaChange = this.handleGuideMediaChange.bind(this);
+        this.mobileTimerMedia = window.matchMedia('(max-width: 900px)');
+        this.smartViewEnabled = this.getSmartViewEnabled();
 
         this.init();
     }
@@ -27,6 +29,7 @@ export class ChickenFeederApp {
         this.bindElements();
         this.bindEvents();
         this.setupGuideCollapse();
+        this.setupTimerViewMode();
         this.loadInitialData();
         this.startStatusUpdates();
         this.startTimeSync();
@@ -46,6 +49,7 @@ export class ChickenFeederApp {
         this.elements.guideContent = document.getElementById('guideContent');
         this.elements.guideToggle = document.getElementById('guideToggle');
         this.elements.guideHintToggle = document.getElementById('guideHintToggle');
+        this.elements.timerViewToggle = document.getElementById('timerViewToggle');
 
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
@@ -142,6 +146,13 @@ export class ChickenFeederApp {
             this.elements.guideHintToggle.addEventListener('click', () => {
                 const collapsed = this.elements.guidePanel.classList.contains('collapsed');
                 this.setGuideCollapsed(!collapsed);
+            });
+        }
+
+        // Timer view toggle (mobile smart view)
+        if (this.elements.timerViewToggle) {
+            this.elements.timerViewToggle.addEventListener('click', () => {
+                this.toggleTimerView();
             });
         }
 
@@ -505,6 +516,8 @@ export class ChickenFeederApp {
         if (this.elements.portionUnitInput && this.config.portion_unit_grams) {
             this.elements.portionUnitInput.value = this.config.portion_unit_grams;
         }
+
+        this.updateVisibleTimers();
     }
 
     updateTimerRow(index, schedule) {
@@ -601,13 +614,14 @@ export class ChickenFeederApp {
         if (!this.config) return;
         this.ensureSchedules(this.elements.timerRows.length);
         if (!this.config.schedules[index]) return;
-        
+
         const row = this.elements.timerRows[index];
         const enabledCheckbox = row.querySelector('.timer-enabled');
         const enabled = enabledCheckbox.checked;
-        
+
         this.config.schedules[index].enabled = enabled;
         this.updateRowState(row, enabled);
+        this.updateVisibleTimers();
     }
 
     updateTimerTime(index) {
@@ -725,6 +739,17 @@ export class ChickenFeederApp {
             this.guideCollapseMedia.addEventListener('change', this.handleGuideMediaChange);
         }
         this.handleGuideMediaChange(this.guideCollapseMedia);
+    }
+
+    setupTimerViewMode() {
+        if (this.mobileTimerMedia?.addEventListener) {
+            this.mobileTimerMedia.addEventListener('change', () => {
+                this.updateVisibleTimers();
+            });
+        }
+        this.updateTimerViewToggleUI();
+        // Initial update (will be called again after config loads, but ensures correct state)
+        this.updateVisibleTimers();
     }
 
     handleGuideMediaChange(e) {
@@ -1110,5 +1135,108 @@ export class ChickenFeederApp {
             this.elements.otaFirmwareInput.disabled = false;
             this.setOtaStatus('online', 'Ready for firmware update');
         }
+    }
+
+    // Smart Timer View Methods (Mobile only)
+    isMobileView() {
+        return this.mobileTimerMedia?.matches || false;
+    }
+
+    getSmartViewEnabled() {
+        const stored = localStorage.getItem('timerSmartView');
+        return stored !== null ? stored === 'true' : true; // Default to smart view
+    }
+
+    setSmartViewEnabled(enabled) {
+        this.smartViewEnabled = enabled;
+        localStorage.setItem('timerSmartView', enabled.toString());
+        this.updateTimerViewToggleUI();
+    }
+
+    updateTimerViewToggleUI() {
+        if (!this.elements.timerViewToggle) return;
+
+        const toggleText = this.elements.timerViewToggle.querySelector('.toggle-text');
+        if (this.smartViewEnabled) {
+            // Smart View is ACTIVE → Button shows what happens on click: "Show All"
+            this.elements.timerViewToggle.classList.add('active');
+            if (toggleText) toggleText.textContent = 'Show All';
+        } else {
+            // Smart View is OFF → Button shows what happens on click: "Smart View"
+            this.elements.timerViewToggle.classList.remove('active');
+            if (toggleText) toggleText.textContent = 'Smart View';
+        }
+    }
+
+    toggleTimerView() {
+        this.setSmartViewEnabled(!this.smartViewEnabled);
+        this.updateVisibleTimers();
+    }
+
+    updateVisibleTimers() {
+        console.log('[SmartView] === START ===');
+        console.log('[SmartView] Config loaded:', !!this.config);
+        console.log('[SmartView] timerRows count:', this.elements.timerRows.length);
+
+        if (this.config && this.config.schedules) {
+            // Create list with enabled status
+            const timers = [];
+            this.elements.timerRows.forEach((row, index) => {
+                const enabled = this.config.schedules[index]?.enabled || false;
+                timers.push({ row, index, enabled });
+                console.log(`[SmartView] Timer ${index}: enabled=${enabled}`);
+            });
+
+            // Determine visibility mode
+            const isMobile = this.isMobileView();
+            const smartViewActive = isMobile && this.smartViewEnabled;
+            console.log('[SmartView] isMobile:', isMobile, 'smartViewEnabled:', this.smartViewEnabled, 'active:', smartViewActive);
+
+            if (smartViewActive) {
+                // Smart View: sort enabled first, then hide some
+                timers.sort((a, b) => {
+                    if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+                    return a.index - b.index;
+                });
+
+                // Apply sorted order
+                timers.forEach((t, order) => {
+                    t.row.style.order = order;
+                    console.log(`[SmartView] Timer ${t.index} → order ${order}`);
+                });
+
+                const enabledCount = timers.filter(t => t.enabled).length;
+                const showCount = Math.max(2, Math.min(6, enabledCount + 1));
+                console.log('[SmartView] Show count:', showCount, '/', timers.length);
+
+                timers.forEach((t, order) => {
+                    if (order < showCount) {
+                        t.row.classList.remove('timer-hidden');
+                        console.log(`[SmartView] Timer ${t.index}: SHOW`);
+                    } else {
+                        t.row.classList.add('timer-hidden');
+                        console.log(`[SmartView] Timer ${t.index}: HIDE`);
+                    }
+                });
+            } else {
+                // Show All: restore original order, show everything
+                console.log('[SmartView] Show ALL - restore original order');
+                timers.forEach(t => {
+                    t.row.style.order = t.index; // Original order
+                    t.row.classList.remove('timer-hidden');
+                    console.log(`[SmartView] Timer ${t.index}: order=${t.index}, SHOW`);
+                });
+            }
+        } else {
+            // No config: show all in original order
+            console.log('[SmartView] No config - show all');
+            this.elements.timerRows.forEach((row, index) => {
+                row.classList.remove('timer-hidden');
+                row.style.order = index;
+            });
+        }
+
+        this.updateTimerViewToggleUI();
+        console.log('[SmartView] === END ===');
     }
 }
