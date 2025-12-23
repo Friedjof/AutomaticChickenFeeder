@@ -10,11 +10,18 @@ An ESP32-C3 based automatic chicken feeder with RTC-scheduled feeding times, web
 |:----------------------:|:--------------------------:|
 | ![Schedule View](media/images/screenshot-mobile-head.png) | ![Manual Control](media/images/screenshot-mobile-footer.png) |
 
+## 🖨️ 3D Design
+
+| Cross-Section | Animated View | Top View |
+|:-------------:|:-------------:|:--------:|
+| ![Cross-Section](media/images/3d-side-cut-static.png) | ![3D Animation](media/images/3d-animation-1.gif) | ![Top View](media/images/3d-top-static.png) |
+
 ## ✨ Features
 
 - 🕐 **RTC-Based Scheduling** - DS3231 external RTC with alarm interrupts for precise feeding times
 - 📅 **Flexible Schedules** - Configure up to 6 feeding times with weekday selection (e.g., Mon-Fri only)
 - 🌐 **Embedded Web Interface** - Complete configuration via WiFi AP, no SD card needed
+- 📱 **Mobile-Optimized UI** - Smart View automatically shows relevant timers on mobile devices
 - 🔋 **Ultra-Low Power** - Deep sleep mode (~10-20µA) with dual wakeup sources
 - ⚡ **Smart Power Management** - Automatic sleep after 2 minutes inactivity
 - 🎚️ **Configurable Portions** - 1-5 portion units (12g per unit)
