@@ -76,20 +76,19 @@ void FeedingService::update() {
 
     case ATTACH_SERVOS:
       if (elapsed >= POWER_ON_DELAY) {
-        // Attach servos and immediately write target position to avoid default position jump
+        // Attach servos
         servo1.attach(SERVO1_PIN, 500, 2400);
         servo2.attach(SERVO2_PIN, 500, 2400);
 
-        // Immediately write target position to prevent jump to default
-        servo1.write(SERVO_MAX_ANGLE - targetPosition);
-        servo2.write(targetPosition);
-
-        position = targetPosition;
+        // Start at current position (will move stepwise to target)
+        currentStepPosition = position;
+        servo1.write(SERVO_MAX_ANGLE - currentStepPosition);
+        servo2.write(currentStepPosition);
 
         state = SERVO_READY;
         stateStartTime = currentTime;
-        Serial.print("[DEBUG] Servos attached and moving to position: ");
-        Serial.println(targetPosition);
+        Serial.printf("[DEBUG] Servos attached at position %d, will move to %d in steps\n",
+                      currentStepPosition, targetPosition);
       }
       break;
 
@@ -103,11 +102,42 @@ void FeedingService::update() {
       break;
 
     case MOVING:
-      if (elapsed >= SERVO_MOVE_TIME) {
-        // Movement complete, detach servos
-        state = DETACH_SERVOS;
-        stateStartTime = currentTime;
-        Serial.println("[DEBUG] Movement complete");
+      if (elapsed >= STEP_DELAY) {
+        // Calculate next step
+        if (currentStepPosition != targetPosition) {
+          // Move one step towards target
+          if (currentStepPosition < targetPosition) {
+            // Moving up (opening)
+            if (currentStepPosition + STEP_SIZE >= targetPosition) {
+              currentStepPosition = targetPosition;
+            } else {
+              currentStepPosition += STEP_SIZE;
+            }
+          } else {
+            // Moving down (closing)
+            if (currentStepPosition <= targetPosition + STEP_SIZE) {
+              currentStepPosition = targetPosition;
+            } else {
+              currentStepPosition -= STEP_SIZE;
+            }
+          }
+
+          // CRITICAL: Write both servos at EXACTLY the same time for synchronous movement
+          // servo1 rotates opposite direction, servo2 normal direction
+          servo1.write(SERVO_MAX_ANGLE - currentStepPosition);
+          servo2.write(currentStepPosition);
+
+          // Reset timer for next step
+          stateStartTime = currentTime;
+
+          Serial.printf("[DEBUG] Moving step: %d -> target: %d\n", currentStepPosition, targetPosition);
+        } else {
+          // Target reached, move to detach
+          position = targetPosition;
+          state = DETACH_SERVOS;
+          stateStartTime = currentTime;
+          Serial.println("[DEBUG] Movement complete");
+        }
       }
       break;
 
@@ -122,12 +152,16 @@ void FeedingService::update() {
     case POWER_OFF:
       digitalWrite(TRANSISTOR_PIN, LOW);
 
+      // DEBUG: Log state before checking conditions
+      Serial.printf("[DEBUG] POWER_OFF: isFeedSequence=%d, targetPosition=%d, feedsCompleted=%d/%d, time=%lu\n",
+                    isFeedSequence, targetPosition, feedsCompleted, feedCount, millis());
+
       // Check if this was part of a feed sequence and we just finished opening
       if (isFeedSequence && targetPosition == SERVO_MAX_ANGLE) {
-        // We just finished opening, now wait before closing
+        // We just finished opening, now wait before close
         state = FEED_WAITING;
         stateStartTime = currentTime;
-        Serial.println("[DEBUG] Power OFF, waiting before close");
+        Serial.printf("[DEBUG] Power OFF, waiting before close (start_time=%lu)\n", currentTime);
       } else if (isFeedSequence && targetPosition == SERVO_MIN_ANGLE) {
         // We just finished closing, check if we need more feedings
         feedsCompleted++;
@@ -135,7 +169,7 @@ void FeedingService::update() {
 
         if (feedsCompleted < feedCount) {
           // Start next feeding cycle
-          Serial.println("[DEBUG] Starting next portion");
+          Serial.printf("[DEBUG] Starting next portion (start_time=%lu)\n", currentTime);
           state = FEED_WAITING;
           stateStartTime = currentTime;
         } else {
@@ -159,11 +193,11 @@ void FeedingService::update() {
         // Wait time over
         if (targetPosition == SERVO_MAX_ANGLE) {
           // We were open, now close
-          Serial.println("[DEBUG] Wait complete, closing");
+          Serial.printf("[DEBUG] Wait complete (%lu ms), closing\n", elapsed);
           targetPosition = SERVO_MIN_ANGLE;
         } else {
           // We were closed, now open for next portion
-          Serial.println("[DEBUG] Wait complete, opening for next portion");
+          Serial.printf("[DEBUG] Wait complete (%lu ms), opening for next portion\n", elapsed);
           targetPosition = SERVO_MAX_ANGLE;
         }
         state = POWER_ON;

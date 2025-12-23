@@ -32,8 +32,12 @@ struct FeedHistoryEntry {
 // Timing constants (in milliseconds)
 #define POWER_ON_DELAY 100     // Time to wait after powering on servos
 #define SERVO_ATTACH_DELAY 100 // Time to wait after attaching servos before sending position
-#define SERVO_MOVE_TIME 620    // Time for servos to complete movement
+#define SERVO_MOVE_TIME 620    // Time for servos to complete movement (legacy, not used with stepwise movement)
 #define FEED_WAIT_TIME 1000    // Time to wait between open and close during feed
+
+// Stepwise movement constants
+#define STEP_SIZE 30           // Degrees per step
+#define STEP_DELAY 50          // Milliseconds between steps
 
 enum ServoState {
   IDLE,
@@ -70,6 +74,7 @@ public:
 private:
   uint8_t position = 0;
   uint8_t targetPosition = 0;
+  uint8_t currentStepPosition = 0;  // Current position during stepwise movement
   bool isFeedSequence = false;  // Track if we're in a feed sequence
   uint8_t feedCount = 0;         // Remaining feedings in sequence
   uint8_t feedsCompleted = 0;    // Completed feedings in sequence
