@@ -255,14 +255,6 @@ body {
     color: var(--muted);
     font-size: 0.95rem;
 }
-@media (max-width: 900px) {
-    .guide-hint-toggle {
-        display: inline-flex !important;
-    }
-    .guide-panel.collapsed .guide-content {
-        display: none;
-    }
-}
 .guide-hint-toggle {
     display: none;
     margin-top: 8px;
@@ -284,9 +276,18 @@ body {
     background: #e2e8f0;
     border-color: #cbd5e1;
 }
-@media (min-width: 901px) {
+@media (max-width: 900px) {
     .guide-hint-toggle {
-        display: none !important;
+        display: flex;
+    }
+    .guide-panel .panel-header {
+        flex-direction: column;
+    }
+    .guide-panel .panel-header > div {
+        width: 100%;
+    }
+    .guide-panel.collapsed .guide-content {
+        display: none;
     }
 }
 .guide-hint-bars {
@@ -439,17 +440,22 @@ body {
 
 .expand-btn {
     justify-self: end;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     background: var(--panel-soft);
     border-radius: 10px;
     padding: 8px 10px;
     cursor: pointer;
     font-weight: 700;
     color: var(--muted);
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, border-width 0.15s ease;
 }
-.expand-btn:hover { background: #e2e8f0; }
-.timer-row.expanded .expand-btn { transform: rotate(180deg); }
+.expand-btn:hover {
+    background: #e2e8f0;
+}
+.timer-row.expanded .expand-btn {
+    border: 2.5px solid var(--primary);
+    border-color: var(--primary);
+}
 
 .timer-details {
     max-height: 0; overflow: hidden;
@@ -687,10 +693,64 @@ body {
     .timer-main > .start-toggle { order: 0; }
     .timer-main > .portion-inline { order: 1; min-width: 70px; }
     .timer-main > .timer-time { order: 2; min-width: 120px; }
-    .timer-main > .expand-btn { order: 3; }
+    .timer-main > .expand-btn { order: 3; flex: 1; min-width: 46px; padding: 10px 12px; }
     .timer-main > .weekdays-checks { order: 4; flex: 1 0 100%; justify-content: space-between; margin-top: 4px; }
-    .timer-main > .expand-btn { min-width: 46px; padding: 10px 12px; }
     .toggle-switch-small { height: 30px; width: 56px; }
     .toggle-slider-small:before { height: 21px; width: 21px; bottom: 4.5px; left: 4.5px; }
     .toggle-switch-small input:checked + .toggle-slider-small:before { transform: translateX(25px); }
+}
+
+/* Timer View Toggle (Mobile only) */
+.timer-view-toggle {
+    display: none;
+    margin: 12px 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--panel-soft);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.85rem;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+.timer-view-toggle:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+.timer-view-toggle .toggle-icon {
+    font-size: 1rem;
+    transition: transform 0.2s ease;
+}
+.timer-view-toggle.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 900px) {
+    .timer-view-toggle {
+        display: flex;
+    }
+}
+
+/* Smart View - Hidden timers with animation */
+.timer-row {
+    overflow: hidden;
+    transition: opacity 0.25s ease, transform 0.25s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    max-height: 500px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.timer-row.timer-hidden {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-10px);
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    overflow: hidden;
 }
