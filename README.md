@@ -16,6 +16,8 @@ An ESP32-C3 based automatic chicken feeder with RTC-scheduled feeding times, web
 |:-------------:|:-------------:|:--------:|
 | ![Cross-Section](media/images/3d-side-cut-static.png) | ![3D Animation](media/images/3d-animation-1.gif) | ![Top View](media/images/3d-top-static.png) |
 
+> **Note:** 3D printable models (.stl files) will be added soon.
+
 ## ✨ Features
 
 - 🕐 **RTC-Based Scheduling** - DS3231 external RTC with alarm interrupts for precise feeding times
