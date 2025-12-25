@@ -37,7 +37,7 @@ struct FeedHistoryEntry {
 
 // Stepwise movement constants
 #define STEP_SIZE 30           // Degrees per step
-#define STEP_DELAY 50          // Milliseconds between steps
+#define STEP_DELAY 100          // Milliseconds between steps
 
 enum ServoState {
   IDLE,
