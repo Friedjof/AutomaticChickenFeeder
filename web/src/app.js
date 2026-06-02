@@ -121,8 +121,9 @@ export class ChickenFeederApp {
 
         // Portion unit change
         if (this.elements.portionUnitInput) {
-            this.elements.portionUnitInput.addEventListener('change', () => this.updatePortionUnit());
             this.elements.portionUnitInput.addEventListener('input', () => this.updatePortionUnit());
+            this.elements.portionUnitInput.addEventListener('change', () => this.updatePortionUnit({ commit: true }));
+            this.elements.portionUnitInput.addEventListener('blur', () => this.updatePortionUnit({ commit: true }));
         }
 
         // OTA firmware selection
@@ -681,6 +682,8 @@ export class ChickenFeederApp {
 
     async saveScheduleOnly() {
         try {
+            this.updatePortionUnit({ commit: true });
+
             const scheduleConfig = {
                 schedules: this.config.schedules,
                 portion_unit_grams: this.getPortionUnitGrams()
@@ -899,19 +902,42 @@ export class ChickenFeederApp {
         reader.readAsText(file);
     }
 
-    updatePortionUnit() {
+    refreshPortionUnitDisplays() {
         if (!this.config) return;
-        const val = parseInt(this.elements.portionUnitInput.value, 10);
-        const grams = Math.min(100, Math.max(1, isNaN(val) ? this.getPortionUnitGrams() : val));
-        this.config.portion_unit_grams = grams;
-        this.elements.portionUnitInput.value = grams;
 
-        // Refresh inline displays
         this.elements.timerRows.forEach((row, index) => {
             if (this.config.schedules[index]) {
                 this.updatePortionDisplay(row, this.config.schedules[index].portion_units);
             }
         });
+    }
+
+    updatePortionUnit({ commit = false } = {}) {
+        if (!this.config) return;
+
+        const rawValue = this.elements.portionUnitInput.value.trim();
+        if (rawValue === '') {
+            if (commit) {
+                this.elements.portionUnitInput.value = this.getPortionUnitGrams();
+            }
+            return;
+        }
+
+        const val = parseInt(rawValue, 10);
+        if (isNaN(val)) {
+            if (commit) {
+                this.elements.portionUnitInput.value = this.getPortionUnitGrams();
+            }
+            return;
+        }
+
+        const grams = Math.min(100, Math.max(1, val));
+        this.config.portion_unit_grams = grams;
+        if (commit) {
+            this.elements.portionUnitInput.value = grams;
+        }
+
+        this.refreshPortionUnitDisplays();
     }
 
     bindDeepSleepGesture(button) {
