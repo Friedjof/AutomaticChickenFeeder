@@ -45,7 +45,7 @@ echo -e "${BLUE}🚀 Starting deployment...${NC}"
 # Clean target directory (except config.json backup)
 echo -e "${YELLOW}🧹 Cleaning target directory...${NC}"
 find "$TARGET_DIR" -type f -not -name "config.json" -delete 2>/dev/null || true
-find "$TARGET_DIR" -type d -empty -delete 2>/dev/null || true
+find "$TARGET_DIR" -mindepth 1 -type d -empty -delete 2>/dev/null || true
 
 # Copy web files to temporary location for processing
 echo -e "${YELLOW}📂 Copying source files...${NC}"
