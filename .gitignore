@@ -5,5 +5,7 @@ data/
 build/
 web/node_modules/
 web/dist/
+web/.vite-cache/
+data-template/
 
 media/pcb/
