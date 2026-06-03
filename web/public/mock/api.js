@@ -5,6 +5,8 @@ class MockAPI {
     constructor() {
         // Load initial config from localStorage or use defaults
         this.config = this.loadConfig();
+        this.deviceTimeMs = Date.now();
+        this.deviceTimeStartedAtMs = Date.now();
         this.status = {
             isOnline: true,
             servoPosition: 'Closed',
@@ -48,6 +50,11 @@ class MockAPI {
         localStorage.setItem('chicken-feeder-config', JSON.stringify(this.config));
     }
 
+    getCurrentDeviceDate() {
+        const elapsed = Date.now() - this.deviceTimeStartedAtMs;
+        return new Date(this.deviceTimeMs + elapsed);
+    }
+
     // Simulate network delay
     async delay(ms = 200 + Math.random() * 300) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -77,6 +84,26 @@ class MockAPI {
         return {
             success: true,
             data: { ...this.config }
+        };
+    }
+
+    async getTime() {
+        await this.delay(50);
+
+        const now = this.getCurrentDeviceDate();
+
+        return {
+            success: true,
+            data: {
+                year: now.getFullYear(),
+                month: now.getMonth() + 1,
+                day: now.getDate(),
+                hour: now.getHours(),
+                minute: now.getMinutes(),
+                second: now.getSeconds(),
+                timezone: 'Mock',
+                utc_offset_seconds: -now.getTimezoneOffset() * 60
+            }
         };
     }
 
@@ -184,6 +211,9 @@ class MockAPI {
     async syncTime(unixTime) {
         await this.delay(50);
 
+        this.deviceTimeMs = unixTime * 1000;
+        this.deviceTimeStartedAtMs = Date.now();
+
         console.log(`[MOCK] Time sync called with timestamp: ${unixTime}`);
         console.log(`[MOCK] That's: ${new Date(unixTime * 1000).toISOString()}`);
 
@@ -268,6 +298,7 @@ window.mockAPI = new MockAPI();
 console.log('Mock API loaded. Available methods:');
 console.log('- mockAPI.getStatus()');
 console.log('- mockAPI.getConfig()');
+console.log('- mockAPI.getTime()');
 console.log('- mockAPI.saveConfig(config)');
 console.log('- mockAPI.triggerFeed()');
 console.log('- mockAPI.resetConfig()');

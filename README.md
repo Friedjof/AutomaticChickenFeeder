@@ -24,12 +24,13 @@ An ESP32-C3 based automatic chicken feeder with RTC-scheduled feeding times, web
 - 📅 **Flexible Schedules** - Configure up to 6 feeding times with weekday selection (e.g., Mon-Fri only)
 - 🌐 **Embedded Web Interface** - Complete configuration via WiFi AP, no SD card needed
 - 📱 **Mobile-Optimized UI** - Smart View automatically shows relevant timers on mobile devices
+- 🖥️ **Visible Device Clock** - Current device date/time shown in the top bar of the web UI
 - 🔋 **Ultra-Low Power** - Deep sleep mode (~10-20µA) with dual wakeup sources
 - ⚡ **Smart Power Management** - Automatic sleep after 2 minutes inactivity
 - 🎚️ **Configurable Portions** - 1-5 portion units (12g per unit)
 - 🔘 **Physical Button Control** - Single/double/long-press for manual operation
-- 🕒 **Automatic Time Sync** - Browser syncs time to RTC every 10 seconds
-- 🌍 **Timezone Support** - Europe/Berlin (CET/CEST) timezone
+- 🕒 **Automatic Time Sync** - Browser syncs time to RTC when the web UI opens
+- 🌍 **Timezone Support** - Europe/Berlin with CET/CEST daylight saving handling
 - 🔄 **OTA Firmware Updates** - Update firmware over WiFi without USB cable
 
 ## 🎮 Button Controls
@@ -135,7 +136,7 @@ make list
 5. **Save configuration** - Stored in ESP32 NVS (non-volatile storage)
 
 ### Manual Time Sync
-Time syncs automatically from your browser every 10 seconds while the web page is open. Initial setup requires opening the web interface once to set the RTC time.
+Time syncs automatically from your browser when the web UI opens. The device clock shown in the top bar is loaded from the RTC once at startup and then advanced locally in the browser. Initial setup requires opening the web interface once to set the RTC time.
 
 ### Config Import/Export
 Download or upload your configuration as JSON for backup or transfer to another device.

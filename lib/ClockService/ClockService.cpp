@@ -2,6 +2,44 @@
 
 ClockService::ClockService() : available(false), lastSyncTime(0) {}
 
+uint8_t ClockService::lastSundayOfMonth(uint16_t year, uint8_t month) {
+    DateTime firstOfNextMonth = month == 12
+        ? DateTime(year + 1, 1, 1, 0, 0, 0)
+        : DateTime(year, month + 1, 1, 0, 0, 0);
+    DateTime lastOfMonth(firstOfNextMonth.unixtime() - 24 * 60 * 60);
+    return lastOfMonth.day() - lastOfMonth.dayOfTheWeek();
+}
+
+bool ClockService::isDstEuropeBerlinFromUtc(const DateTime &utcTime) {
+    const uint8_t month = utcTime.month();
+    if (month < 3 || month > 10) return false;
+    if (month > 3 && month < 10) return true;
+
+    const uint8_t lastSunday = lastSundayOfMonth(utcTime.year(), month);
+    if (month == 3) {
+        return utcTime.day() > lastSunday ||
+               (utcTime.day() == lastSunday && utcTime.hour() >= 1);
+    }
+
+    return utcTime.day() < lastSunday ||
+           (utcTime.day() == lastSunday && utcTime.hour() < 1);
+}
+
+bool ClockService::isDstEuropeBerlinLocal(const DateTime &localTime) {
+    const uint8_t month = localTime.month();
+    if (month < 3 || month > 10) return false;
+    if (month > 3 && month < 10) return true;
+
+    const uint8_t lastSunday = lastSundayOfMonth(localTime.year(), month);
+    if (month == 3) {
+        return localTime.day() > lastSunday ||
+               (localTime.day() == lastSunday && localTime.hour() >= 3);
+    }
+
+    return localTime.day() < lastSunday ||
+           (localTime.day() == lastSunday && localTime.hour() < 3);
+}
+
 bool ClockService::begin() {
     if (!rtc.begin()) {
         Serial.println("[CLOCK] DS3231 not found!");
@@ -34,19 +72,17 @@ bool ClockService::setTime(uint32_t unixTime) {
         return false;
     }
 
-    // Convert UTC to Europe/Berlin timezone (CET/CEST)
-    // Winter (CET): UTC+1 = +3600 seconds
-    // Summer (CEST): UTC+2 = +7200 seconds
-    // For simplicity, using fixed CET offset (UTC+1)
-    const int32_t TIMEZONE_OFFSET = 3600; // +1 hour for CET (winter)
-
-    DateTime localTime(unixTime + TIMEZONE_OFFSET);
+    const DateTime utcTime(unixTime);
+    const bool isDst = isDstEuropeBerlinFromUtc(utcTime);
+    const int32_t timezoneOffset = isDst ? 7200 : 3600;
+    DateTime localTime(unixTime + timezoneOffset);
     rtc.adjust(localTime);
     lastSyncTime = millis();
 
-    Serial.printf("[CLOCK] Time set to: %04d-%02d-%02d %02d:%02d:%02d (UTC+1)\n",
+    Serial.printf("[CLOCK] Time set to: %04d-%02d-%02d %02d:%02d:%02d (%s)\n",
                   localTime.year(), localTime.month(), localTime.day(),
-                  localTime.hour(), localTime.minute(), localTime.second());
+                  localTime.hour(), localTime.minute(), localTime.second(),
+                  isDst ? "CEST" : "CET");
 
     return true;
 }
@@ -57,6 +93,16 @@ DateTime ClockService::now() {
         return DateTime((uint32_t)0);
     }
     return rtc.now();
+}
+
+int32_t ClockService::getCurrentUtcOffsetSeconds() {
+    if (!available) return 0;
+    return isDstEuropeBerlinLocal(rtc.now()) ? 7200 : 3600;
+}
+
+const char* ClockService::getCurrentTimeZoneName() {
+    if (!available) return "UTC";
+    return isDstEuropeBerlinLocal(rtc.now()) ? "CEST" : "CET";
 }
 
 bool ClockService::needsSync(uint32_t thresholdMs) {

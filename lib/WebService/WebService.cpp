@@ -135,6 +135,11 @@ void WebService::setupRoutes() {
         handlePostFeed(request);
     });
 
+    server.on("/api/time", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        updateClientActivity();
+        handleGetTime(request);
+    });
+
     server.on("/api/time", HTTP_POST, [](AsyncWebServerRequest *request) {},
               NULL, [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
         updateClientActivity();
@@ -446,6 +451,25 @@ void WebService::handleSleep(AsyncWebServerRequest *request) {
     // Defer actual sleep to allow response to flush
     sleepRequested = true;
     sleepRequestMillis = millis();
+}
+
+void WebService::handleGetTime(AsyncWebServerRequest *request) {
+    DateTime now = clockService.now();
+
+    JsonDocument response;
+    response["success"] = true;
+
+    JsonObject data = response["data"].to<JsonObject>();
+    data["year"] = now.year();
+    data["month"] = now.month();
+    data["day"] = now.day();
+    data["hour"] = now.hour();
+    data["minute"] = now.minute();
+    data["second"] = now.second();
+    data["timezone"] = clockService.getCurrentTimeZoneName();
+    data["utc_offset_seconds"] = clockService.getCurrentUtcOffsetSeconds();
+
+    sendJsonResponse(request, response);
 }
 
 void WebService::handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
