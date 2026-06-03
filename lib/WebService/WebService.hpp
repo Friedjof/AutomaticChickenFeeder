@@ -56,6 +56,7 @@ private:
     void handleGetStatus(AsyncWebServerRequest *request);
     void handleGetFeedHistory(AsyncWebServerRequest *request);
     void handleGetConfig(AsyncWebServerRequest *request);
+    void handleGetTime(AsyncWebServerRequest *request);
     void handlePostConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len);
     void handlePostFeed(AsyncWebServerRequest *request);
     void handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len);

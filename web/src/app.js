@@ -8,9 +8,11 @@ export class ChickenFeederApp {
         this.config = null;
         this.status = null;
         this.updateInterval = null;
-        this.timeSyncInterval = null;
+        this.deviceClockInterval = null;
+        this.deviceTime = null;
+        this.deviceTimeZone = '';
         this.mockApi = window.mockAPI;
-        this.useMock = !!this.mockApi && this.shouldUseMockFromQuery();
+        this.useMock = this.shouldUseMockFromQuery();
         this.mockLoadPromise = null;
         this.feedHistory = [];
         this.feedHistoryInterval = null;
@@ -41,6 +43,8 @@ export class ChickenFeederApp {
         this.elements.statusIndicator = document.getElementById('statusIndicator');
         this.elements.servoPosition = document.getElementById('servoPosition');
         this.elements.lastFeedTime = document.getElementById('lastFeedTime');
+        this.elements.deviceTime = document.getElementById('deviceTime');
+        this.elements.deviceDate = document.getElementById('deviceDate');
         this.elements.feedLogToggle = document.getElementById('feedLogToggle');
         this.elements.feedLogOverlay = document.getElementById('feedLogOverlay');
         this.elements.feedLogList = document.getElementById('feedLogList');
@@ -236,6 +240,14 @@ export class ChickenFeederApp {
         return await this.apiRequest('/config');
     }
 
+    async getTime() {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.getTime();
+        }
+        return await this.apiRequest('/time');
+    }
+
     async getFeedHistory(limit = 10) {
         if (this.useMock) {
             if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
@@ -345,6 +357,25 @@ export class ChickenFeederApp {
         }
     }
 
+    async loadDeviceTime() {
+        try {
+            const response = await this.getTime();
+            if (!response.success || !response.data) {
+                return false;
+            }
+
+            const { year, month, day, hour, minute, second, timezone } = response.data;
+            this.deviceTime = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+            this.deviceTimeZone = timezone || '';
+            this.renderDeviceTime();
+            this.startDeviceClock();
+            return true;
+        } catch (error) {
+            console.error('[TIME] Failed to load device time:', error);
+            return false;
+        }
+    }
+
     async loadInitialData() {
         try {
             if (this.useMock && !await this.ensureMockReady()) {
@@ -423,23 +454,48 @@ export class ChickenFeederApp {
     }
 
     startTimeSync() {
-        // Sync immediately on start
-        this.syncTime();
-
-        // Then sync every 10 seconds
-        this.timeSyncInterval = setInterval(() => {
-            this.syncTime();
-        }, 10000); // 10 seconds
-
-        console.log('[TIME] Started periodic time sync (every 10s)');
+        (async () => {
+            await this.syncTime();
+            await this.loadDeviceTime();
+        })();
     }
 
     stopTimeSync() {
-        if (this.timeSyncInterval) {
-            clearInterval(this.timeSyncInterval);
-            this.timeSyncInterval = null;
-            console.log('[TIME] Stopped periodic time sync');
+        if (this.deviceClockInterval) {
+            clearInterval(this.deviceClockInterval);
+            this.deviceClockInterval = null;
         }
+    }
+
+    startDeviceClock() {
+        if (!this.deviceTime || this.deviceClockInterval) return;
+
+        this.deviceClockInterval = setInterval(() => {
+            this.deviceTime = new Date(this.deviceTime.getTime() + 1000);
+            this.renderDeviceTime();
+        }, 1000);
+    }
+
+    renderDeviceTime() {
+        if (!this.elements.deviceDate || !this.elements.deviceTime) return;
+
+        if (!this.deviceTime) {
+            this.elements.deviceDate.textContent = 'Device time unavailable';
+            this.elements.deviceTime.textContent = '--:--:--';
+            return;
+        }
+
+        const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekday = weekdayNames[this.deviceTime.getUTCDay()];
+        const day = String(this.deviceTime.getUTCDate()).padStart(2, '0');
+        const month = String(this.deviceTime.getUTCMonth() + 1).padStart(2, '0');
+        const year = this.deviceTime.getUTCFullYear();
+        const hour = String(this.deviceTime.getUTCHours()).padStart(2, '0');
+        const minute = String(this.deviceTime.getUTCMinutes()).padStart(2, '0');
+        const second = String(this.deviceTime.getUTCSeconds()).padStart(2, '0');
+
+        this.elements.deviceDate.textContent = `${weekday}, ${day}.${month}.${year}${this.deviceTimeZone ? ` · ${this.deviceTimeZone}` : ''}`;
+        this.elements.deviceTime.textContent = `${hour}:${minute}:${second}`;
     }
 
     async updateStatus() {

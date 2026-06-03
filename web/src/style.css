@@ -42,6 +42,12 @@ body {
 
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.02em; }
+.topbar-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
 .logo {
     width: 46px; height: 46px; border-radius: 12px;
     background: linear-gradient(135deg, #fda34b, #f97316);
@@ -76,6 +82,25 @@ body {
 }
 .status-dot.offline { background: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.16); animation: none; }
 @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.92); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+
+.device-time-card {
+    text-align: right;
+    color: var(--text);
+}
+
+.device-time-date {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.device-time-value {
+    margin: 2px 0 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
 
 .layout { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 .panel {
@@ -683,8 +708,11 @@ body {
 @media (max-width: 760px) {
     body { padding: 14px 10px 24px; }
     .topbar { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+    .topbar-meta { align-items: flex-end; }
     .status-pill { padding: 6px 10px; gap: 6px; font-size: 0.9rem; }
     .status-dot { width: 9px; height: 9px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14); }
+    .device-time-date { font-size: 0.72rem; }
+    .device-time-value { font-size: 1rem; }
     .panel { padding: 14px 12px; }
     .feed-button { width: 100%; justify-content: center; }
     .hero-text h2 { font-size: 1.5rem; }
