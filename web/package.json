@@ -10,6 +10,6 @@
     "build:esp": "vite build && python3 ../scripts/web-to-header.py dist -o ../lib/WebService/generated"
   },
   "devDependencies": {
-    "vite": "^5.4.8"
+    "vite": "^8.0.16"
   }
 }
