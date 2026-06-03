@@ -10,6 +10,7 @@ const appVersion = versionMatch || 'v1.0.0';
 
 export default defineConfig({
   base: './',
+  cacheDir: '.vite-cache',
   server: {
     host: true,
     port: 8000
