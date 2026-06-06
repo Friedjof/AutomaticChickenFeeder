@@ -55,6 +55,11 @@ class MockAPI {
         return new Date(this.deviceTimeMs + elapsed);
     }
 
+    getCurrentTimeZoneLabel(date = this.getCurrentDeviceDate()) {
+        const offsetMinutes = -date.getTimezoneOffset();
+        return offsetMinutes >= 120 ? 'CEST' : 'CET';
+    }
+
     // Simulate network delay
     async delay(ms = 200 + Math.random() * 300) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -101,7 +106,7 @@ class MockAPI {
                 hour: now.getHours(),
                 minute: now.getMinutes(),
                 second: now.getSeconds(),
-                timezone: 'Mock',
+                timezone: this.getCurrentTimeZoneLabel(now),
                 utc_offset_seconds: -now.getTimezoneOffset() * 60
             }
         };

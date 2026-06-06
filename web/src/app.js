@@ -45,6 +45,7 @@ export class ChickenFeederApp {
         this.elements.lastFeedTime = document.getElementById('lastFeedTime');
         this.elements.deviceTime = document.getElementById('deviceTime');
         this.elements.deviceDate = document.getElementById('deviceDate');
+        this.elements.deviceTimezone = document.getElementById('deviceTimezone');
         this.elements.feedLogToggle = document.getElementById('feedLogToggle');
         this.elements.feedLogOverlay = document.getElementById('feedLogOverlay');
         this.elements.feedLogList = document.getElementById('feedLogList');
@@ -477,16 +478,16 @@ export class ChickenFeederApp {
     }
 
     renderDeviceTime() {
-        if (!this.elements.deviceDate || !this.elements.deviceTime) return;
+        if (!this.elements.deviceDate || !this.elements.deviceTime || !this.elements.deviceTimezone) return;
 
         if (!this.deviceTime) {
             this.elements.deviceDate.textContent = 'Device time unavailable';
             this.elements.deviceTime.textContent = '--:--:--';
+            this.elements.deviceTimezone.textContent = '';
+            this.elements.deviceTimezone.hidden = true;
             return;
         }
 
-        const weekdayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const weekday = weekdayNames[this.deviceTime.getUTCDay()];
         const day = String(this.deviceTime.getUTCDate()).padStart(2, '0');
         const month = String(this.deviceTime.getUTCMonth() + 1).padStart(2, '0');
         const year = this.deviceTime.getUTCFullYear();
@@ -494,8 +495,10 @@ export class ChickenFeederApp {
         const minute = String(this.deviceTime.getUTCMinutes()).padStart(2, '0');
         const second = String(this.deviceTime.getUTCSeconds()).padStart(2, '0');
 
-        this.elements.deviceDate.textContent = `${weekday}, ${day}.${month}.${year}${this.deviceTimeZone ? ` · ${this.deviceTimeZone}` : ''}`;
+        this.elements.deviceDate.textContent = `${day}.${month}.${year}`;
         this.elements.deviceTime.textContent = `${hour}:${minute}:${second}`;
+        this.elements.deviceTimezone.textContent = this.deviceTimeZone;
+        this.elements.deviceTimezone.hidden = !this.deviceTimeZone;
     }
 
     async updateStatus() {
