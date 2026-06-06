@@ -16,7 +16,7 @@ struct Schedule {
     bool enabled;
     char time[6];  // "HH:MM"
     uint8_t weekday_mask;  // Bit 0=Sunday, 1=Monday, ..., 6=Saturday
-    uint8_t portion_units; // 1-5 units (12g each)
+    uint8_t portion_units; // 1-10 units
 };
 
 class ConfigService {
@@ -34,6 +34,8 @@ public:
     // Config metadata
     uint8_t getPortionUnitGrams();
     void setPortionUnitGrams(uint8_t grams);
+    uint8_t getManualPortionUnits();
+    void setManualPortionUnits(uint8_t units);
 
     // Feed history management
     bool saveFeedHistory(const FeedHistoryEntry* history, uint8_t count);
@@ -46,6 +48,7 @@ public:
 private:
     Preferences preferences;
     uint8_t portionUnitGrams;
+    uint8_t manualPortionUnits;
 
     void getScheduleKey(uint8_t index, char *key);
 };

@@ -350,6 +350,7 @@ void WebService::handleGetConfig(AsyncWebServerRequest *request) {
     JsonObject data = doc["data"].to<JsonObject>();
     data["version"] = 1;
     data["portion_unit_grams"] = configService.getPortionUnitGrams();
+    data["manual_portion_units"] = configService.getManualPortionUnits();
 
     JsonArray schedules = data["schedules"].to<JsonArray>();
 
@@ -392,8 +393,8 @@ void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data,
             schedule.portion_units = s["portion_units"] | 1;
 
             // Validate portion_units
-            if (schedule.portion_units < 1 || schedule.portion_units > 5) {
-                sendError(request, "Invalid portion size. Must be between 1-5 units (12-60g).", 400);
+            if (schedule.portion_units < 1 || schedule.portion_units > 10) {
+                sendError(request, "Invalid portion size. Must be between 1-10 units.", 400);
                 return;
             }
 
@@ -405,6 +406,15 @@ void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data,
     if (!doc["portion_unit_grams"].isNull()) {
         uint8_t grams = doc["portion_unit_grams"];
         configService.setPortionUnitGrams(grams);
+    }
+
+    if (!doc["manual_portion_units"].isNull()) {
+        uint8_t units = doc["manual_portion_units"];
+        if (units < 1 || units > 10) {
+            sendError(request, "Invalid manual feed amount. Must be between 1-10 units.", 400);
+            return;
+        }
+        configService.setManualPortionUnits(units);
     }
 
     JsonDocument response;
@@ -423,8 +433,7 @@ void WebService::handlePostFeed(AsyncWebServerRequest *request) {
         return;
     }
 
-    // Trigger manual feed with 1 portion
-    feedingService.feed(1);
+    feedingService.feed(configService.getManualPortionUnits());
 
     JsonDocument doc;
     doc["success"] = true;

@@ -199,7 +199,7 @@ void doubleClickHandler(Button2 &btn) {
   }
 
   Serial.println("[BUTTON] Double click - Manual feed");
-  feedingService.feed(1);
+  feedingService.feed(configService.getManualPortionUnits());
 }
 
 void longClickHandler(Button2 &btn) {

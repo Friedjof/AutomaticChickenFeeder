@@ -227,8 +227,42 @@ body {
 .feed-button:disabled { opacity: 0.7; cursor: not-allowed; }
 .feed-button.feeding { background: linear-gradient(135deg, #22c55e, #16a34a); }
 .feed-icon { font-size: 1.2rem; }
+.manual-feed-summary {
+    margin-top: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
 
+.feed-settings-panel,
 .schedule-panel { display: flex; flex-direction: column; gap: 14px; }
+.feed-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+.feed-setting-card {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.feed-setting-card label {
+    font-weight: 700;
+    color: var(--text);
+}
+.feed-setting-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.feed-setting-value {
+    color: var(--accent-strong);
+    font-weight: 800;
+}
 .panel-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .ghost-btn {
     border: 1px solid var(--success);
@@ -702,6 +736,7 @@ body {
 
 @media (max-width: 900px) {
     .hero { grid-template-columns: 1fr; }
+    .feed-settings-grid { grid-template-columns: 1fr; }
     .feed-timers { grid-template-columns: 1fr; }
 }
 

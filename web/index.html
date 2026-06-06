@@ -37,6 +37,7 @@
                         <span class="feed-icon">🌾</span>
                         <span>Feed Now</span>
                     </button>
+                    <p class="manual-feed-summary muted" id="manualFeedSummary">Manual feed amount: 12g</p>
                 </div>
                 <div class="hero-stats">
                     <div class="stat-card">
@@ -53,6 +54,29 @@
                 </div>
             </section>
 
+            <section class="panel feed-settings-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Feed settings</p>
+                        <h3>Global feed settings</h3>
+                        <p class="muted">Applies to Feed Now, button feed, and scheduled feedings.</p>
+                    </div>
+                </div>
+                <div class="feed-settings-grid">
+                    <div class="feed-setting-card">
+                        <label for="portionUnitInput">Portion size (g per unit)</label>
+                        <input id="portionUnitInput" type="number" min="1" max="100" step="1" value="12">
+                    </div>
+                    <div class="feed-setting-card">
+                        <div class="feed-setting-header">
+                            <label for="manualPortionSlider">Manual feed amount</label>
+                            <span class="feed-setting-value" id="manualPortionDisplay">12g</span>
+                        </div>
+                        <input id="manualPortionSlider" type="range" class="portion-slider" min="1" max="10" value="1" step="1">
+                    </div>
+                </div>
+            </section>
+
             <section class="panel schedule-panel">
                 <div class="panel-header">
                     <div>
@@ -60,10 +84,6 @@
                         <h3>Weekly routine</h3>
                         <p class="muted">Enable up to four feedings and tune time, days and portion.</p>
                     </div>
-                </div>
-                <div class="portion-unit-row">
-                    <label for="portionUnitInput">Portion size (g per unit)</label>
-                    <input id="portionUnitInput" type="number" min="1" max="100" step="1" value="12">
                 </div>
                 <button class="timer-view-toggle" id="timerViewToggle" aria-label="Toggle timer view">
                     <span class="toggle-icon">⚡</span>
@@ -91,7 +111,7 @@
                         </div>
                         <div class="timer-details">
                             <div class="detail-row">
-                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                                <input type="range" class="portion-slider" min="1" max="10" value="1" step="1">
                             </div>
                         </div>
                     </div>
@@ -117,7 +137,7 @@
                         </div>
                         <div class="timer-details">
                             <div class="detail-row">
-                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                                <input type="range" class="portion-slider" min="1" max="10" value="1" step="1">
                             </div>
                         </div>
                     </div>
@@ -143,7 +163,7 @@
                         </div>
                         <div class="timer-details">
                             <div class="detail-row">
-                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                                <input type="range" class="portion-slider" min="1" max="10" value="1" step="1">
                             </div>
                         </div>
                     </div>
@@ -169,7 +189,7 @@
                         </div>
                         <div class="timer-details">
                             <div class="detail-row">
-                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                                <input type="range" class="portion-slider" min="1" max="10" value="1" step="1">
                             </div>
                         </div>
                     </div>
@@ -195,7 +215,7 @@
                         </div>
                         <div class="timer-details">
                             <div class="detail-row">
-                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                                <input type="range" class="portion-slider" min="1" max="10" value="1" step="1">
                             </div>
                         </div>
                     </div>
@@ -221,7 +241,7 @@
                         </div>
                         <div class="timer-details">
                             <div class="detail-row">
-                                <input type="range" class="portion-slider" min="1" max="5" value="1" step="1">
+                                <input type="range" class="portion-slider" min="1" max="10" value="1" step="1">
                             </div>
                         </div>
                     </div>
