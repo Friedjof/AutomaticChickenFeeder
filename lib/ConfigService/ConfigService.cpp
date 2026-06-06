@@ -139,22 +139,27 @@ void ConfigService::setManualPortionUnits(uint8_t units) {
     Serial.printf("[CONFIG] Manual feed amount updated to %d units\n", units);
 }
 
-bool ConfigService::saveFeedHistory(const FeedHistoryEntry* history, uint8_t count) {
+bool ConfigService::saveFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex) {
     if (count > MAX_FEED_HISTORY) {
         count = MAX_FEED_HISTORY;
+    }
+    if (writeIndex >= MAX_FEED_HISTORY) {
+        writeIndex = count % MAX_FEED_HISTORY;
     }
 
     // Save history as binary blob for efficiency
     size_t dataSize = count * sizeof(FeedHistoryEntry);
     preferences.putBytes("feedHist", history, dataSize);
     preferences.putUChar("feedHistCnt", count);
+    preferences.putUChar("feedHistIdx", writeIndex);
 
-    Serial.printf("[CONFIG] Saved %d feed history entries (%d bytes)\n", count, dataSize);
+    Serial.printf("[CONFIG] Saved %d feed history entries (%d bytes), write index %d\n", count, dataSize, writeIndex);
     return true;
 }
 
-uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount) {
+uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount, uint8_t &writeIndex) {
     uint8_t count = preferences.getUChar("feedHistCnt", 0);
+    writeIndex = 0;
 
     if (count == 0) {
         Serial.println("[CONFIG] No feed history found");
@@ -173,13 +178,19 @@ uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCou
         return 0;
     }
 
-    Serial.printf("[CONFIG] Loaded %d feed history entries\n", count);
+    writeIndex = preferences.getUChar("feedHistIdx", count % MAX_FEED_HISTORY);
+    if (writeIndex >= MAX_FEED_HISTORY) {
+        writeIndex = count % MAX_FEED_HISTORY;
+    }
+
+    Serial.printf("[CONFIG] Loaded %d feed history entries, write index %d\n", count, writeIndex);
     return count;
 }
 
 bool ConfigService::clearFeedHistory() {
     preferences.remove("feedHist");
     preferences.remove("feedHistCnt");
+    preferences.remove("feedHistIdx");
     Serial.println("[CONFIG] Feed history cleared");
     return true;
 }

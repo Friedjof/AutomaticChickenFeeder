@@ -23,7 +23,7 @@ void FeedingService::feed(uint8_t count) {
 
   // Validate count
   if (count < 1) count = 1;
-  if (count > 5) count = 5;
+  if (count > 10) count = 10;
 
   feedCount = count;
   feedsCompleted = 0;
@@ -256,7 +256,7 @@ void FeedingService::addFeedToHistory(uint32_t timestamp, uint8_t portionUnits) 
 
   // Immediately save to persistent storage
   if (configService) {
-    configService->saveFeedHistory(feedHistory, feedHistoryCount);
+    configService->saveFeedHistory(feedHistory, feedHistoryCount, feedHistoryIndex);
     Serial.println("[INFO] Feed history saved to NVS");
   }
 }
@@ -265,7 +265,7 @@ uint8_t FeedingService::getFeedHistoryCount() const {
   return feedHistoryCount;
 }
 
-void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t count) {
+void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex) {
   if (count > MAX_FEED_HISTORY) {
     count = MAX_FEED_HISTORY;
   }
@@ -279,7 +279,7 @@ void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t co
   }
 
   feedHistoryCount = count;
-  feedHistoryIndex = count % MAX_FEED_HISTORY;
+  feedHistoryIndex = (writeIndex < MAX_FEED_HISTORY) ? writeIndex : (count % MAX_FEED_HISTORY);
 
   Serial.printf("[INFO] Loaded %d feed history entries, next index will be %d\n", count, feedHistoryIndex);
 }

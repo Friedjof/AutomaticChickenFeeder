@@ -109,14 +109,14 @@ void WebService::setupRoutes() {
     });
 
     // API endpoints
-    server.on("/api/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
-        updateClientActivity();
-        handleGetStatus(request);
-    });
-
     server.on("/api/status/history", HTTP_GET, [this](AsyncWebServerRequest *request) {
         updateClientActivity();
         handleGetFeedHistory(request);
+    });
+
+    server.on("/api/status", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        updateClientActivity();
+        handleGetStatus(request);
     });
 
     server.on("/api/config", HTTP_GET, [this](AsyncWebServerRequest *request) {
@@ -309,12 +309,14 @@ void WebService::handleGetFeedHistory(AsyncWebServerRequest *request) {
     }
 
     // Add entries to JSON array (newest first)
-    // Ring buffer: entries are added at feedHistoryIndex, wrapping around
-    // We need to read them in reverse chronological order
+    // Ring buffer: feedHistoryIndex points to the next write position.
+    uint8_t historyCount = feedingService.getFeedHistoryCount();
+    uint8_t writeIndex = feedingService.getFeedHistoryWriteIndex();
     for (uint8_t i = 0; i < count; i++) {
-        const FeedHistoryEntry& entry = history[i];
+        uint8_t ringIndex = (writeIndex + historyCount - 1 - i) % MAX_FEED_HISTORY;
+        const FeedHistoryEntry& entry = history[ringIndex];
 
-        Serial.printf("[WEB] Entry %d: timestamp=%lu, portion_units=%d\n", i, entry.timestamp, entry.portion_units);
+        Serial.printf("[WEB] Entry %d (ring %d): timestamp=%lu, portion_units=%d\n", i, ringIndex, entry.timestamp, entry.portion_units);
 
         if (entry.timestamp == 0) {
             Serial.printf("[WEB] Skipping empty entry at index %d\n", i);

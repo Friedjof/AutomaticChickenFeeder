@@ -38,8 +38,8 @@ public:
     void setManualPortionUnits(uint8_t units);
 
     // Feed history management
-    bool saveFeedHistory(const FeedHistoryEntry* history, uint8_t count);
-    uint8_t loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount);
+    bool saveFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex);
+    uint8_t loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount, uint8_t &writeIndex);
     bool clearFeedHistory();
 
     // Reset to defaults
