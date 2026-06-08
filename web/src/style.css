@@ -40,7 +40,8 @@ body {
     gap: 12px;
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand > div { min-width: 0; }
 .brand h1 { margin: 0; font-size: 1.35rem; letter-spacing: -0.02em; }
 .topbar-meta {
     display: flex;
@@ -86,6 +87,7 @@ body {
 .device-time-card {
     text-align: right;
     color: var(--text);
+    min-width: 0;
 }
 
 .device-time-date {
@@ -93,13 +95,38 @@ body {
     font-size: 0.78rem;
     color: var(--muted);
     font-weight: 600;
+    white-space: nowrap;
+}
+
+.device-time-row {
+    margin-top: 2px;
+    display: inline-flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 8px;
+    white-space: nowrap;
 }
 
 .device-time-value {
-    margin: 2px 0 0;
+    margin: 0;
     font-size: 1.15rem;
     font-weight: 700;
     letter-spacing: 0.04em;
+}
+
+.device-time-zone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    color: #4338ca;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
 }
 
 .layout { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
@@ -713,9 +740,13 @@ body {
     .status-dot { width: 9px; height: 9px; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14); }
     .device-time-date { font-size: 0.72rem; }
     .device-time-value { font-size: 1rem; }
+    .device-time-row { gap: 6px; }
+    .device-time-zone { font-size: 0.66rem; padding: 2px 7px; min-height: 22px; }
     .panel { padding: 14px 12px; }
     .feed-button { width: 100%; justify-content: center; }
     .hero-text h2 { font-size: 1.5rem; }
+    .hero-stats { grid-template-columns: 1fr; }
+    .backup-actions { grid-template-columns: 1fr; }
 
     .timer-main { flex-wrap: wrap; gap: 10px; overflow-x: visible; }
     .timer-main > .start-toggle { order: 0; }
