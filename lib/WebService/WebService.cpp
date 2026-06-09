@@ -313,7 +313,7 @@ void WebService::handleGetFeedHistory(AsyncWebServerRequest *request) {
     uint8_t historyCount = feedingService.getFeedHistoryCount();
     uint8_t writeIndex = feedingService.getFeedHistoryWriteIndex();
     for (uint8_t i = 0; i < count; i++) {
-        uint8_t ringIndex = (writeIndex + historyCount - 1 - i) % MAX_FEED_HISTORY;
+        uint8_t ringIndex = (writeIndex + MAX_FEED_HISTORY - 1 - i) % MAX_FEED_HISTORY;
         const FeedHistoryEntry& entry = history[ringIndex];
 
         Serial.printf("[WEB] Entry %d (ring %d): timestamp=%lu, portion_units=%d\n", i, ringIndex, entry.timestamp, entry.portion_units);
