@@ -5,9 +5,11 @@ This document describes how to create and publish a new release of the Automatic
 ## Prerequisites
 
 - Git repository with clean working directory
+- GNU Make installed
 - Node.js installed (for web build)
 - Python 3 installed (for web-to-header conversion)
 - PlatformIO installed
+- Optional: Nix with `nix-shell`
 - Push access to the GitHub repository
 
 ## Release Workflow
@@ -45,7 +47,7 @@ make release VERSION=v2.1.0
 ✅ Tag v2.1.0 created
 
 🚀 Step 5/5: Pushing to GitHub...
-📤 Pushing branch: v2.0
+📤 Pushing branch: main
 📤 Pushing tag: v2.1.0
 
 ✅ ✅ ✅ Release v2.1.0 completed! ✅ ✅ ✅
@@ -54,7 +56,7 @@ make release VERSION=v2.1.0
 🔗 Releases: https://github.com/Friedjof/AutomaticChickenFeeder/releases
 
 ⏳ The release build will take ~5-10 minutes
-📦 Artifacts: firmware-v2.1.0.bin, firmware-v2.1.0.elf
+📦 Artifacts: automaticchickenfeeder-v2.1.0.bin, automaticchickenfeeder-v2.1.0.elf
 ```
 
 ### Monitor GitHub Actions
@@ -69,8 +71,9 @@ After pushing the tag:
 Once the GitHub Action completes:
 1. Go to: https://github.com/Friedjof/AutomaticChickenFeeder/releases
 2. You should see the new release `vX.X.X` with:
-   - `firmware-vX.X.X.bin` - Ready for OTA upload
-   - `firmware-vX.X.X.elf` - For debugging
+   - `automaticchickenfeeder-vX.X.X.bin` - Ready for OTA upload
+   - `automaticchickenfeeder-vX.X.X.elf` - For debugging
+   - A release page with OTA instructions, a screenshot, and local build steps
    - Auto-generated release notes
 
 ## What Gets Built
@@ -87,15 +90,47 @@ The GitHub Action performs these steps:
 
 ## Release Artifacts
 
-### firmware-vX.X.X.bin
+### automaticchickenfeeder-vX.X.X.bin
 - **Use for:** OTA updates via web interface
 - **How:** Upload via http://192.168.4.1 → Maintenance → Firmware Update
 - **Size:** ~500KB - 1MB (depending on features)
 
-### firmware-vX.X.X.elf
+### automaticchickenfeeder-vX.X.X.elf
 - **Use for:** Debugging with GDB
 - **How:** `pio debug --environment esp32c3`
 - **Contains:** Symbols for crash analysis
+
+## Build From Release Source ZIP
+
+Every GitHub release page also includes quick build instructions.
+
+### Option A: Regular local toolchain
+
+1. Download **Source code (zip)** from the release page
+2. Unzip it
+3. Open a terminal in the extracted folder
+4. Run:
+
+```bash
+make build
+```
+
+Requirements:
+- GNU Make
+- Node.js
+- Python 3
+- PlatformIO
+
+### Option B: Nix shell
+
+If Nix is available, you can build from the repository root with:
+
+```bash
+nix-shell
+make build
+```
+
+This shell provides the local build tools needed by the repository.
 
 ## Partition Table
 
@@ -124,7 +159,6 @@ If a release has critical bugs:
    ```bash
    git revert <commit-hash>
    make release VERSION=v2.1.1
-   make release-push
    ```
 
 2. **Emergency:** Users can manually flash older firmware
@@ -182,12 +216,11 @@ Then re-run `make release`.
 ```mermaid
 graph LR
     A[make release] --> B[Local commit + tag]
-    B --> C[make release-push]
-    C --> D[GitHub receives tag]
-    D --> E[Workflow triggered]
-    E --> F[Build firmware]
-    F --> G[Create release]
-    G --> H[Upload artifacts]
+    B --> C[GitHub receives tag]
+    C --> D[Workflow triggered]
+    D --> E[Build firmware]
+    E --> F[Create release]
+    F --> G[Upload artifacts + release guide]
 ```
 
 ## Best Practices
@@ -223,11 +256,10 @@ git checkout -b hotfix/v2.0.1
 # Fix the bug
 git commit -m "Fix critical feeding bug"
 make release VERSION=v2.0.1
-make release-push
 # Merge back
-git checkout v2.0
+git checkout main
 git merge hotfix/v2.0.1
-git push origin v2.0
+git push origin main
 ```
 
 ## Release Checklist

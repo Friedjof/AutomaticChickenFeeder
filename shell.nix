@@ -1,9 +1,10 @@
 { pkgs ? import <nixpkgs> {} }:
-let
-in
-  pkgs.mkShell {
-    buildInputs = [
-      pkgs.platformio
-      pkgs.avrdude
-    ];
+pkgs.mkShell {
+  buildInputs = [
+    pkgs.gnumake
+    pkgs.nodejs
+    pkgs.python3
+    pkgs.platformio
+    pkgs.avrdude
+  ];
 }

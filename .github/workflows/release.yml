@@ -76,15 +76,88 @@ jobs:
           VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
           mkdir -p binaries/esp32c3
-          cp .pio/build/esp32c3/firmware.bin binaries/esp32c3/firmware-${VERSION}.bin
-          cp .pio/build/esp32c3/firmware.elf binaries/esp32c3/firmware-${VERSION}.elf
+          cp .pio/build/esp32c3/firmware.bin binaries/esp32c3/automaticchickenfeeder-${VERSION}.bin
+          cp .pio/build/esp32c3/firmware.elf binaries/esp32c3/automaticchickenfeeder-${VERSION}.elf
           ls -lh binaries/esp32c3
+
+      - name: Generate release body
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          REPO: ${{ github.repository }}
+        run: |
+          cat > release-body.md <<EOF
+          ## 🐔 Flash this release
+
+          This release is ready for **OTA update** directly from the web interface.
+
+          ### 📲 OTA update in the browser
+
+          1. Wake the feeder and connect to the **`ChickenFeeder`** WiFi.
+          2. Open **`http://192.168.4.1`** in your browser.
+          3. Scroll down to **Maintenance** -> **Firmware Update (OTA)**.
+          4. Click **Select Firmware (.bin)**.
+          5. Choose **`automaticchickenfeeder-${VERSION}.bin`**.
+          6. Click **Upload Firmware**.
+          7. Wait until the upload finishes and the device reboots.
+
+          ![OTA update section](https://raw.githubusercontent.com/${REPO}/${VERSION}/media/images/screenshot-mobile-footer.png)
+
+          ### 📦 Which file should I use?
+
+          - **`automaticchickenfeeder-${VERSION}.bin`**: the firmware image for OTA upload or normal flashing. Most users only need this file.
+          - **`automaticchickenfeeder-${VERSION}.elf`**: the debug build with symbols. Useful for troubleshooting and crash analysis, not for OTA upload.
+
+          ### 🛠️ Build locally from the source ZIP
+
+          If you want to build the firmware yourself:
+
+          1. On this release page, download **Source code (zip)**.
+          2. Unzip it.
+          3. Open a terminal in the extracted folder.
+          4. Build with one of the options below.
+
+          #### Option A: regular local toolchain
+
+          Install **GNU Make**, **Node.js**, **Python 3**, and **PlatformIO**, then run:
+
+          ```bash
+          make build
+          ```
+
+          This rebuilds the web UI, regenerates the embedded headers, and compiles the ESP32-C3 firmware.
+
+          If you want to flash over USB afterwards:
+
+          ```bash
+          make list
+          make flash
+          ```
+
+          #### Option B: Nix shell
+
+          If you use Nix, enter the project shell first:
+
+          ```bash
+          nix-shell
+          make build
+          ```
+
+          The Nix shell provides the required local build tools for this repository.
+
+          ### 💡 Notes
+
+          - Use the **ESP32-C3** release files only.
+          - Do not power off the device during OTA upload.
+          - Your saved configuration is preserved across firmware updates.
+          - A local build writes the firmware image to **`.pio/build/esp32c3/firmware.bin`**.
+          EOF
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: binaries/esp32c3/*
+          body_path: release-body.md
           generate_release_notes: true
           draft: false
           prerelease: false

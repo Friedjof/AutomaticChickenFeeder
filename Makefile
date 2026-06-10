@@ -141,4 +141,4 @@ release:
 	echo "🔗 Releases: https://github.com/$$REPO/releases"; \
 	echo ""; \
 	echo "⏳ The release build will take ~5-10 minutes"; \
-	echo "📦 Artifacts: firmware-$(VERSION).bin, firmware-$(VERSION).elf"
+	echo "📦 Artifacts: automaticchickenfeeder-$(VERSION).bin, automaticchickenfeeder-$(VERSION).elf"
