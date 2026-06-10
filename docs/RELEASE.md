@@ -73,8 +73,9 @@ Once the GitHub Action completes:
 2. You should see the new release `vX.X.X` with:
    - `automaticchickenfeeder-vX.X.X.bin` - Ready for OTA upload
    - `automaticchickenfeeder-vX.X.X.elf` - For debugging
-   - A release page with OTA instructions, a screenshot, and local build steps
-   - Auto-generated release notes
+   - Contributor avatars with profile links
+   - A linked commit list for all changes since the previous release
+   - A full changelog compare link at the bottom
 
 ## What Gets Built
 
@@ -86,7 +87,8 @@ The GitHub Action performs these steps:
 4. **Convert to C headers** (embedded in firmware)
 5. **Build firmware** for ESP32-C3
 6. **Package binaries** with version suffix
-7. **Create GitHub Release** with artifacts
+ 7. **Generate release notes** from commit history and contributors
+ 8. **Create GitHub Release** with artifacts
 
 ## Release Artifacts
 
