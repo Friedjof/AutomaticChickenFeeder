@@ -3,8 +3,8 @@
 PLATFORMIO ?= pio
 BOARD ?= esp32c3
 
-# Optionales "Argument" nach flash/monitor/run (z. B. "make flash 1")
-ACTION_TARGETS := flash monitor run
+# Optionales "Argument" nach flash/monitor/run/test (z. B. "make flash 1")
+ACTION_TARGETS := flash monitor run test
 ifneq ($(filter $(ACTION_TARGETS),$(firstword $(MAKECMDGOALS))),)
   ARG := $(word 2,$(MAKECMDGOALS))
   ifneq ($(ARG),)
@@ -23,7 +23,7 @@ else
   MONITOR_FLAG :=
 endif
 
-.PHONY: all build flash monitor run clean list deploy-web deploy-fs deploy-flash web-headers
+.PHONY: all build flash monitor run test clean list deploy-web deploy-fs deploy-flash web-headers
 
 all: build
 
@@ -43,6 +43,11 @@ monitor:
 # make run          -> flash danach monitor (ohne Port)
 # make run 1        -> flash/monitor auf /dev/ttyACM1
 run: build flash monitor
+
+# make test         -> Führt Unit-Tests via Unity-Framework auf dem Gerät aus (ohne Port)
+# make test 1       -> Unit-Tests auf /dev/ttyACM1
+test:
+	$(PLATFORMIO) test --environment $(BOARD) $(UPLOAD_FLAG)
 
 clean:
 	$(PLATFORMIO) run --target clean --environment $(BOARD)
