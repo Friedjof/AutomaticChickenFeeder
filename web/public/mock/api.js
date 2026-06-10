@@ -48,7 +48,7 @@ class MockAPI {
     }
 
     normalizeConfig(config) {
-        return {
+        const normalized = {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
@@ -65,6 +65,24 @@ class MockAPI {
             },
             ...config
         };
+
+        if (!Number.isInteger(normalized.manual_portion_units) || normalized.manual_portion_units < 1 || normalized.manual_portion_units > 10) {
+            normalized.manual_portion_units = 1;
+        }
+
+        if (Array.isArray(normalized.schedules)) {
+            normalized.schedules = normalized.schedules.map((schedule, index) => ({
+                id: schedule?.id || index + 1,
+                enabled: !!schedule?.enabled,
+                time: schedule?.time || "00:00",
+                weekday_mask: Number.isInteger(schedule?.weekday_mask) ? schedule.weekday_mask : 0,
+                portion_units: Number.isInteger(schedule?.portion_units) && schedule.portion_units >= 1 && schedule.portion_units <= 10
+                    ? schedule.portion_units
+                    : 1
+            }));
+        }
+
+        return normalized;
     }
 
     persistConfig() {
@@ -143,11 +161,13 @@ class MockAPI {
             }
         }
 
-        if (newConfig.manual_portion_units && (newConfig.manual_portion_units < 1 || newConfig.manual_portion_units > 10)) {
-            return {
-                success: false,
-                error: 'Invalid manual feed amount. Must be between 1-10 units.'
-            };
+        if (Object.prototype.hasOwnProperty.call(newConfig, 'manual_portion_units')) {
+            if (!Number.isInteger(newConfig.manual_portion_units) || newConfig.manual_portion_units < 1 || newConfig.manual_portion_units > 10) {
+                return {
+                    success: false,
+                    error: 'Invalid manual feed amount. Must be between 1-10 units.'
+                };
+            }
         }
 
         this.config = this.normalizeConfig({ ...this.config, ...newConfig });

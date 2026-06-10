@@ -271,6 +271,7 @@ void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t co
   }
 
   Serial.printf("[DEBUG] loadFeedHistory: loading %d entries\n", count);
+  lastFeedUnix = 0;
 
   for (uint8_t i = 0; i < count; i++) {
     feedHistory[i] = history[i];
@@ -281,7 +282,16 @@ void FeedingService::loadFeedHistory(const FeedHistoryEntry* history, uint8_t co
   feedHistoryCount = count;
   feedHistoryIndex = (writeIndex < MAX_FEED_HISTORY) ? writeIndex : (count % MAX_FEED_HISTORY);
 
-  Serial.printf("[INFO] Loaded %d feed history entries, next index will be %d\n", count, feedHistoryIndex);
+  for (uint8_t i = 0; i < feedHistoryCount; i++) {
+    uint8_t ringIndex = (feedHistoryIndex + MAX_FEED_HISTORY - 1 - i) % MAX_FEED_HISTORY;
+    if (feedHistory[ringIndex].timestamp > 0) {
+      lastFeedUnix = feedHistory[ringIndex].timestamp;
+      break;
+    }
+  }
+
+  Serial.printf("[INFO] Loaded %d feed history entries, next index will be %d, last feed %lu\n",
+                count, feedHistoryIndex, lastFeedUnix);
 }
 
 void FeedingService::clearFeedHistory() {
