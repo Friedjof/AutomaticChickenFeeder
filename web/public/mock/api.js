@@ -25,13 +25,14 @@ class MockAPI {
     loadConfig() {
         const saved = localStorage.getItem('chicken-feeder-config');
         if (saved) {
-            return JSON.parse(saved);
+            return this.normalizeConfig(JSON.parse(saved));
         }
         
         // Default config based on data-template/config.json
         return {
             version: 1,
             portion_unit_grams: 12,
+            manual_portion_units: 1,
             schedules: [
                 { id: 1, enabled: true, time: "06:30", weekday_mask: 62, portion_units: 1 },
                 { id: 2, enabled: true, time: "12:00", weekday_mask: 62, portion_units: 1 },
@@ -46,7 +47,45 @@ class MockAPI {
         };
     }
 
-    saveConfig() {
+    normalizeConfig(config) {
+        const normalized = {
+            version: 1,
+            portion_unit_grams: 12,
+            manual_portion_units: 1,
+            schedules: [
+                { id: 1, enabled: true, time: "06:30", weekday_mask: 62, portion_units: 1 },
+                { id: 2, enabled: true, time: "12:00", weekday_mask: 62, portion_units: 1 },
+                { id: 3, enabled: true, time: "18:00", weekday_mask: 62, portion_units: 1 },
+                { id: 4, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 },
+                { id: 5, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 },
+                { id: 6, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 }
+            ],
+            rtc: {
+                sync_threshold_ms: 3000
+            },
+            ...config
+        };
+
+        if (!Number.isInteger(normalized.manual_portion_units) || normalized.manual_portion_units < 1 || normalized.manual_portion_units > 10) {
+            normalized.manual_portion_units = 1;
+        }
+
+        if (Array.isArray(normalized.schedules)) {
+            normalized.schedules = normalized.schedules.map((schedule, index) => ({
+                id: schedule?.id || index + 1,
+                enabled: !!schedule?.enabled,
+                time: schedule?.time || "00:00",
+                weekday_mask: Number.isInteger(schedule?.weekday_mask) ? schedule.weekday_mask : 0,
+                portion_units: Number.isInteger(schedule?.portion_units) && schedule.portion_units >= 1 && schedule.portion_units <= 10
+                    ? schedule.portion_units
+                    : 1
+            }));
+        }
+
+        return normalized;
+    }
+
+    persistConfig() {
         localStorage.setItem('chicken-feeder-config', JSON.stringify(this.config));
     }
 
@@ -118,17 +157,26 @@ class MockAPI {
         // Validate schedules if provided
         if (newConfig.schedules) {
             for (const schedule of newConfig.schedules) {
-                if (schedule.portion_units < 1 || schedule.portion_units > 5) {
+                if (schedule.portion_units < 1 || schedule.portion_units > 10) {
                     return {
                         success: false,
-                        error: 'Invalid portion size. Must be between 1-5 units (12-60g).'
+                        error: 'Invalid portion size. Must be between 1-10 units.'
                     };
                 }
             }
         }
 
-        this.config = { ...this.config, ...newConfig };
-        this.saveConfig();
+        if (Object.prototype.hasOwnProperty.call(newConfig, 'manual_portion_units')) {
+            if (!Number.isInteger(newConfig.manual_portion_units) || newConfig.manual_portion_units < 1 || newConfig.manual_portion_units > 10) {
+                return {
+                    success: false,
+                    error: 'Invalid manual feed amount. Must be between 1-10 units.'
+                };
+            }
+        }
+
+        this.config = this.normalizeConfig({ ...this.config, ...newConfig });
+        this.persistConfig();
 
         return {
             success: true,
@@ -177,7 +225,7 @@ class MockAPI {
         setTimeout(() => {
             this.status.servoPosition = 'Closed';
             this.status.isFeeding = false;
-            this.recordFeed(this.config.portion_unit_grams);
+            this.recordFeed(this.config.manual_portion_units * this.config.portion_unit_grams);
         }, 2000);
 
         return {
@@ -193,19 +241,21 @@ class MockAPI {
         this.config = {
             version: 1,
             portion_unit_grams: 12,
+            manual_portion_units: 1,
             schedules: [
                 { id: 1, enabled: false, time: "06:30", weekday_mask: 62, portion_units: 1 },
                 { id: 2, enabled: false, time: "12:00", weekday_mask: 62, portion_units: 1 },
                 { id: 3, enabled: false, time: "18:00", weekday_mask: 62, portion_units: 1 },
                 { id: 4, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 },
-                { id: 5, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 }
+                { id: 5, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 },
+                { id: 6, enabled: false, time: "00:00", weekday_mask: 0, portion_units: 1 }
             ],
             rtc: {
                 sync_threshold_ms: 3000
             }
         };
 
-        this.saveConfig();
+        this.persistConfig();
 
         return {
             success: true,

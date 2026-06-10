@@ -1,16 +1,18 @@
 #include "ConfigService.hpp"
 #include "FeedingService.hpp"  // For FeedHistoryEntry definition
 
-ConfigService::ConfigService() : portionUnitGrams(12) {}
+ConfigService::ConfigService() : portionUnitGrams(12), manualPortionUnits(1) {}
 
 bool ConfigService::begin() {
     preferences.begin("feeder", false);
 
     // Load portion unit grams
     portionUnitGrams = preferences.getUChar("portionGrams", 12);
+    manualPortionUnits = preferences.getUChar("manualUnits", 1);
 
     Serial.println("[CONFIG] ConfigService initialized");
     Serial.printf("[CONFIG] Portion unit: %d grams\n", portionUnitGrams);
+    Serial.printf("[CONFIG] Manual feed amount: %d units\n", manualPortionUnits);
 
     return true;
 }
@@ -127,22 +129,37 @@ void ConfigService::setPortionUnitGrams(uint8_t grams) {
     Serial.printf("[CONFIG] Portion unit updated to %d grams\n", grams);
 }
 
-bool ConfigService::saveFeedHistory(const FeedHistoryEntry* history, uint8_t count) {
+uint8_t ConfigService::getManualPortionUnits() {
+    return manualPortionUnits;
+}
+
+void ConfigService::setManualPortionUnits(uint8_t units) {
+    manualPortionUnits = units;
+    preferences.putUChar("manualUnits", units);
+    Serial.printf("[CONFIG] Manual feed amount updated to %d units\n", units);
+}
+
+bool ConfigService::saveFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex) {
     if (count > MAX_FEED_HISTORY) {
         count = MAX_FEED_HISTORY;
+    }
+    if (writeIndex >= MAX_FEED_HISTORY) {
+        writeIndex = count % MAX_FEED_HISTORY;
     }
 
     // Save history as binary blob for efficiency
     size_t dataSize = count * sizeof(FeedHistoryEntry);
     preferences.putBytes("feedHist", history, dataSize);
     preferences.putUChar("feedHistCnt", count);
+    preferences.putUChar("feedHistIdx", writeIndex);
 
-    Serial.printf("[CONFIG] Saved %d feed history entries (%d bytes)\n", count, dataSize);
+    Serial.printf("[CONFIG] Saved %d feed history entries (%d bytes), write index %d\n", count, dataSize, writeIndex);
     return true;
 }
 
-uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount) {
+uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount, uint8_t &writeIndex) {
     uint8_t count = preferences.getUChar("feedHistCnt", 0);
+    writeIndex = 0;
 
     if (count == 0) {
         Serial.println("[CONFIG] No feed history found");
@@ -161,13 +178,19 @@ uint8_t ConfigService::loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCou
         return 0;
     }
 
-    Serial.printf("[CONFIG] Loaded %d feed history entries\n", count);
+    writeIndex = preferences.getUChar("feedHistIdx", count % MAX_FEED_HISTORY);
+    if (writeIndex >= MAX_FEED_HISTORY) {
+        writeIndex = count % MAX_FEED_HISTORY;
+    }
+
+    Serial.printf("[CONFIG] Loaded %d feed history entries, write index %d\n", count, writeIndex);
     return count;
 }
 
 bool ConfigService::clearFeedHistory() {
     preferences.remove("feedHist");
     preferences.remove("feedHistCnt");
+    preferences.remove("feedHistIdx");
     Serial.println("[CONFIG] Feed history cleared");
     return true;
 }
@@ -187,6 +210,7 @@ bool ConfigService::resetToDefaults() {
 
     saveAllSchedules(defaults);
     setPortionUnitGrams(12);
+    setManualPortionUnits(1);
     clearFeedHistory();
 
     Serial.println("[CONFIG] Reset complete");

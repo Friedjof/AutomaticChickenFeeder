@@ -87,9 +87,10 @@ void setup() {
 
   // Load feed history from persistent storage
   FeedHistoryEntry history[MAX_FEED_HISTORY];
-  uint8_t historyCount = configService.loadFeedHistory(history, MAX_FEED_HISTORY);
+  uint8_t historyWriteIndex = 0;
+  uint8_t historyCount = configService.loadFeedHistory(history, MAX_FEED_HISTORY, historyWriteIndex);
   if (historyCount > 0) {
-    feedingService.loadFeedHistory(history, historyCount);
+    feedingService.loadFeedHistory(history, historyCount, historyWriteIndex);
   }
 
   // Initialize button service
@@ -199,7 +200,7 @@ void doubleClickHandler(Button2 &btn) {
   }
 
   Serial.println("[BUTTON] Double click - Manual feed");
-  feedingService.feed(1);
+  feedingService.feed(configService.getManualPortionUnits());
 }
 
 void longClickHandler(Button2 &btn) {
@@ -246,7 +247,7 @@ void enterDeepSleep(const char* reason) {
   // Save feed history to persistent storage before sleeping
   uint8_t historyCount = feedingService.getFeedHistoryCount();
   if (historyCount > 0) {
-    configService.saveFeedHistory(feedingService.getFeedHistory(), historyCount);
+    configService.saveFeedHistory(feedingService.getFeedHistory(), historyCount, feedingService.getFeedHistoryWriteIndex());
   }
 
   // Ensure AP is stopped if it was running

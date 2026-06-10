@@ -58,11 +58,14 @@ export class ChickenFeederApp {
 
         // Control elements
         this.elements.manualFeedBtn = document.getElementById('manualFeedBtn');
+        this.elements.manualFeedSummary = document.getElementById('manualFeedSummary');
         this.elements.saveScheduleBtn = document.getElementById('saveScheduleBtn');
         this.elements.deepSleepBtn = document.getElementById('deepSleepBtn');
         this.elements.exportConfigBtn = document.getElementById('exportConfigBtn');
         this.elements.importConfigInput = document.getElementById('importConfigInput');
         this.elements.portionUnitInput = document.getElementById('portionUnitInput');
+        this.elements.manualPortionSlider = document.getElementById('manualPortionSlider');
+        this.elements.manualPortionDisplay = document.getElementById('manualPortionDisplay');
         this.elements.uiVersion = document.getElementById('uiVersion');
 
         // OTA elements
@@ -129,6 +132,10 @@ export class ChickenFeederApp {
             this.elements.portionUnitInput.addEventListener('input', () => this.updatePortionUnit());
             this.elements.portionUnitInput.addEventListener('change', () => this.updatePortionUnit({ commit: true }));
             this.elements.portionUnitInput.addEventListener('blur', () => this.updatePortionUnit({ commit: true }));
+        }
+
+        if (this.elements.manualPortionSlider) {
+            this.elements.manualPortionSlider.addEventListener('input', () => this.updateManualPortionSlider());
         }
 
         // OTA firmware selection
@@ -577,6 +584,10 @@ export class ChickenFeederApp {
             this.elements.portionUnitInput.value = this.config.portion_unit_grams;
         }
 
+        if (this.elements.manualPortionSlider) {
+            this.updateManualPortionDisplay(this.getManualPortionUnits());
+        }
+
         this.updateVisibleTimers();
     }
 
@@ -670,6 +681,30 @@ export class ChickenFeederApp {
         if (inlinePortion) inlinePortion.textContent = `${grams}g`;
     }
 
+    updateManualPortionSlider() {
+        if (!this.config || !this.elements.manualPortionSlider) return;
+
+        const units = parseInt(this.elements.manualPortionSlider.value, 10);
+        if (isNaN(units)) return;
+
+        this.config.manual_portion_units = units;
+        this.updateManualPortionDisplay(units);
+    }
+
+    updateManualPortionDisplay(units = this.getManualPortionUnits()) {
+        const grams = units * this.getPortionUnitGrams();
+
+        if (this.elements.manualPortionSlider) {
+            this.elements.manualPortionSlider.value = units;
+        }
+        if (this.elements.manualPortionDisplay) {
+            this.elements.manualPortionDisplay.textContent = `${grams}g`;
+        }
+        if (this.elements.manualFeedSummary) {
+            this.elements.manualFeedSummary.textContent = `Manual feed amount: ${grams}g (${units} unit${units === 1 ? '' : 's'})`;
+        }
+    }
+
     updateTimerState(index) {
         if (!this.config) return;
         this.ensureSchedules(this.elements.timerRows.length);
@@ -745,7 +780,8 @@ export class ChickenFeederApp {
 
             const scheduleConfig = {
                 schedules: this.config.schedules,
-                portion_unit_grams: this.getPortionUnitGrams()
+                portion_unit_grams: this.getPortionUnitGrams(),
+                manual_portion_units: this.getManualPortionUnits()
             };
             
             const response = await this.saveConfig(scheduleConfig);
@@ -789,6 +825,10 @@ export class ChickenFeederApp {
 
     getPortionUnitGrams() {
         return this.config?.portion_unit_grams || 12;
+    }
+
+    getManualPortionUnits() {
+        return this.config?.manual_portion_units || 1;
     }
     shouldUseMockFromQuery() {
         const params = new URLSearchParams(window.location.search);
@@ -915,7 +955,11 @@ export class ChickenFeederApp {
             return;
         }
 
-        const blob = new Blob([JSON.stringify({ schedules: this.config.schedules, portion_unit_grams: this.getPortionUnitGrams() }, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify({
+            schedules: this.config.schedules,
+            portion_unit_grams: this.getPortionUnitGrams(),
+            manual_portion_units: this.getManualPortionUnits()
+        }, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -949,6 +993,9 @@ export class ChickenFeederApp {
                 if (parsed.portion_unit_grams) {
                     this.config.portion_unit_grams = parsed.portion_unit_grams;
                 }
+                if (parsed.manual_portion_units) {
+                    this.config.manual_portion_units = parsed.manual_portion_units;
+                }
                 this.updateConfigurationUI();
                 this.showToast('Config imported (not saved yet)', 'info');
             } catch (err) {
@@ -969,6 +1016,7 @@ export class ChickenFeederApp {
                 this.updatePortionDisplay(row, this.config.schedules[index].portion_units);
             }
         });
+        this.updateManualPortionDisplay();
     }
 
     updatePortionUnit({ commit = false } = {}) {
@@ -1051,6 +1099,9 @@ export class ChickenFeederApp {
                 weekday_mask: 0,
                 portion_units: 1
             });
+        }
+        if (typeof this.config.manual_portion_units !== 'number') {
+            this.config.manual_portion_units = 1;
         }
     }
 

@@ -54,7 +54,7 @@ class FeedingService {
 public:
   FeedingService();
   void setup();
-  void feed(uint8_t count = 1);  // Feed with count portions (1-5)
+  void feed(uint8_t count = 1);  // Feed with count portions (1-10)
   void update();  // Must be called in loop()
 
   uint8_t getPosition();
@@ -68,7 +68,8 @@ public:
   void addFeedToHistory(uint32_t timestamp, uint8_t portionUnits);
   uint8_t getFeedHistoryCount() const;
   const FeedHistoryEntry* getFeedHistory() const { return feedHistory; }
-  void loadFeedHistory(const FeedHistoryEntry* history, uint8_t count);
+  uint8_t getFeedHistoryWriteIndex() const { return feedHistoryIndex; }
+  void loadFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex);
   void clearFeedHistory();
 
 private:
