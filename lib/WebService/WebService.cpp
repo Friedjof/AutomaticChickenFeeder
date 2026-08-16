@@ -2,6 +2,35 @@
 #include "SchedulingService.hpp"
 #include "generated/web_files.h"
 #include <WiFi.h>
+#include <cctype>
+
+std::vector<uint8_t>* WebService::accumulateBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total, size_t maxSize) {
+    if (index == 0) {
+        if (total > maxSize) {
+            sendError(request, "Request body too large", 413);
+            request->_tempObject = nullptr;
+            return nullptr;
+        }
+        auto* buf = new std::vector<uint8_t>();
+        buf->reserve(total);
+        request->_tempObject = buf;
+    }
+
+    auto* buf = static_cast<std::vector<uint8_t>*>(request->_tempObject);
+    if (!buf) {
+        // This request was already rejected as oversized - ignore remaining chunks
+        return nullptr;
+    }
+
+    buf->insert(buf->end(), data, data + len);
+
+    if (index + len < total) {
+        return nullptr; // wait for more chunks
+    }
+
+    request->_tempObject = nullptr;
+    return buf;
+}
 
 WebService::WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling, VibrationService &vibration)
     : server(80), configService(config), clockService(clock), feedingService(feeding), schedulingService(scheduling),
@@ -143,7 +172,7 @@ void WebService::setupRoutes() {
     server.on("/api/config", HTTP_POST, [](AsyncWebServerRequest *request) {},
               NULL, [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
         updateClientActivity();
-        handlePostConfig(request, data, len);
+        handlePostConfig(request, data, len, index, total);
     });
 
     server.on("/api/feed", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -164,7 +193,7 @@ void WebService::setupRoutes() {
     server.on("/api/time", HTTP_POST, [](AsyncWebServerRequest *request) {},
               NULL, [this](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
         updateClientActivity();
-        handlePostTime(request, data, len);
+        handlePostTime(request, data, len, index, total);
     });
 
     server.on("/api/power/sleep", HTTP_POST, [this](AsyncWebServerRequest *request) {
@@ -394,9 +423,13 @@ void WebService::handleGetConfig(AsyncWebServerRequest *request) {
     sendJsonResponse(request, doc);
 }
 
-void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
+void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+    std::vector<uint8_t>* body = accumulateBody(request, data, len, index, total, MAX_POST_BODY_BYTES);
+    if (!body) return;
+
     JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, data, len);
+    DeserializationError error = deserializeJson(doc, body->data(), body->size());
+    delete body;
 
     if (error) {
         sendError(request, "Invalid JSON", 400);
@@ -410,10 +443,20 @@ void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data,
         for (uint8_t i = 0; i < schedules.size() && i < MAX_SCHEDULES; i++) {
             JsonObject s = schedules[i];
 
+            const char* timeStr = s["time"] | "00:00";
+            bool validTime = strlen(timeStr) == 5 && timeStr[2] == ':' &&
+                             isdigit((unsigned char)timeStr[0]) && isdigit((unsigned char)timeStr[1]) &&
+                             isdigit((unsigned char)timeStr[3]) && isdigit((unsigned char)timeStr[4]);
+            if (!validTime) {
+                sendError(request, "Invalid time format. Must be HH:MM.", 400);
+                return;
+            }
+
             Schedule schedule;
             schedule.id = s["id"] | (i + 1);
             schedule.enabled = s["enabled"] | false;
-            strncpy(schedule.time, s["time"] | "00:00", 6);
+            strncpy(schedule.time, timeStr, sizeof(schedule.time) - 1);
+            schedule.time[sizeof(schedule.time) - 1] = '\0';
             schedule.weekday_mask = s["weekday_mask"] | 0;
             schedule.portion_units = s["portion_units"] | 1;
 
@@ -529,9 +572,13 @@ void WebService::handleGetTime(AsyncWebServerRequest *request) {
     sendJsonResponse(request, response);
 }
 
-void WebService::handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
+void WebService::handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+    std::vector<uint8_t>* body = accumulateBody(request, data, len, index, total, MAX_POST_BODY_BYTES);
+    if (!body) return;
+
     JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, data, len);
+    DeserializationError error = deserializeJson(doc, body->data(), body->size());
+    delete body;
 
     if (error) {
         sendError(request, "Invalid JSON", 400);

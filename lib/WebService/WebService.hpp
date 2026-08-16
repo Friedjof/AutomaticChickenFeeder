@@ -7,6 +7,7 @@
 #include <ArduinoJson.h>
 #include <Update.h>
 #include <functional>
+#include <vector>
 #include "ConfigService.hpp"
 #include "ClockService.hpp"
 #include "FeedingService.hpp"
@@ -47,6 +48,7 @@ private:
     static const uint32_t AP_TIMEOUT_WITH_CLIENT_MS = 300000; // 5min after last activity if device connected
     static const uint8_t DNS_PORT = 53;
     static const uint8_t AP_WIFI_CHANNEL = 6;  // avoid the commonly-congested default channel 1
+    static const size_t MAX_POST_BODY_BYTES = 4096;  // plenty for config/time JSON, rejects abuse
     std::function<void()> sleepCallback;
     bool sleepRequested = false;
     uint32_t sleepRequestMillis = 0;
@@ -60,10 +62,10 @@ private:
     void handleGetFeedHistory(AsyncWebServerRequest *request);
     void handleGetConfig(AsyncWebServerRequest *request);
     void handleGetTime(AsyncWebServerRequest *request);
-    void handlePostConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len);
+    void handlePostConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
     void handlePostFeed(AsyncWebServerRequest *request);
     void handlePostVibrate(AsyncWebServerRequest *request);
-    void handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len);
+    void handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
     void handleResetConfig(AsyncWebServerRequest *request);
     void handleSleep(AsyncWebServerRequest *request);
     void handleOtaStatus(AsyncWebServerRequest *request);
@@ -73,6 +75,12 @@ private:
     void handleStaticFile(AsyncWebServerRequest *request, const char* path);
 
     // Helper methods
+    // Accumulates a chunked request body (ESPAsyncWebServer delivers bodies in
+    // arbitrary-sized pieces - see index/total). Returns nullptr while more
+    // chunks are expected, or if the body was rejected as oversized (an error
+    // response has already been sent in that case). Returns a heap-allocated
+    // buffer with the complete body once fully received - caller must delete it.
+    std::vector<uint8_t>* accumulateBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total, size_t maxSize);
     void sendJsonResponse(AsyncWebServerRequest *request, JsonDocument &doc, int statusCode = 200);
     void sendError(AsyncWebServerRequest *request, const char* message, int statusCode = 400);
     void updateClientActivity();

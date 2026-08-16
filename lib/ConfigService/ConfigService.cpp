@@ -72,7 +72,8 @@ bool ConfigService::loadSchedule(uint8_t index, Schedule &schedule) {
 
     schedule.id = doc["id"] | (index + 1);
     schedule.enabled = doc["enabled"] | false;
-    strncpy(schedule.time, doc["time"] | "00:00", 6);
+    strncpy(schedule.time, doc["time"] | "00:00", sizeof(schedule.time) - 1);
+    schedule.time[sizeof(schedule.time) - 1] = '\0';
     schedule.weekday_mask = doc["weekday_mask"] | 0;
     schedule.portion_units = doc["portion_units"] | 1;
 
