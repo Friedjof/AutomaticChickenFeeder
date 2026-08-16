@@ -23,7 +23,7 @@ else
   MONITOR_FLAG :=
 endif
 
-.PHONY: all build flash monitor run test clean list deploy-web deploy-fs deploy-flash web-headers web-dev
+.PHONY: all build flash monitor run test clean list web-headers web-dev
 
 all: build
 
@@ -71,33 +71,6 @@ web-dev:
 	@echo "🐔 Starting web UI dev server (http://localhost:8000) ..."
 	@cd web && npm install
 	@cd web && npm run dev
-
-# Build Docker image for web optimization (only when needed)
-build-web-image:
-	@echo "🐔 Building ESP32 web optimization container..."
-	docker build -t esp32-web-builder ./build/
-
-# Deploy web interface from /web/ to /data-template/ (professional optimization)
-deploy-web: build-web-image
-	@echo "🚀 Starting professional web optimization pipeline..."
-	docker run --rm -v $(PWD):/workspace esp32-web-builder
-
-# Legacy deployment (simple bash minification)
-deploy-web-simple:
-	@echo "🐔 Deploying web interface for ESP32 (simple)..."
-	./scripts/deploy-web.sh
-
-# Upload filesystem (data-template/) to ESP32
-deploy-fs:
-	@echo "📁 Uploading filesystem to ESP32..."
-	$(PLATFORMIO) run --target uploadfs --environment $(BOARD) $(UPLOAD_FLAG)
-
-# Deploy web interface and flash ESP32 with firmware + filesystem
-deploy-flash: deploy-web build flash deploy-fs
-	@echo "🚀 Complete deployment finished!"
-	@echo "✅ Firmware flashed"
-	@echo "✅ Web interface deployed" 
-	@echo "✅ Filesystem uploaded"
 
 # make list         -> nur ESP-Geräte auf /dev/ttyACM<N> mit Nummern (ohne Duplikate)
 list:

@@ -290,7 +290,6 @@ main.cpp
 
 - **[AGENTS.md](AGENTS.md)** - Comprehensive development guidelines and build system documentation
 - **[docs/dev.md](docs/dev.md)** - Development setup and troubleshooting
-- **[docs/web-development.md](docs/web-development.md)** - Web interface development guide
 
 ## 🤝 Contributing
 
