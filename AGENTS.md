@@ -70,9 +70,14 @@ make list
 
 ## Code Structure
 - `src/main.cpp`: Main application with button handling
+- `include/PinConfig.h`: Single source of truth for all GPIO pin assignments
 - `lib/ButtonService/`: Button input management using Button2 library
 - `lib/FeedingService/`: Dual servo control for feeding mechanism
-- `lib/WebService/`: Placeholder for future web interface
+- `lib/ClockService/`: DS3231 RTC time management
+- `lib/ConfigService/`: NVS-backed configuration (schedules, portion sizes, vibration settings)
+- `lib/SchedulingService/`: RTC-alarm-driven feed event queue
+- `lib/VibrationService/`: Vibration motor control (anti-clump shaking around feeds)
+- `lib/WebService/`: Full REST API + captive portal + OTA updates, served from the embedded web UI
 
 ## Platform Configuration
 - `platformio.ini` uses standard `espressif32` platform for ESP32-C3
@@ -116,7 +121,8 @@ The system provides:
    - **Single click:** Start AP mode for configuration
    - **Double click:** Manual feed (1 portion)
    - **Long press (~600ms):** Enter deep sleep immediately
-   - **Wakeup from sleep:** Button press wakes device + starts AP mode after 1 second delay
+   - **Wakeup from sleep:** Button press wakes device + starts AP mode after a short (~150ms) settle delay
+   - **Cold boot / power-on:** AP mode starts automatically as well, no button press needed
    - **Hold during boot (optional):** Enter maintenance mode (keeps WiFi always on, useful for debugging)
 
 2. **Web Interface:**
@@ -147,6 +153,7 @@ The system provides:
    - **Stay-awake conditions:**
      - While AP active with connected client
      - While feeding in progress
+     - While the post-feed vibration tail is still running
      - Any button press resets 2-minute inactivity timer
 
 5. **Feeding Mechanism:**
@@ -163,6 +170,12 @@ The system provides:
    - Automatic device reboot after successful update
    - Partition scheme: `min_spiffs.csv` (2x ~1.9MB app partitions)
    - Configuration preserved during update (stored in NVS)
+
+7. **Vibration Motor (Anti-Clump):**
+   - Runs automatically before/during/shortly after each feed cycle (helps clumped pellets fall)
+   - Manual "Shake Now" trigger via the web UI (`POST /api/vibrate`)
+   - Enable toggle + pulse duration configurable via web UI / NVS
+   - Transistor-driven output on GPIO10
 
 ## Architecture Overview
 
@@ -202,6 +215,9 @@ main.cpp
 │   ├── Event queue (50 events, 7 days)
 │   ├── Weekday mask filtering
 │   └── RTC alarm management
+├── VibrationService (GPIO10)
+│   ├── Continuous shake around feed cycles
+│   └── Manual/timed pulse trigger
 └── WebService (WiFi AP)
     ├── AsyncWebServer (port 80)
     ├── Captive portal DNS
@@ -228,7 +244,7 @@ main.cpp
         └─────────────────┘      └─────────────────┘
                  │                         │
                  ▼                         ▼
-        • Wait 1s delay          • Execute scheduled feed
+        • Wait ~150ms delay      • Execute scheduled feed
         • Start AP mode          • Clear RTC alarm flag
         • 2s ignore window       • Process all due events
         • Mark activity
@@ -267,15 +283,18 @@ main.cpp
                         DEEP SLEEP
 ```
 
+Not shown above: a plain **power-on/reset** (fresh boot, not a deep-sleep wakeup) also starts AP mode automatically in `setup()` — no button press required.
+
 ### GPIO Pin Assignments
 
 | GPIO | Function | Direction | Notes |
 |------|----------|-----------|-------|
-| GPIO2 | Servo 1 | Output | PWM control |
+| GPIO2 | Servo 2 | Output | PWM control |
 | GPIO3 | RTC INT | Input (PULLUP) | Alarm wakeup |
 | GPIO4 | Button | Input (PULLUP) | User input + wakeup |
 | GPIO5 | Transistor | Output | Servo power control |
-| GPIO21 | Servo 2 | Output | PWM control |
+| GPIO10 | Vibration Motor | Output | Transistor-driven, anti-clump shaking |
+| GPIO21 | Servo 1 | Output | PWM control |
 | I2C SDA | DS3231 | I/O | RTC communication |
 | I2C SCL | DS3231 | I/O | RTC communication |
 

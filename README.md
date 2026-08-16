@@ -56,11 +56,12 @@ An ESP32-C3 based automatic chicken feeder with RTC-scheduled feeding times, web
 
 | GPIO | Function | Direction | Notes |
 |------|----------|-----------|-------|
-| GPIO2 | Servo 1 | Output | PWM control |
+| GPIO2 | Servo 2 | Output | PWM control |
 | GPIO3 | RTC INT | Input (PULLUP) | Alarm wakeup |
 | GPIO4 | Button | Input (PULLUP) | User input + wakeup |
 | GPIO5 | Transistor | Output | Servo power control |
-| GPIO21 | Servo 2 | Output | PWM control |
+| GPIO10 | Vibration Motor | Output | Transistor-driven, anti-clump shaking |
+| GPIO21 | Servo 1 | Output | PWM control |
 | I2C SDA | DS3231 | I/O | RTC communication |
 | I2C SCL | DS3231 | I/O | RTC communication |
 
@@ -180,7 +181,7 @@ The system enters deep sleep (~10-20µA) to conserve battery power:
 
 | Source | GPIO | Trigger | Action |
 |--------|------|---------|--------|
-| **Button** | GPIO4 | LOW | Wake → Wait 1s → Start AP |
+| **Button** | GPIO4 | LOW | Wake → Wait ~150ms → Start AP |
 | **RTC Alarm** | GPIO3 | LOW | Wake → Feed → Sleep |
 
 ### Stay-Awake Conditions

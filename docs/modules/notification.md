@@ -1,5 +1,7 @@
 # Notification Module (Optional)
 
+> **Status:** Not implemented in the current firmware. This document describes a possible future module — there is no `lib/NotificationService` yet.
+
 The notification module centralises how the feeder communicates alerts to the outside world. It is considered optional because the initial PlatformIO port can run without user-facing buzzers or LEDs, yet the architecture leaves space for future signalling features.
 
 ## Purpose
