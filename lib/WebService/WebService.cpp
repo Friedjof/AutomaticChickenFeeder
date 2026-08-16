@@ -228,6 +228,17 @@ void WebService::setupRoutes() {
               },
               [this](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data, size_t len, bool final) {
                   // Upload handler
+                  if (index == 0) {
+                      // Client dropped mid-upload (WiFi hiccup, closed tab) - make sure
+                      // Update isn't left "running" forever, which would block every
+                      // future OTA attempt with "already running".
+                      request->onDisconnect([]() {
+                          if (Update.isRunning()) {
+                              Update.abort();
+                              Serial.println("[OTA] Client disconnected mid-upload - aborted");
+                          }
+                      });
+                  }
                   handleOtaUpdate(request, filename, index, data, len, final);
               });
 
@@ -663,12 +674,12 @@ void WebService::handleOtaUpdate(AsyncWebServerRequest *request, const String& f
         // Begin OTA update
         if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
             Update.printError(Serial);
-            if (final) {
-                JsonDocument doc;
-                doc["success"] = false;
-                doc["error"] = "OTA update failed to begin";
-                sendJsonResponse(request, doc, 500);
-            }
+            Update.abort(); // make sure a stale "already running" state can't block future attempts
+
+            JsonDocument doc;
+            doc["success"] = false;
+            doc["error"] = "OTA update failed to begin";
+            sendJsonResponse(request, doc, 500);
             return;
         }
     }
