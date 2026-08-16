@@ -35,6 +35,7 @@ WebService webService(configService, clockService, feedingService, schedulingSer
 // State flags
 bool wokeFromRtcAlarm = false;
 bool wokeFromButton = false;
+bool wokeFromPowerOn = false;
 unsigned long lastActivityMillis = 0;
 unsigned long ignoreButtonUntil = 0;
 
@@ -65,6 +66,7 @@ void setup() {
       Serial.println("[INFO] Wake reason: Button (GPIO)");
     }
   } else {
+    wokeFromPowerOn = true;
     Serial.println("[INFO] Wake reason: Power-on reset or unknown");
   }
 
@@ -157,6 +159,12 @@ void setup() {
     webService.startAP("ChickenFeeder", "");
 
     // Mark activity to prevent immediate sleep
+    markActivity();
+  }
+
+  if (wokeFromPowerOn) {
+    Serial.println("[BOOT] Cold boot - starting AP mode automatically");
+    webService.startAP("ChickenFeeder", "");
     markActivity();
   }
 
