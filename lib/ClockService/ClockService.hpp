@@ -11,6 +11,7 @@ public:
 
     bool begin();
     bool isAvailable();
+    bool isTimeTrusted();  // false if RTC missing, or lost power and not yet re-synced
 
     // Time management
     bool setTime(uint32_t unixTime);
@@ -29,6 +30,7 @@ public:
 private:
     RTC_DS3231 rtc;
     bool available;
+    bool timeTrusted;
     uint32_t lastSyncTime;
 
     static uint8_t lastSundayOfMonth(uint16_t year, uint8_t month);

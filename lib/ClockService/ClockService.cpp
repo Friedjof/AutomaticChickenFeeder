@@ -1,6 +1,6 @@
 #include "ClockService.hpp"
 
-ClockService::ClockService() : available(false), lastSyncTime(0) {}
+ClockService::ClockService() : available(false), timeTrusted(false), lastSyncTime(0) {}
 
 uint8_t ClockService::lastSundayOfMonth(uint16_t year, uint8_t month) {
     DateTime firstOfNextMonth = month == 12
@@ -44,14 +44,17 @@ bool ClockService::begin() {
     if (!rtc.begin()) {
         Serial.println("[CLOCK] DS3231 not found!");
         available = false;
+        timeTrusted = false;
         return false;
     }
 
-    if (rtc.lostPower()) {
+    bool lostPower = rtc.lostPower();
+    if (lostPower) {
         Serial.println("[CLOCK] RTC lost power, needs time sync!");
     }
 
     available = true;
+    timeTrusted = !lostPower;
     lastSyncTime = millis();
 
     DateTime now = rtc.now();
@@ -66,6 +69,10 @@ bool ClockService::isAvailable() {
     return available;
 }
 
+bool ClockService::isTimeTrusted() {
+    return timeTrusted;
+}
+
 bool ClockService::setTime(uint32_t unixTime) {
     if (!available) {
         Serial.println("[CLOCK] RTC not available!");
@@ -78,6 +85,7 @@ bool ClockService::setTime(uint32_t unixTime) {
     DateTime localTime(unixTime + timezoneOffset);
     rtc.adjust(localTime);
     lastSyncTime = millis();
+    timeTrusted = true;
 
     Serial.printf("[CLOCK] Time set to: %04d-%02d-%02d %02d:%02d:%02d (%s)\n",
                   localTime.year(), localTime.month(), localTime.day(),
@@ -122,6 +130,16 @@ bool ClockService::setAlarm(const DateTime &dt) {
     // Set Alarm1 to match date, hour, minute, second
     if (!rtc.setAlarm1(dt, DS3231_A1_Date)) {
         Serial.println("[CLOCK] Failed to set alarm");
+        return false;
+    }
+
+    // RTClib's setAlarm1() only checks a register bit from *before* the write,
+    // not whether the I2C write itself actually landed - read back and verify
+    // so a silently-lost write doesn't leave us believing an alarm is armed.
+    DateTime readBack = rtc.getAlarm1();
+    if (readBack.day() != dt.day() || readBack.hour() != dt.hour() ||
+        readBack.minute() != dt.minute() || readBack.second() != dt.second()) {
+        Serial.println("[CLOCK] Alarm verification failed - I2C write may have been lost");
         return false;
     }
 

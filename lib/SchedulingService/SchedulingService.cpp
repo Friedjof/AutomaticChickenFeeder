@@ -57,6 +57,11 @@ void SchedulingService::generateTimerEvents() {
         timerEvents[i].valid = false;
     }
 
+    if (!clockService.isAvailable() || !clockService.isTimeTrusted()) {
+        Serial.println("[SCHED] Clock not available/trusted - skipping event generation");
+        return;
+    }
+
     DateTime now = clockService.now();
 
     // Load all schedules
