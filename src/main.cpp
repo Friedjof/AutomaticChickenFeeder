@@ -154,8 +154,9 @@ void setup() {
     // Ignore button events for 2 seconds to avoid consuming wakeup press
     ignoreButtonUntil = millis() + 2000;
 
-    // Wait a short moment before starting AP (give button time to settle)
-    delay(1000);
+    // Wait a short moment before starting AP (give button time to settle;
+    // Button2's own debounce is only 50ms, so this just needs a small margin)
+    delay(150);
 
     // Start AP mode
     Serial.println("[BUTTON] Starting AP mode");

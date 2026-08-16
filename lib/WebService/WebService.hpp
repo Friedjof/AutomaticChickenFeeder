@@ -46,6 +46,7 @@ private:
     static const uint32_t AP_TIMEOUT_NO_CLIENT_MS = 60000;  // 60s if no device connected
     static const uint32_t AP_TIMEOUT_WITH_CLIENT_MS = 300000; // 5min after last activity if device connected
     static const uint8_t DNS_PORT = 53;
+    static const uint8_t AP_WIFI_CHANNEL = 6;  // avoid the commonly-congested default channel 1
     std::function<void()> sleepCallback;
     bool sleepRequested = false;
     uint32_t sleepRequestMillis = 0;

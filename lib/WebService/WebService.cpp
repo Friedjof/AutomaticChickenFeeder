@@ -60,7 +60,23 @@ void WebService::startAP(const char* ssid, const char* password) {
     Serial.printf("[WEB] Starting AP mode: %s\n", ssid);
 
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(ssid, password);
+    WiFi.setSleep(false);              // disable WiFi power-save for stable AP beaconing
+    WiFi.setTxPower(WIFI_POWER_19_5dBm); // make sure we're not throttled below the external antenna's gain
+    delay(100); // let the radio settle after the mode switch before bringing up the AP
+
+    bool started = WiFi.softAP(ssid, password, AP_WIFI_CHANNEL, 0, 4);
+    if (!started) {
+        Serial.println("[WEB] softAP() failed, retrying...");
+        delay(200);
+        started = WiFi.softAP(ssid, password, AP_WIFI_CHANNEL, 0, 4);
+    }
+
+    if (!started) {
+        Serial.println("[WEB] ERROR: Failed to start AP mode after retry");
+        return;
+    }
+
+    delay(100); // let beaconing actually start before declaring the AP up
 
     IPAddress IP = WiFi.softAPIP();
     Serial.printf("[WEB] AP IP address: %s\n", IP.toString().c_str());
