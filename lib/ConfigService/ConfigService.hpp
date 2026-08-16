@@ -37,6 +37,12 @@ public:
     uint8_t getManualPortionUnits();
     void setManualPortionUnits(uint8_t units);
 
+    // Vibration motor config
+    bool isVibrationEnabled();
+    void setVibrationEnabled(bool enabled);
+    uint8_t getVibrationPulseSeconds();
+    void setVibrationPulseSeconds(uint8_t seconds);
+
     // Feed history management
     bool saveFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex);
     uint8_t loadFeedHistory(FeedHistoryEntry* history, uint8_t maxCount, uint8_t &writeIndex);
@@ -49,6 +55,8 @@ private:
     Preferences preferences;
     uint8_t portionUnitGrams;
     uint8_t manualPortionUnits;
+    bool vibrationEnabled;
+    uint8_t vibrationPulseSeconds;
 
     void getScheduleKey(uint8_t index, char *key);
 };

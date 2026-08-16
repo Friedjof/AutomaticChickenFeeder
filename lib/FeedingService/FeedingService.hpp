@@ -5,6 +5,7 @@
 
 #include "ButtonService.hpp"
 #include "ClockService.hpp"
+#include "VibrationService.hpp"
 
 // Forward declarations
 class ConfigService;
@@ -34,6 +35,7 @@ struct FeedHistoryEntry {
 #define SERVO_ATTACH_DELAY 100 // Time to wait after attaching servos before sending position
 #define SERVO_MOVE_TIME 620    // Time for servos to complete movement (legacy, not used with stepwise movement)
 #define FEED_WAIT_TIME 1000    // Time to wait between open and close during feed
+#define POST_FEED_VIBRATION_TAIL_MS 2000  // Vibration tail after feed sequence completes
 
 // Stepwise movement constants
 #define STEP_SIZE 30           // Degrees per step
@@ -63,6 +65,7 @@ public:
   void recordFeedEvent(); // Manually record feed completion (e.g., if needed)
   void setClockService(ClockService* clock) { clockService = clock; }
   void setConfigService(ConfigService* config) { configService = config; }
+  void setVibrationService(VibrationService* vibration) { vibrationService = vibration; }
 
   // Feed history management
   void addFeedToHistory(uint32_t timestamp, uint8_t portionUnits);
@@ -88,6 +91,7 @@ private:
   uint32_t lastFeedUnix = 0;
   ClockService* clockService = nullptr;
   ConfigService* configService = nullptr;
+  VibrationService* vibrationService = nullptr;
 
   // Feed history (ring buffer)
   FeedHistoryEntry feedHistory[MAX_FEED_HISTORY];

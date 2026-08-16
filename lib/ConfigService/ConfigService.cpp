@@ -1,7 +1,8 @@
 #include "ConfigService.hpp"
 #include "FeedingService.hpp"  // For FeedHistoryEntry definition
 
-ConfigService::ConfigService() : portionUnitGrams(12), manualPortionUnits(1) {}
+ConfigService::ConfigService() : portionUnitGrams(12), manualPortionUnits(1),
+    vibrationEnabled(true), vibrationPulseSeconds(3) {}
 
 bool ConfigService::begin() {
     preferences.begin("feeder", false);
@@ -10,9 +11,15 @@ bool ConfigService::begin() {
     portionUnitGrams = preferences.getUChar("portionGrams", 12);
     manualPortionUnits = preferences.getUChar("manualUnits", 1);
 
+    // Load vibration motor config
+    vibrationEnabled = preferences.getBool("vibEnabled", true);
+    vibrationPulseSeconds = preferences.getUChar("vibPulseSec", 3);
+
     Serial.println("[CONFIG] ConfigService initialized");
     Serial.printf("[CONFIG] Portion unit: %d grams\n", portionUnitGrams);
     Serial.printf("[CONFIG] Manual feed amount: %d units\n", manualPortionUnits);
+    Serial.printf("[CONFIG] Vibration: enabled=%d, pulse=%ds\n",
+                  vibrationEnabled, vibrationPulseSeconds);
 
     return true;
 }
@@ -139,6 +146,26 @@ void ConfigService::setManualPortionUnits(uint8_t units) {
     Serial.printf("[CONFIG] Manual feed amount updated to %d units\n", units);
 }
 
+bool ConfigService::isVibrationEnabled() {
+    return vibrationEnabled;
+}
+
+void ConfigService::setVibrationEnabled(bool enabled) {
+    vibrationEnabled = enabled;
+    preferences.putBool("vibEnabled", enabled);
+    Serial.printf("[CONFIG] Vibration enabled updated to %d\n", enabled);
+}
+
+uint8_t ConfigService::getVibrationPulseSeconds() {
+    return vibrationPulseSeconds;
+}
+
+void ConfigService::setVibrationPulseSeconds(uint8_t seconds) {
+    vibrationPulseSeconds = seconds;
+    preferences.putUChar("vibPulseSec", seconds);
+    Serial.printf("[CONFIG] Vibration pulse duration updated to %ds\n", seconds);
+}
+
 bool ConfigService::saveFeedHistory(const FeedHistoryEntry* history, uint8_t count, uint8_t writeIndex) {
     if (count > MAX_FEED_HISTORY) {
         count = MAX_FEED_HISTORY;
@@ -211,6 +238,8 @@ bool ConfigService::resetToDefaults() {
     saveAllSchedules(defaults);
     setPortionUnitGrams(12);
     setManualPortionUnits(1);
+    setVibrationEnabled(true);
+    setVibrationPulseSeconds(3);
     clearFeedHistory();
 
     Serial.println("[CONFIG] Reset complete");

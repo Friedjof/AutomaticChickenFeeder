@@ -7,6 +7,7 @@
 #include "ConfigService.hpp"
 #include "WebService.hpp"
 #include "SchedulingService.hpp"
+#include "VibrationService.hpp"
 
 #define RTC_INT_PIN 3
 #define BUTTON_PIN 4
@@ -29,8 +30,9 @@ ButtonService buttonService;
 FeedingService feedingService;
 ClockService clockService;
 ConfigService configService;
+VibrationService vibrationService;
 SchedulingService schedulingService(configService, clockService, feedingService);
-WebService webService(configService, clockService, feedingService, schedulingService);
+WebService webService(configService, clockService, feedingService, schedulingService, vibrationService);
 
 // State flags
 bool wokeFromRtcAlarm = false;
@@ -51,6 +53,7 @@ void setup() {
   webService.setSleepCallback([]() { enterDeepSleep("Remote request"); });
   feedingService.setClockService(&clockService);
   feedingService.setConfigService(&configService);
+  feedingService.setVibrationService(&vibrationService);
 
   // Wake cause detection
   esp_sleep_wakeup_cause_t wakeupReason = esp_sleep_get_wakeup_cause();
@@ -180,6 +183,7 @@ void loop() {
   feedingService.update();
   webService.update();
   schedulingService.update();
+  vibrationService.update();
   handleSleepLogic();
 }
 
@@ -225,6 +229,13 @@ void handleSleepLogic() {
 
   // Skip sleeping while feeding
   if (feedingService.isFeeding()) {
+    markActivity();
+    return;
+  }
+
+  // Skip sleeping while the post-feed vibration tail is still running
+  // (feed can finish and isFeeding() go false before the tail winds down)
+  if (vibrationService.isActive()) {
     markActivity();
     return;
   }

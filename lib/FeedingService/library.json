@@ -4,7 +4,8 @@
   "dependencies": {
     "ConfigService": "*",
     "ClockService": "*",
-    "ButtonService": "*"
+    "ButtonService": "*",
+    "VibrationService": "*"
   },
   "frameworks": "arduino",
   "platforms": "espressif32"

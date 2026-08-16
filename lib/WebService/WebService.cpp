@@ -3,9 +3,9 @@
 #include "generated/web_files.h"
 #include <WiFi.h>
 
-WebService::WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling)
+WebService::WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling, VibrationService &vibration)
     : server(80), configService(config), clockService(clock), feedingService(feeding), schedulingService(scheduling),
-      apActive(false), apStartTime(0), lastClientActivity(0) {}
+      vibrationService(vibration), apActive(false), apStartTime(0), lastClientActivity(0) {}
 
 bool WebService::begin(uint16_t port) {
     setupRoutes();
@@ -133,6 +133,11 @@ void WebService::setupRoutes() {
     server.on("/api/feed", HTTP_POST, [this](AsyncWebServerRequest *request) {
         updateClientActivity();
         handlePostFeed(request);
+    });
+
+    server.on("/api/vibrate", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        updateClientActivity();
+        handlePostVibrate(request);
     });
 
     server.on("/api/time", HTTP_GET, [this](AsyncWebServerRequest *request) {
@@ -353,6 +358,8 @@ void WebService::handleGetConfig(AsyncWebServerRequest *request) {
     data["version"] = 1;
     data["portion_unit_grams"] = configService.getPortionUnitGrams();
     data["manual_portion_units"] = configService.getManualPortionUnits();
+    data["vibration_enabled"] = configService.isVibrationEnabled();
+    data["vibration_pulse_seconds"] = configService.getVibrationPulseSeconds();
 
     JsonArray schedules = data["schedules"].to<JsonArray>();
 
@@ -419,6 +426,19 @@ void WebService::handlePostConfig(AsyncWebServerRequest *request, uint8_t *data,
         configService.setManualPortionUnits(units);
     }
 
+    if (!doc["vibration_enabled"].isNull()) {
+        configService.setVibrationEnabled(doc["vibration_enabled"] | true);
+    }
+
+    if (!doc["vibration_pulse_seconds"].isNull()) {
+        uint8_t seconds = doc["vibration_pulse_seconds"];
+        if (seconds < 1 || seconds > 30) {
+            sendError(request, "Invalid vibration pulse duration. Must be between 1-30 seconds.", 400);
+            return;
+        }
+        configService.setVibrationPulseSeconds(seconds);
+    }
+
     JsonDocument response;
     response["success"] = true;
     response["message"] = "Configuration saved successfully";
@@ -440,6 +460,16 @@ void WebService::handlePostFeed(AsyncWebServerRequest *request) {
     JsonDocument doc;
     doc["success"] = true;
     doc["message"] = "Feed cycle started";
+
+    sendJsonResponse(request, doc);
+}
+
+void WebService::handlePostVibrate(AsyncWebServerRequest *request) {
+    vibrationService.triggerPulse((uint32_t)configService.getVibrationPulseSeconds() * 1000UL);
+
+    JsonDocument doc;
+    doc["success"] = true;
+    doc["message"] = "Vibration triggered";
 
     sendJsonResponse(request, doc);
 }

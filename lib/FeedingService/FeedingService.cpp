@@ -29,6 +29,11 @@ void FeedingService::feed(uint8_t count) {
   feedsCompleted = 0;
 
   Serial.printf("[INFO] Starting feed sequence: %d portions\n", feedCount);
+
+  if (vibrationService && (!configService || configService->isVibrationEnabled())) {
+    vibrationService->startFeedShake();
+  }
+
   isFeedSequence = true;
   startMovement(SERVO_MAX_ANGLE, true);
 }
@@ -177,6 +182,9 @@ void FeedingService::update() {
           state = IDLE;
           isFeedSequence = false;
           recordFeedEvent();
+          if (vibrationService) {
+            vibrationService->endFeedShake(POST_FEED_VIBRATION_TAIL_MS);
+          }
           Serial.println("[DEBUG] All portions complete");
         }
       } else {
@@ -184,6 +192,9 @@ void FeedingService::update() {
         state = IDLE;
         isFeedSequence = false;
         recordFeedEvent();
+        if (vibrationService) {
+          vibrationService->endFeedShake(POST_FEED_VIBRATION_TAIL_MS);
+        }
         Serial.println("[DEBUG] Power OFF, sequence complete");
       }
       break;

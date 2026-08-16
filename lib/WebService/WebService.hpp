@@ -10,13 +10,14 @@
 #include "ConfigService.hpp"
 #include "ClockService.hpp"
 #include "FeedingService.hpp"
+#include "VibrationService.hpp"
 
 // Forward declaration to avoid circular dependency
 class SchedulingService;
 
 class WebService {
 public:
-    WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling);
+    WebService(ConfigService &config, ClockService &clock, FeedingService &feeding, SchedulingService &scheduling, VibrationService &vibration);
 
     bool begin(uint16_t port = 80);
     void update();
@@ -37,6 +38,7 @@ private:
     ClockService &clockService;
     FeedingService &feedingService;
     SchedulingService &schedulingService;
+    VibrationService &vibrationService;
 
     bool apActive;
     uint32_t apStartTime;
@@ -59,6 +61,7 @@ private:
     void handleGetTime(AsyncWebServerRequest *request);
     void handlePostConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len);
     void handlePostFeed(AsyncWebServerRequest *request);
+    void handlePostVibrate(AsyncWebServerRequest *request);
     void handlePostTime(AsyncWebServerRequest *request, uint8_t *data, size_t len);
     void handleResetConfig(AsyncWebServerRequest *request);
     void handleSleep(AsyncWebServerRequest *request);
