@@ -85,6 +85,18 @@ void FeedingService::update() {
         servo1.attach(SERVO1_PIN, 500, 2400);
         servo2.attach(SERVO2_PIN, 500, 2400);
 
+        if (!servo1.attached() || !servo2.attached()) {
+          Serial.println("[ERROR] Servo attach failed - aborting feed cycle");
+          digitalWrite(TRANSISTOR_PIN, LOW);
+          if (vibrationService) {
+            vibrationService->endFeedShake(0);
+          }
+          state = IDLE;
+          isFeedSequence = false;
+          // Do NOT call recordFeedEvent() - nothing was actually dispensed
+          break;
+        }
+
         // Start at current position (will move stepwise to target)
         currentStepPosition = position;
         servo1.write(SERVO_MAX_ANGLE - currentStepPosition);
