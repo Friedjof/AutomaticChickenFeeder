@@ -1,15 +1,21 @@
 #include "VibrationService.hpp"
 
 VibrationService::VibrationService() {
+#if VIBRATION_MOTOR_ENABLED
   pinMode(VIBRATION_PIN, OUTPUT);
   digitalWrite(VIBRATION_PIN, LOW);
 
   Serial.println("[INFO] VibrationService initialized.");
+#else
+  Serial.println("[INFO] VibrationService disabled at compile time (VIBRATION_MOTOR_ENABLED=0).");
+#endif
 }
 
 void VibrationService::setPin(bool on) {
+#if VIBRATION_MOTOR_ENABLED
   pinOn = on;
   digitalWrite(VIBRATION_PIN, on ? HIGH : LOW);
+#endif
 }
 
 void VibrationService::update() {

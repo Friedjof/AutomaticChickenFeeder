@@ -69,6 +69,7 @@ export class ChickenFeederApp {
         this.elements.uiVersion = document.getElementById('uiVersion');
 
         // Vibration motor elements
+        this.elements.vibrationSettingsPanel = document.getElementById('vibrationSettingsPanel');
         this.elements.vibrationEnabledToggle = document.getElementById('vibrationEnabledToggle');
         this.elements.vibrationPulseInput = document.getElementById('vibrationPulseInput');
         this.elements.vibrateNowBtn = document.getElementById('vibrateNowBtn');
@@ -612,6 +613,11 @@ export class ChickenFeederApp {
 
         if (this.elements.manualPortionSlider) {
             this.updateManualPortionDisplay(this.getManualPortionUnits());
+        }
+
+        if (this.elements.vibrationSettingsPanel) {
+            const available = this.config.vibration_available !== false; // default to shown if API doesn't report it
+            this.elements.vibrationSettingsPanel.style.display = available ? '' : 'none';
         }
 
         if (this.elements.vibrationEnabledToggle && typeof this.config.vibration_enabled !== 'undefined') {

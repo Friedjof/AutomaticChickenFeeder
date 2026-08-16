@@ -33,6 +33,7 @@ class MockAPI {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
+            vibration_available: true,
             vibration_enabled: true,
             vibration_pulse_seconds: 3,
             schedules: [
@@ -54,6 +55,7 @@ class MockAPI {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
+            vibration_available: true,
             vibration_enabled: true,
             vibration_pulse_seconds: 3,
             schedules: [
@@ -261,6 +263,7 @@ class MockAPI {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
+            vibration_available: true,
             vibration_enabled: true,
             vibration_pulse_seconds: 3,
             schedules: [

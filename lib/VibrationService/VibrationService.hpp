@@ -17,6 +17,7 @@ public:
   void triggerPulse(uint32_t durationMs);
 
   bool isActive() const { return pinOn; }
+  static constexpr bool isCompiledIn() { return VIBRATION_MOTOR_ENABLED; }
 
 private:
   bool pinOn = false;

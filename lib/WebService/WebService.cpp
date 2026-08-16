@@ -423,6 +423,7 @@ void WebService::handleGetConfig(AsyncWebServerRequest *request) {
     data["version"] = 1;
     data["portion_unit_grams"] = configService.getPortionUnitGrams();
     data["manual_portion_units"] = configService.getManualPortionUnits();
+    data["vibration_available"] = VibrationService::isCompiledIn();
     data["vibration_enabled"] = configService.isVibrationEnabled();
     data["vibration_pulse_seconds"] = configService.getVibrationPulseSeconds();
 
