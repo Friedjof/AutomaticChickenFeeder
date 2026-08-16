@@ -54,16 +54,25 @@ void WebService::update() {
         // Check how many stations (devices) are connected
         uint8_t stationCount = WiFi.softAPgetStationNum();
 
-        // Timeout logic: Only stop AP if no device is connected
-        if (stationCount == 0) {
-            // No device connected - timeout after 60 seconds from start
-            if (timeSinceStart > AP_TIMEOUT_NO_CLIENT_MS) {
-                Serial.println("[WEB] AP timeout (no client connected for 60s) - stopping AP mode");
-                stopAP();
+        // Timeout logic - skipped entirely in maintenance mode, which is meant
+        // to keep WiFi on indefinitely (bounded instead by a separate,
+        // longer inactivity timeout in the maintenance loop itself).
+        if (!maintenanceMode) {
+            if (stationCount == 0) {
+                // No device connected - timeout after 60 seconds from start
+                if (timeSinceStart > AP_TIMEOUT_NO_CLIENT_MS) {
+                    Serial.println("[WEB] AP timeout (no client connected for 60s) - stopping AP mode");
+                    stopAP();
+                }
+            } else {
+                // Device connected but inactive - timeout after 5 minutes of no requests
+                uint32_t timeSinceActivity = now - lastClientActivity;
+                if (timeSinceActivity > AP_TIMEOUT_WITH_CLIENT_MS) {
+                    Serial.println("[WEB] AP timeout (client connected but inactive for 5min) - stopping AP mode");
+                    stopAP();
+                }
             }
         }
-        // If device(s) are connected, keep AP running indefinitely
-        // User must manually stop by disconnecting or the device will auto-disconnect eventually
     }
 
     // Handle deferred sleep request after responses have been sent
