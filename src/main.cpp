@@ -12,6 +12,7 @@
 
 // Power management
 static const uint32_t INACTIVITY_SLEEP_MS = 120000;  // 2 minutes
+static const uint32_t MAINTENANCE_TIMEOUT_MS = 15UL * 60UL * 1000UL;  // 15 minutes without web activity
 
 void simpleClickHandler(Button2 &btn);
 void doubleClickHandler(Button2 &btn);
@@ -39,6 +40,11 @@ unsigned long ignoreButtonUntil = 0;
 void setup() {
   Serial.begin(115200);
   delay(1000);
+
+  // Subscribe the main loop task to the framework's already-running task
+  // watchdog (CONFIG_ESP_TASK_WDT, 10s timeout) - our only safety net against
+  // an unforeseen hang during years of unattended operation.
+  enableLoopWDT();
 
   Serial.println("\n\n[INFO] ========================================");
   Serial.println("[INFO] Automatic Chicken Feeder v2.0");
@@ -132,7 +138,18 @@ void setup() {
     Serial.println("[MAINTENANCE] Navigate to Maintenance section for firmware upload\n");
 
     while (true) {
+      feedLoopWDT();
       webService.update();
+      feedingService.update();
+      vibrationService.update();
+      schedulingService.update();
+
+      if ((unsigned long)(millis() - webService.getLastClientActivity()) > MAINTENANCE_TIMEOUT_MS) {
+        Serial.println("[MAINTENANCE] No activity for 15 minutes - rebooting to normal operation");
+        delay(100);
+        ESP.restart();
+      }
+
       delay(10);
     }
   }
@@ -175,6 +192,7 @@ void setup() {
 }
 
 void loop() {
+  feedLoopWDT();
   buttonService.loop();
   feedingService.update();
   webService.update();
