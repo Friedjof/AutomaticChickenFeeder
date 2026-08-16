@@ -23,7 +23,7 @@ else
   MONITOR_FLAG :=
 endif
 
-.PHONY: all build flash monitor run test clean list deploy-web deploy-fs deploy-flash web-headers
+.PHONY: all build flash monitor run test clean list deploy-web deploy-fs deploy-flash web-headers web-dev
 
 all: build
 
@@ -64,6 +64,13 @@ web-headers:
 	@python3 scripts/web-to-header.py web/dist -o lib/WebService/generated
 	@echo "✅ Headers generated in lib/WebService/generated/"
 	@echo "   Include with: #include \"web_files.h\""
+
+# Start the Vite dev server with live reload (http://localhost:8000)
+# Falls back to the built-in mock API automatically if no ESP32 is reachable
+web-dev:
+	@echo "🐔 Starting web UI dev server (http://localhost:8000) ..."
+	@cd web && npm install
+	@cd web && npm run dev
 
 # Build Docker image for web optimization (only when needed)
 build-web-image:
