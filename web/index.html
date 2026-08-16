@@ -80,6 +80,35 @@
                 </div>
             </section>
 
+            <section class="panel vibration-settings-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Anti-clump</p>
+                        <h3>Vibration motor</h3>
+                        <p class="muted">Shakes the hopper before, during and shortly after each feed so pellets don't clump.</p>
+                    </div>
+                </div>
+                <div class="feed-settings-grid">
+                    <div class="feed-setting-card">
+                        <div class="feed-setting-header">
+                            <label for="vibrationEnabledToggle">Enabled for feedings</label>
+                            <label class="toggle-switch-small start-toggle">
+                                <input type="checkbox" id="vibrationEnabledToggle" checked>
+                                <span class="toggle-slider-small"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="feed-setting-card">
+                        <label for="vibrationPulseInput">Manual shake duration (seconds)</label>
+                        <input id="vibrationPulseInput" type="number" min="1" max="30" step="1" value="3">
+                    </div>
+                </div>
+                <button class="feed-button" id="vibrateNowBtn">
+                    <span class="feed-icon">📳</span>
+                    <span>Shake Now</span>
+                </button>
+            </section>
+
             <section class="panel schedule-panel">
                 <div class="panel-header">
                     <div>

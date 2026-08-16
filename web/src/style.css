@@ -280,6 +280,23 @@ body {
     font-weight: 700;
     color: var(--text);
 }
+.feed-setting-card input[type="number"] {
+    height: 46px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel-soft);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: inherit;
+    width: 100%;
+}
+.feed-setting-card input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
 .feed-setting-header {
     display: flex;
     align-items: center;

@@ -33,6 +33,8 @@ class MockAPI {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
+            vibration_enabled: true,
+            vibration_pulse_seconds: 3,
             schedules: [
                 { id: 1, enabled: true, time: "06:30", weekday_mask: 62, portion_units: 1 },
                 { id: 2, enabled: true, time: "12:00", weekday_mask: 62, portion_units: 1 },
@@ -52,6 +54,8 @@ class MockAPI {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
+            vibration_enabled: true,
+            vibration_pulse_seconds: 3,
             schedules: [
                 { id: 1, enabled: true, time: "06:30", weekday_mask: 62, portion_units: 1 },
                 { id: 2, enabled: true, time: "12:00", weekday_mask: 62, portion_units: 1 },
@@ -69,6 +73,12 @@ class MockAPI {
         if (!Number.isInteger(normalized.manual_portion_units) || normalized.manual_portion_units < 1 || normalized.manual_portion_units > 10) {
             normalized.manual_portion_units = 1;
         }
+
+        if (!Number.isInteger(normalized.vibration_pulse_seconds) || normalized.vibration_pulse_seconds < 1 || normalized.vibration_pulse_seconds > 30) {
+            normalized.vibration_pulse_seconds = 3;
+        }
+
+        normalized.vibration_enabled = !!normalized.vibration_enabled;
 
         if (Array.isArray(normalized.schedules)) {
             normalized.schedules = normalized.schedules.map((schedule, index) => ({
@@ -234,6 +244,15 @@ class MockAPI {
         };
     }
 
+    async triggerVibrate() {
+        await this.delay(100);
+
+        return {
+            success: true,
+            message: 'Vibration triggered'
+        };
+    }
+
     async resetConfig() {
         await this.delay();
 
@@ -242,6 +261,8 @@ class MockAPI {
             version: 1,
             portion_unit_grams: 12,
             manual_portion_units: 1,
+            vibration_enabled: true,
+            vibration_pulse_seconds: 3,
             schedules: [
                 { id: 1, enabled: false, time: "06:30", weekday_mask: 62, portion_units: 1 },
                 { id: 2, enabled: false, time: "12:00", weekday_mask: 62, portion_units: 1 },
@@ -356,6 +377,7 @@ console.log('- mockAPI.getConfig()');
 console.log('- mockAPI.getTime()');
 console.log('- mockAPI.saveConfig(config)');
 console.log('- mockAPI.triggerFeed()');
+console.log('- mockAPI.triggerVibrate()');
 console.log('- mockAPI.resetConfig()');
 console.log('- mockAPI.syncTime(unixTime)');
 console.log('- mockAPI.getFeedHistory(limit)');

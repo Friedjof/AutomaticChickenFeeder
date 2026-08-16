@@ -68,6 +68,11 @@ export class ChickenFeederApp {
         this.elements.manualPortionDisplay = document.getElementById('manualPortionDisplay');
         this.elements.uiVersion = document.getElementById('uiVersion');
 
+        // Vibration motor elements
+        this.elements.vibrationEnabledToggle = document.getElementById('vibrationEnabledToggle');
+        this.elements.vibrationPulseInput = document.getElementById('vibrationPulseInput');
+        this.elements.vibrateNowBtn = document.getElementById('vibrateNowBtn');
+
         // OTA elements
         this.elements.otaFirmwareInput = document.getElementById('otaFirmwareInput');
         this.elements.otaUploadBtn = document.getElementById('otaUploadBtn');
@@ -136,6 +141,17 @@ export class ChickenFeederApp {
 
         if (this.elements.manualPortionSlider) {
             this.elements.manualPortionSlider.addEventListener('input', () => this.updateManualPortionSlider());
+        }
+
+        // Vibration motor settings
+        if (this.elements.vibrationEnabledToggle) {
+            this.elements.vibrationEnabledToggle.addEventListener('change', () => this.updateVibrationSetting());
+        }
+        if (this.elements.vibrationPulseInput) {
+            this.elements.vibrationPulseInput.addEventListener('change', () => this.updateVibrationSetting());
+        }
+        if (this.elements.vibrateNowBtn) {
+            this.elements.vibrateNowBtn.addEventListener('click', () => this.triggerManualVibration());
         }
 
         // OTA firmware selection
@@ -291,6 +307,16 @@ export class ChickenFeederApp {
             return await this.mockApi.triggerFeed();
         }
         return await this.apiRequest('/feed', {
+            method: 'POST'
+        });
+    }
+
+    async triggerVibrate() {
+        if (this.useMock) {
+            if (!await this.ensureMockReady()) throw new Error('Mock API unavailable');
+            return await this.mockApi.triggerVibrate();
+        }
+        return await this.apiRequest('/vibrate', {
             method: 'POST'
         });
     }
@@ -588,6 +614,13 @@ export class ChickenFeederApp {
             this.updateManualPortionDisplay(this.getManualPortionUnits());
         }
 
+        if (this.elements.vibrationEnabledToggle && typeof this.config.vibration_enabled !== 'undefined') {
+            this.elements.vibrationEnabledToggle.checked = !!this.config.vibration_enabled;
+        }
+        if (this.elements.vibrationPulseInput && this.config.vibration_pulse_seconds) {
+            this.elements.vibrationPulseInput.value = this.config.vibration_pulse_seconds;
+        }
+
         this.updateVisibleTimers();
     }
 
@@ -774,14 +807,53 @@ export class ChickenFeederApp {
     }
 
 
+    async triggerManualVibration() {
+        try {
+            this.elements.vibrateNowBtn.disabled = true;
+
+            const response = await this.triggerVibrate();
+
+            if (response.success) {
+                this.showToast('Vibration triggered!', 'success');
+            } else {
+                this.showToast(response.error || 'Failed to trigger vibration', 'error');
+            }
+
+        } catch (error) {
+            this.showToast('Network error occurred', 'error');
+            console.error('Error triggering vibration:', error);
+        } finally {
+            setTimeout(() => {
+                this.elements.vibrateNowBtn.disabled = false;
+            }, 1000);
+        }
+    }
+
+    updateVibrationSetting() {
+        if (!this.config) return;
+
+        if (this.elements.vibrationEnabledToggle) {
+            this.config.vibration_enabled = this.elements.vibrationEnabledToggle.checked;
+        }
+
+        if (this.elements.vibrationPulseInput) {
+            const seconds = Math.min(30, Math.max(1, parseInt(this.elements.vibrationPulseInput.value, 10) || 3));
+            this.config.vibration_pulse_seconds = seconds;
+            this.elements.vibrationPulseInput.value = seconds;
+        }
+    }
+
     async saveScheduleOnly() {
         try {
             this.updatePortionUnit({ commit: true });
+            this.updateVibrationSetting();
 
             const scheduleConfig = {
                 schedules: this.config.schedules,
                 portion_unit_grams: this.getPortionUnitGrams(),
-                manual_portion_units: this.getManualPortionUnits()
+                manual_portion_units: this.getManualPortionUnits(),
+                vibration_enabled: this.config.vibration_enabled,
+                vibration_pulse_seconds: this.config.vibration_pulse_seconds
             };
             
             const response = await this.saveConfig(scheduleConfig);
