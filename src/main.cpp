@@ -8,12 +8,7 @@
 #include "WebService.hpp"
 #include "SchedulingService.hpp"
 #include "VibrationService.hpp"
-
-#define RTC_INT_PIN 3
-#define BUTTON_PIN 4
-#define SERVO1_PIN 21
-#define SERVO2_PIN 2
-#define TRANSISTOR_PIN 5
+#include "PinConfig.h"
 
 // Power management
 static const uint32_t INACTIVITY_SLEEP_MS = 120000;  // 2 minutes

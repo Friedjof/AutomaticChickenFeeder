@@ -3,11 +3,7 @@
 
 #include <Arduino.h>
 #include <Button2.h>
-
-
-#ifndef BUTTON_PIN
-#define BUTTON_PIN 4
-#endif
+#include "PinConfig.h"
 
 class ButtonService {
 private:

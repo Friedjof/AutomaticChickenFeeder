@@ -2,10 +2,7 @@
 #define VIBRATION_SERVICE_HPP
 
 #include <Arduino.h>
-
-#ifndef VIBRATION_PIN
-#define VIBRATION_PIN 10
-#endif
+#include "PinConfig.h"
 
 class VibrationService {
 public:

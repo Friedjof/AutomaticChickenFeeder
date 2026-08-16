@@ -6,6 +6,7 @@
 #include "ButtonService.hpp"
 #include "ClockService.hpp"
 #include "VibrationService.hpp"
+#include "PinConfig.h"
 
 // Forward declarations
 class ConfigService;
@@ -16,16 +17,6 @@ struct FeedHistoryEntry {
   uint32_t timestamp;  // Unix timestamp
   uint8_t portion_units;  // Number of portion units fed
 };
-
-#ifndef SERVO1_PIN
-#define SERVO1_PIN 21
-#endif
-#ifndef SERVO2_PIN
-#define SERVO2_PIN 2
-#endif
-#ifndef TRANSISTOR_PIN
-#define TRANSISTOR_PIN 5
-#endif
 
 #define SERVO_MIN_ANGLE 0
 #define SERVO_MAX_ANGLE 180

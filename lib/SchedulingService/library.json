@@ -1,0 +1,11 @@
+{
+  "name": "SchedulingService",
+  "version": "1.0.0",
+  "dependencies": {
+    "ConfigService": "*",
+    "ClockService": "*",
+    "FeedingService": "*"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}

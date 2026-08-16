@@ -1,0 +1,13 @@
+{
+  "name": "WebService",
+  "version": "1.0.0",
+  "dependencies": {
+    "ConfigService": "*",
+    "ClockService": "*",
+    "FeedingService": "*",
+    "SchedulingService": "*",
+    "VibrationService": "*"
+  },
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}
